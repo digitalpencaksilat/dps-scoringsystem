@@ -221,4 +221,68 @@ class PenilaianSeniModel extends Model
             return false;
         }
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  HUKUMAN KP — sync penalty dari Ketua Pertandingan ke semua juri
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /**
+     * Proses hukuman dari KP: tambahkan entry hukuman ke JSON penilaian
+     * semua juri untuk penampilan ini.
+     * Parity legacy: Penilaian_seni_model->proses_penilaian_kp()
+     *
+     * @param int   $idPenampilanSeni
+     * @param array $hukumanData ['jenis' => string, 'jumlah' => int, 'sumber' => 'kp']
+     * @param mixed $seniService PersilatSeniService instance
+     * @return bool
+     */
+    public function prosesHukumanKp(int $idPenampilanSeni, array $hukumanData, $seniService = null): bool
+    {
+        $db = \Config\Database::connect();
+
+        // Get all juri rows for this penampilan
+        $rows = $this->where('id_penampilan_seni', $idPenampilanSeni)->findAll();
+
+        if (empty($rows)) {
+            return false;
+        }
+
+        try {
+            $db->transStart();
+
+            foreach ($rows as $row) {
+                $penilaian = json_decode($row->penilaian, true) ?: [];
+
+                // Append hukuman entry
+                if (!isset($penilaian['hukuman'])) {
+                    $penilaian['hukuman'] = [];
+                }
+
+                $penilaian['hukuman'][] = [
+                    'jenis'     => $hukumanData['jenis'],
+                    'jumlah'    => (int) $hukumanData['jumlah'],
+                    'sumber'    => 'kp',
+                    'timestamp' => date('Y-m-d H:i:s'),
+                ];
+
+                // Recalculate total_hukuman
+                $totalHukuman = 0;
+                foreach ($penilaian['hukuman'] as $h) {
+                    $totalHukuman += (int) ($h['jumlah'] ?? 0);
+                }
+                $penilaian['total_hukuman'] = $totalHukuman;
+
+                // Update JSON
+                $this->update($row->id_penilaian_seni, [
+                    'penilaian' => json_encode($penilaian),
+                ]);
+            }
+
+            $db->transComplete();
+            return $db->transStatus();
+        } catch (\Throwable $e) {
+            log_message('error', 'prosesHukumanKp gagal: ' . $e->getMessage());
+            return false;
+        }
+    }
 }

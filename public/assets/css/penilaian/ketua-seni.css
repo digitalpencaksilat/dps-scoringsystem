@@ -1,0 +1,159 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   Ketua Pertandingan — Seni Views CSS
+   Parity legacy: kp_seni_custom.css + button_controller styling
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Header Bar ───────────────────────────────────────────────────────── */
+.kp-seni-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: #111;
+    border-bottom: 2px solid var(--brand-primary, #d90429);
+}
+.kp-seni-header-light {
+    background: #fff;
+    border-bottom-color: #dee2e6;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.kp-seni-kategori {
+    color: rgba(255,255,255,0.7);
+    font-size: 0.8rem;
+}
+
+/* ─── Peserta Bar ──────────────────────────────────────────────────────── */
+.kp-seni-peserta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: #1a1a1a;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.kp-seni-peserta-light {
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+.peserta-nama {
+    display: block;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+.peserta-kontingen {
+    display: block;
+    color: rgba(255,255,255,0.5);
+    font-size: 0.8rem;
+}
+.kp-seni-peserta-light .peserta-nama { color: #212529; }
+.kp-seni-peserta-light .peserta-kontingen { color: #6c757d; }
+
+/* ─── Nav Pills (Battle tabs) ──────────────────────────────────────────── */
+.kp-tab-biru.active { background: #1d2af4 !important; color: #fff !important; }
+.kp-tab-merah.active { background: #dd0a35 !important; color: #fff !important; }
+.kp-tab-summary.active { background: #333 !important; color: #fff !important; }
+
+/* ─── Action Bar (bottom) ──────────────────────────────────────────────── */
+.kp-seni-actions {
+    display: flex;
+    gap: 2px;
+    background: #000;
+}
+.kp-seni-actions-light {
+    background: #e9ecef;
+}
+
+.btn-kp-action {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 80px;
+    border: none;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: transform 0.06s, opacity 0.15s;
+    -webkit-tap-highlight-color: transparent;
+}
+.btn-kp-action:active {
+    transform: scale(0.97);
+}
+.btn-kp-action i {
+    font-size: 1.3rem;
+}
+
+.btn-akses {
+    background: #1565c0;
+    color: #fff;
+}
+.btn-akses:hover {
+    background: #0d47a1;
+}
+.btn-dq {
+    background: #c62828;
+    color: #fff;
+}
+.btn-dq:hover {
+    background: #b71c1c;
+}
+
+/* Light mode action buttons */
+.kp-seni-actions-light .btn-akses {
+    background: #e3f2fd;
+    color: #1565c0;
+    border: 1px solid #1565c0;
+}
+.kp-seni-actions-light .btn-dq {
+    background: #ffebee;
+    color: #c62828;
+    border: 1px solid #c62828;
+}
+
+/* ─── Gradient Backgrounds (reuse from juri-tanding) ───────────────────── */
+.bg-gradient-180-blue {
+    background: linear-gradient(180deg, #1d2af4 55%, #0118d8 75%) !important;
+}
+.bg-gradient-180-red {
+    background: linear-gradient(180deg, #dd0a35 55%, #b80c0c 75%) !important;
+}
+.bg-gradient-180-biru {
+    background: linear-gradient(135deg, #1d2af4, #0118d8) !important;
+}
+.bg-gradient-180-merah {
+    background: linear-gradient(135deg, #dd0a35, #b80c0c) !important;
+}
+
+/* ─── Loading state ────────────────────────────────────────────────────── */
+.is-loading {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* ─── Responsive ───────────────────────────────────────────────────────── */
+@media (max-width: 575.98px) {
+    .btn-kp-action {
+        min-height: 64px;
+        font-size: 0.75rem;
+    }
+    .btn-kp-action i {
+        font-size: 1.1rem;
+    }
+    .kp-seni-header {
+        padding: 8px 12px;
+    }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+    .btn-kp-action {
+        min-height: 56px;
+        flex-direction: row;
+        gap: 8px;
+    }
+}

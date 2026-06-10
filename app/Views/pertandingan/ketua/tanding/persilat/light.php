@@ -1,147 +1,143 @@
 <?= $this->extend('layouts/penilaian') ?>
 
+<?= $this->section('styles') ?>
+<link rel="stylesheet" href="<?= base_url('assets/css/penilaian/ketua-tanding.css') ?>">
+<style>.kp-wrapper-light { background: var(--bg-color, #f4f6f9) !important; }</style>
+<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <?php
     $idP   = (int) $pertandingan->id_pertandingan;
     $ronde = (string) $pertandingan->ronde_pertandingan;
+    $totalRonde = (int) ($pertandingan->total_ronde ?? 3);
     $namaMerah = $atlet_merah->nama_pendaftar ?? 'Atlet Merah';
     $namaBiru  = $atlet_biru->nama_pendaftar ?? 'Atlet Biru';
-    $semua = $ringkasan->semua_ronde ?? null;
+    $kontMerah = $atlet_merah->nama_kontingen ?? '-';
+    $kontBiru  = $atlet_biru->nama_kontingen ?? '-';
+    $semua     = $ringkasan->semua_ronde ?? null;
 
-    // Tombol KP: label, mode, jumlah (null/'hapus' = hapus). Negatif = hukuman.
     $aksiHukuman = [
-        ['label' => 'Teguran 1',    'mode' => 'teguran_1',    'jumlah' => -1,  'cls' => 'warn'],
-        ['label' => 'Teguran 2',    'mode' => 'teguran_2',    'jumlah' => -2,  'cls' => 'warn'],
-        ['label' => 'Peringatan 1', 'mode' => 'peringatan_1', 'jumlah' => -5,  'cls' => 'danger'],
-        ['label' => 'Peringatan 2', 'mode' => 'peringatan_2', 'jumlah' => -10, 'cls' => 'danger'],
-        ['label' => 'Jatuhan (+3)', 'mode' => 'jatuhan',      'jumlah' => 3,   'cls' => 'ok'],
-        ['label' => 'Binaan',       'mode' => 'binaan',       'jumlah' => 1,   'cls' => 'muted'],
+        ['label' => 'Teguran 1',    'mode' => 'teguran_1',    'jumlah' => -1,  'cls' => 'warn',   'icon' => 'fa-comment-dots'],
+        ['label' => 'Teguran 2',    'mode' => 'teguran_2',    'jumlah' => -2,  'cls' => 'warn',   'icon' => 'fa-comment-dots'],
+        ['label' => 'Peringatan 1', 'mode' => 'peringatan_1', 'jumlah' => -5,  'cls' => 'danger', 'icon' => 'fa-triangle-exclamation'],
+        ['label' => 'Peringatan 2', 'mode' => 'peringatan_2', 'jumlah' => -10, 'cls' => 'danger', 'icon' => 'fa-circle-exclamation'],
+        ['label' => 'Jatuhan (+3)', 'mode' => 'jatuhan',      'jumlah' => 3,   'cls' => 'ok',     'icon' => 'fa-person-falling'],
+        ['label' => 'Binaan',       'mode' => 'binaan',       'jumlah' => 1,   'cls' => 'muted',  'icon' => 'fa-hand-holding-heart'],
     ];
 ?>
-<div class="kp-wrapper" data-id-pertandingan="<?= $idP ?>" data-ronde="<?= esc($ronde, 'attr') ?>">
-    <header class="kp-topbar">
-        <span class="kp-ronde penilaian-display-font">Ronde <?= esc($ronde) ?></span>
-        <span class="kp-title">PERSILAT &middot; Ketua Pertandingan</span>
-        <a href="<?= base_url('perangkat-pertandingan/logout') ?>" class="kp-logout" title="Keluar"><i class="fas fa-right-from-bracket"></i></a>
+
+<div class="kp-wrapper kp-wrapper-light" id="kp-wrapper"
+     data-id-pertandingan="<?= $idP ?>"
+     data-ronde="<?= esc($ronde, 'attr') ?>"
+     data-endpoint-edit="<?= base_url('ketua-pertandingan/edit-penilaian-tanding/' . $idP) ?>"
+     data-endpoint-refresh="<?= base_url('ketua-pertandingan/refresh-status-pertandingan/' . $idP) ?>"
+     data-csrf-name="<?= csrf_token() ?>"
+     data-csrf-hash="<?= csrf_hash() ?>">
+
+    <!-- ═══ Top Bar ═══ -->
+    <header class="kp-topbar kp-topbar-light">
+        <div class="d-flex align-items-center gap-2">
+            <a href="<?= base_url('ketua-pertandingan') ?>" class="text-dark" title="Kembali">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <span class="kp-ronde penilaian-display-font text-dark">Ronde <?= esc($ronde) ?></span>
+        </div>
+        <span class="kp-title text-dark">PERSILAT &middot; Ketua Pertandingan</span>
+        <div class="d-flex align-items-center gap-2">
+            <a href="<?= base_url('ketua-pertandingan/tanding/dark') ?>" class="btn btn-sm btn-outline-dark" title="Dark Mode">
+                <i class="fas fa-moon"></i>
+            </a>
+            <a href="<?= base_url('perangkat-pertandingan/logout') ?>" class="kp-logout text-danger" title="Keluar">
+                <i class="fas fa-right-from-bracket"></i>
+            </a>
+        </div>
     </header>
 
-    <div class="kp-scoreboard">
+    <!-- ═══ Scoreboard ═══ -->
+    <div class="kp-scoreboard kp-scoreboard-light">
         <div class="kp-score corner-biru">
             <div class="kp-score-nama"><?= esc($namaBiru) ?></div>
+            <small class="kp-score-kontingen"><?= esc($kontBiru) ?></small>
             <div class="kp-score-angka penilaian-display-font" id="skor-biru"><?= (int) $pertandingan->skor_biru ?></div>
         </div>
         <div class="kp-score-vs penilaian-display-font">VS</div>
         <div class="kp-score corner-merah">
             <div class="kp-score-nama"><?= esc($namaMerah) ?></div>
+            <small class="kp-score-kontingen"><?= esc($kontMerah) ?></small>
             <div class="kp-score-angka penilaian-display-font" id="skor-merah"><?= (int) $pertandingan->skor_merah ?></div>
         </div>
     </div>
 
-    <div class="kp-controls">
+    <!-- ═══ Controls ═══ -->
+    <div class="kp-controls kp-controls-light">
         <?php foreach (['biru', 'merah'] as $sudut) : ?>
-            <section class="kp-panel corner-<?= $sudut ?>">
-                <h2 class="kp-panel-title"><?= $sudut === 'biru' ? esc($namaBiru) : esc($namaMerah) ?></h2>
+            <section class="kp-panel kp-panel-light corner-<?= $sudut ?>">
+                <h2 class="kp-panel-title">
+                    <span class="kp-panel-dot"></span>
+                    <?= $sudut === 'biru' ? esc($namaBiru) : esc($namaMerah) ?>
+                </h2>
                 <div class="kp-buttons">
                     <?php foreach ($aksiHukuman as $aksi) : ?>
-                        <button type="button" class="kp-btn kp-<?= $aksi['cls'] ?>"
+                        <button type="button" class="kp-btn kp-btn-light kp-<?= $aksi['cls'] ?>"
                                 data-sudut="<?= $sudut ?>"
                                 data-mode="<?= esc($aksi['mode'], 'attr') ?>"
                                 data-jumlah="<?= esc((string) $aksi['jumlah'], 'attr') ?>">
+                            <i class="fas <?= $aksi['icon'] ?> me-1"></i>
                             <?= esc($aksi['label']) ?>
                         </button>
                     <?php endforeach; ?>
                 </div>
-                <div class="kp-rekap" id="rekap-<?= $sudut ?>">
+                <div class="kp-rekap kp-rekap-light" id="rekap-<?= $sudut ?>">
                     <?php $r = $semua->{$sudut} ?? null; ?>
-                    <span>Teguran: <b class="rk-teguran"><?= ($r->teguran_1 ?? 0) + ($r->teguran_2 ?? 0) ?></b></span>
-                    <span>Peringatan: <b class="rk-peringatan"><?= ($r->peringatan_1 ?? 0) + ($r->peringatan_2 ?? 0) ?></b></span>
-                    <span>Jatuhan: <b class="rk-jatuhan"><?= $r->jatuhan ?? 0 ?></b></span>
-                    <span>Binaan: <b class="rk-binaan"><?= $r->binaan_1 ?? 0 ?></b></span>
+                    <div class="kp-rekap-item">
+                        <span class="kp-rekap-label">Teguran</span>
+                        <span class="kp-rekap-val rk-teguran"><?= ($r->teguran_1 ?? 0) + ($r->teguran_2 ?? 0) ?></span>
+                    </div>
+                    <div class="kp-rekap-item">
+                        <span class="kp-rekap-label">Peringatan</span>
+                        <span class="kp-rekap-val rk-peringatan"><?= ($r->peringatan_1 ?? 0) + ($r->peringatan_2 ?? 0) ?></span>
+                    </div>
+                    <div class="kp-rekap-item">
+                        <span class="kp-rekap-label">Jatuhan</span>
+                        <span class="kp-rekap-val rk-jatuhan"><?= $r->jatuhan ?? 0 ?></span>
+                    </div>
+                    <div class="kp-rekap-item">
+                        <span class="kp-rekap-label">Binaan</span>
+                        <span class="kp-rekap-val rk-binaan"><?= $r->binaan_1 ?? 0 ?></span>
+                    </div>
                 </div>
             </section>
         <?php endforeach; ?>
     </div>
 </div>
-<?= $this->endSection() ?>
 
-<?= $this->section('styles') ?>
-<link rel="stylesheet" href="<?= base_url('assets/css/penilaian/ketua-tanding.css') ?>">
+<!-- Verifikasi Modals (same as dark) -->
+<div class="modal fade" id="modalVerifikasiJatuhan" data-bs-backdrop="static" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-white border-warning">
+            <div class="modal-header border-warning"><h5 class="modal-title"><i class="fas fa-person-falling me-2 text-warning"></i>Verifikasi Jatuhan</h5></div>
+            <div class="modal-body text-center py-4"><p class="fs-5 mb-3">Apakah jatuhan pada sudut <span id="verifikasi-jatuhan-sudut" class="fw-bold text-uppercase"></span> valid?</p></div>
+            <div class="modal-footer border-warning justify-content-center gap-3">
+                <button type="button" class="btn btn-success btn-lg px-5" data-jawaban="valid"><i class="fas fa-check me-2"></i>Valid</button>
+                <button type="button" class="btn btn-danger btn-lg px-5" data-jawaban="tidak_valid"><i class="fas fa-xmark me-2"></i>Tidak Valid</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="modalVerifikasiPelanggaran" data-bs-backdrop="static" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-white border-warning">
+            <div class="modal-header border-warning"><h5 class="modal-title"><i class="fas fa-triangle-exclamation me-2 text-warning"></i>Verifikasi Pelanggaran</h5></div>
+            <div class="modal-body text-center py-4"><p class="fs-5 mb-3">Apakah pelanggaran pada sudut <span id="verifikasi-pelanggaran-sudut" class="fw-bold text-uppercase"></span> valid?</p></div>
+            <div class="modal-footer border-warning justify-content-center gap-3">
+                <button type="button" class="btn btn-success btn-lg px-5" data-jawaban="valid"><i class="fas fa-check me-2"></i>Valid</button>
+                <button type="button" class="btn btn-danger btn-lg px-5" data-jawaban="tidak_valid"><i class="fas fa-xmark me-2"></i>Tidak Valid</button>
+            </div>
+        </div>
+    </div>
+</div>
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script>
-(function () {
-    const wrapper = document.querySelector('.kp-wrapper');
-    const idP = wrapper.dataset.idPertandingan;
-    const endpoint = '<?= base_url('ketua-pertandingan/edit-penilaian-tanding') ?>/' + idP;
-    const csrfName = '<?= csrf_token() ?>';
-    let csrfHash = '<?= csrf_hash() ?>';
-    let locked = false;
-
-    function applyRingkasan(ring) {
-        if (!ring || !ring.semua_ronde) return;
-        ['merah', 'biru'].forEach(function (s) {
-            const r = ring.semua_ronde[s] || {};
-            const box = document.getElementById('rekap-' + s);
-            if (!box) return;
-            box.querySelector('.rk-teguran').textContent    = (r.teguran_1 || 0) + (r.teguran_2 || 0);
-            box.querySelector('.rk-peringatan').textContent = (r.peringatan_1 || 0) + (r.peringatan_2 || 0);
-            box.querySelector('.rk-jatuhan').textContent    = r.jatuhan || 0;
-            box.querySelector('.rk-binaan').textContent     = r.binaan_1 || 0;
-        });
-    }
-
-    function kirim(sudut, mode, jumlah, btn) {
-        if (locked) return;
-        locked = true;
-        if (btn) btn.classList.add('is-loading');
-
-        const body = new URLSearchParams();
-        body.append(csrfName, csrfHash);
-        body.append('sudut', sudut);
-        body.append('mode', mode);
-        body.append('jumlah', jumlah);
-
-        fetch(endpoint, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: body })
-            .then(r => r.json())
-            .then(data => {
-                if (data.csrf_hash) csrfHash = data.csrf_hash;
-                if (data && data.status === true) {
-                    document.getElementById('skor-merah').textContent = data.skor_merah;
-                    document.getElementById('skor-biru').textContent  = data.skor_biru;
-                    applyRingkasan(data.ringkasan);
-                } else {
-                    Swal.fire({ icon: 'error', title: 'Gagal', timer: 1500, showConfirmButton: false });
-                }
-            })
-            .catch(() => Swal.fire({ icon: 'warning', title: 'Koneksi gagal', timer: 1500, showConfirmButton: false }))
-            .finally(() => { locked = false; if (btn) btn.classList.remove('is-loading'); });
-    }
-
-    document.querySelectorAll('.kp-btn').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            kirim(btn.dataset.sudut, btn.dataset.mode, btn.dataset.jumlah, btn);
-        });
-    });
-
-    // Polling (placeholder; diganti Socket.IO Fase 8).
-    setInterval(function () {
-        const body = new URLSearchParams();
-        body.append(csrfName, csrfHash);
-        fetch('<?= base_url('ketua-pertandingan/refresh-status-pertandingan') ?>/' + idP, {
-            method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: body
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data && data.reload === true) { window.location.reload(); }
-            else if (data && data.status === false) {
-                document.getElementById('skor-merah').textContent = data.skor_merah;
-                document.getElementById('skor-biru').textContent  = data.skor_biru;
-                applyRingkasan(data.ringkasan);
-            }
-        })
-        .catch(() => {});
-    }, 4000);
-})();
-</script>
+<script src="<?= base_url('assets/js/penilaian/kp_tanding.js') ?>"></script>
 <?= $this->endSection() ?>

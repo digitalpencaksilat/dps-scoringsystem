@@ -48,13 +48,30 @@ $routes->group('juri', ['filter' => 'perangkat:juri'], static function ($routes)
     $routes->post('toggle-ready-seni/(:num)', 'Pertandingan\\Juri::toggleReadySeni/$1');
 });
 
-$routes->get('ketua-pertandingan', 'Pertandingan\PerangkatPertandingan::standby', ['filter' => 'perangkat:ketua_pertandingan']);
+$routes->get('ketua-pertandingan', 'Pertandingan\KetuaPertandingan::index', ['filter' => 'perangkat:ketua_pertandingan']);
 $routes->group('ketua-pertandingan', ['filter' => 'perangkat:ketua_pertandingan'], static function ($routes) {
+    $routes->get('home', 'Pertandingan\KetuaPertandingan::index');
+
+    // Tanding
     $routes->get('tanding', 'Pertandingan\KetuaPertandingan::tanding');
     $routes->get('tanding/(:segment)', 'Pertandingan\KetuaPertandingan::tanding/$1');
     $routes->post('edit-penilaian-tanding/(:num)', 'Pertandingan\KetuaPertandingan::editPenilaianTanding/$1');
     $routes->post('refresh-status-pertandingan/(:num)', 'Pertandingan\KetuaPertandingan::refreshStatusPertandingan/$1');
     $routes->post('refresh-status-pertandingan', 'Pertandingan\KetuaPertandingan::refreshStatusPertandingan');
+
+    // Seni
+    $routes->get('seni', 'Pertandingan\KetuaPertandingan::seni');
+    $routes->get('seni/(:segment)', 'Pertandingan\KetuaPertandingan::seni/$1');
+    $routes->post('edit-penilaian-seni/(:num)', 'Pertandingan\KetuaPertandingan::editPenilaianSeni/$1');
+    $routes->post('refresh-status-seni/(:num)', 'Pertandingan\KetuaPertandingan::refreshStatusSeni/$1');
+    $routes->post('refresh-status-seni', 'Pertandingan\KetuaPertandingan::refreshStatusSeni');
+    $routes->post('ganti-akses-penilaian/(:num)', 'Pertandingan\KetuaPertandingan::gantiAksesPenilaian/$1');
+    $routes->post('diskualifikasi-seni/(:num)', 'Pertandingan\KetuaPertandingan::diskualifikasiPenampilanSeni/$1');
+    $routes->post('batalkan-diskualifikasi-seni/(:num)', 'Pertandingan\KetuaPertandingan::batalkanDiskualifikasi/$1');
+
+    // Daftar Nilai
+    $routes->get('daftar-nilai-tanding', 'Pertandingan\KetuaPertandingan::daftarNilaiTanding');
+    $routes->get('daftar-nilai-seni', 'Pertandingan\KetuaPertandingan::daftarNilaiSeni');
 });
 $routes->get('sekretaris-pertandingan', 'Pertandingan\SekretarisPertandingan::index', ['filter' => 'perangkat:sekretaris,timer']);
 $routes->group('sekretaris-pertandingan', ['filter' => 'perangkat:sekretaris,timer'], static function ($routes) {
