@@ -8,6 +8,7 @@ class PenampilanSeniModel extends Model
 {
     protected $table            = 'penampilan_seni';
     protected $primaryKey       = 'id_penampilan_seni';
+    protected $returnType       = 'object';
     protected $useTimestamps    = false;
     protected $allowedFields    = [
         'id_kelompok_peserta_seni', 'babak', 'waktu_tampil',
@@ -15,7 +16,7 @@ class PenampilanSeniModel extends Model
         'status_penampilan', 'diskualifikasi',
     ];
 
-    public function getAktif(int $idGelanggang): ?array
+    public function getAktif(int $idGelanggang): ?object
     {
         return $this->select('penampilan_seni.*, kelompok_peserta_seni.*,
                     kontingen.nama_kontingen, kompetisi_seni.nomor_pool,
