@@ -1,7 +1,8 @@
 /**
  * Juri Seni PERSILAT — modular JS
- * Handles: kebenaran pointer system, subjective input, hukuman sync,
- *          auto-save, ready toggle, polling, offline fallback
+ * Parity legacy: juri/seni/persilat.js (v72)
+ * Handles: unsur nilai rendering, kebenaran pointer, ready toggle, wrong move,
+ *          auto-save (debounced), offline localStorage fallback, socket.io
  */
 (function () {
     'use strict';
@@ -17,15 +18,17 @@
         csrfName: wrapper.dataset.csrfName,
         csrfHash: wrapper.dataset.csrfHash,
         akses: wrapper.dataset.akses,
+        jenisSeni: wrapper.dataset.jenisSeni || 'tunggal',
+        rangeMin: parseFloat(wrapper.dataset.rangeMin || '0.00'),
+        rangeMax: parseFloat(wrapper.dataset.rangeMax || '0.10'),
     };
 
-    let dataNilai = (typeof SENI_DATA !== 'undefined') ? SENI_DATA : null;
-    let formatPenilaian = (typeof SENI_FORMAT !== 'undefined') ? SENI_FORMAT : null;
+    const format = (typeof SENI_FORMAT !== 'undefined') ? SENI_FORMAT : null;
+    const mode = (typeof SENI_MODE !== 'undefined') ? SENI_MODE : 'sederhana';
+    let dataNilai = (typeof SENI_DATA !== 'undefined') ? SENI_DATA : {};
     let isReady = (typeof SENI_READY !== 'undefined') ? !!SENI_READY : false;
-    let mode = (typeof SENI_MODE !== 'undefined') ? SENI_MODE : 'sederhana';
-
-    let saveTimeout = null;
-    let isSaving = false;
+    let saveTimer = null;
+    let locked = false;
     let pollInterval = null;
 
     // ─── CSRF ─────────────────────────────────────────────────────────────
@@ -37,9 +40,7 @@
     function buildBody(extra) {
         const body = new URLSearchParams();
         body.append(config.csrfName, config.csrfHash);
-        if (extra) {
-            Object.entries(extra).forEach(([k, v]) => body.append(k, typeof v === 'object' ? JSON.stringify(v) : v));
-        }
+        if (extra) Object.entries(extra).forEach(([k, v]) => body.append(k, v));
         return body;
     }
 
@@ -48,388 +49,322 @@
             method: 'POST',
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
             body: buildBody(params),
-        }).then(r => r.json()).then(data => {
-            rotateCsrf(data.csrf_hash);
+        }).then(r => {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        }).then(data => {
+            rotateCsrf(data.csrf_hash || (data.response && data.response.csrf_hash));
+            setOnline(true);
             return data;
+        }).catch(err => {
+            setOnline(false);
+            throw err;
         });
     }
 
-    // ─── Format Detection ─────────────────────────────────────────────────
+    // ─── Online/Offline Indicator ─────────────────────────────────────────
 
-    function hasKebenaran() {
-        return formatPenilaian?.penilaian?.unsur_nilai?.kebenaran != null;
-    }
-
-    function getUnsurNilai() {
-        return formatPenilaian?.penilaian?.unsur_nilai || {};
-    }
-
-    function getHukumanFormat() {
-        return formatPenilaian?.penilaian?.hukuman || {};
-    }
-
-    // ─── Render UI ────────────────────────────────────────────────────────
-
-    function render() {
-        renderUnsurNilai();
-        renderHukuman();
-        renderTotal();
-        renderReadyBtn();
-    }
-
-    function renderUnsurNilai() {
-        const container = document.getElementById('unsur-nilai-container');
-        if (!container) return;
-        container.innerHTML = '';
-
-        const unsurNilai = getUnsurNilai();
-
-        Object.entries(unsurNilai).forEach(([key, unsur]) => {
-            if (key === 'kebenaran') {
-                container.appendChild(renderKebenaran(unsur));
-            } else {
-                container.appendChild(renderSubjectiveUnsur(key, unsur));
-            }
-        });
-    }
-
-    // ─── Kebenaran Rendering ──────────────────────────────────────────────
-
-    function renderKebenaran(formatKebenaran) {
-        const section = createElement('div', 'scoring-section kebenaran-section');
-        const header = createElement('div', 'section-header');
-        header.innerHTML = '<i class="fas fa-bullseye me-2"></i>Kebenaran Jurus';
-
-        const dataKebenaran = dataNilai?.penilaian?.unsur_nilai?.kebenaran || formatKebenaran;
-        const jurusData = dataKebenaran.jurus || {};
-
-        const subtotalEl = createElement('span', 'ms-auto unsur-subtotal');
-        subtotalEl.id = 'kebenaran-subtotal';
-        subtotalEl.textContent = formatNumber(dataKebenaran.nilai_diperoleh || 0);
-        header.appendChild(subtotalEl);
-        section.appendChild(header);
-
-        Object.entries(jurusData).forEach(([jurusName, jurusInfo]) => {
-            const group = createElement('div', 'kebenaran-jurus-group');
-            const label = createElement('div', 'jurus-label');
-            label.textContent = jurusName.replace(/_/g, ' ');
-            group.appendChild(label);
-
-            const grid = createElement('div', 'kebenaran-grid');
-            const rangkaianGerak = jurusInfo.rangkaian_gerak || {};
-
-            Object.entries(rangkaianGerak).forEach(([rgKey, rgData]) => {
-                const jumlahGerakan = rgData.jumlah_gerakan || 1;
-                const kesalahan = rgData.jumlah_kesalahan || 0;
-
-                // In sederhana mode: show 1 cell per rangkaian_gerak with error count
-                if (mode === 'sederhana') {
-                    const cell = createElement('div', 'nilai-cell');
-                    cell.dataset.jurus = jurusName;
-                    cell.dataset.rangkaianGerak = rgKey;
-                    cell.textContent = kesalahan;
-                    cell.classList.add(kesalahan === 0 ? 'perfect' : (kesalahan >= jumlahGerakan ? 'zero' : 'reduced'));
-                    cell.title = `${jurusName} #${rgKey}: ${kesalahan} kesalahan / ${jumlahGerakan} gerakan`;
-                    cell.addEventListener('click', () => incrementKesalahan(jurusName, rgKey, jumlahGerakan));
-                    cell.addEventListener('contextmenu', (e) => {
-                        e.preventDefault();
-                        decrementKesalahan(jurusName, rgKey);
-                    });
-                    grid.appendChild(cell);
-                } else {
-                    // Terperinci: show individual cells per gerakan
-                    for (let g = 1; g <= jumlahGerakan; g++) {
-                        const cell = createElement('div', 'nilai-cell');
-                        cell.dataset.jurus = jurusName;
-                        cell.dataset.rangkaianGerak = rgKey;
-                        cell.dataset.gerakan = g;
-                        const isError = g <= kesalahan;
-                        cell.textContent = isError ? '×' : '✓';
-                        cell.classList.add(isError ? 'zero' : 'perfect');
-                        cell.title = `Gerakan ${g}/${jumlahGerakan}`;
-                        cell.addEventListener('click', () => toggleGerakan(jurusName, rgKey, g, jumlahGerakan));
-                        grid.appendChild(cell);
-                    }
-                }
-            });
-
-            group.appendChild(grid);
-            section.appendChild(group);
-        });
-
-        return section;
-    }
-
-    // ─── Subjective Unsur Rendering ───────────────────────────────────────
-
-    function renderSubjectiveUnsur(key, formatUnsur) {
-        const section = createElement('div', 'scoring-section');
-        const header = createElement('div', 'section-header');
-
-        const labelText = formatUnsur.metadata?.label || key.replace(/_/g, ' ');
-        header.innerHTML = `<i class="fas fa-sliders me-2"></i>${capitalize(labelText)}`;
-        section.appendChild(header);
-
-        const dataUnsur = dataNilai?.penilaian?.unsur_nilai?.[key] || formatUnsur;
-        const nilaiMin = formatUnsur.nilai_minimal || 0;
-        const nilaiMax = formatUnsur.nilai_maksimal || 10;
-        const step = formatUnsur.metadata?.step || 0.01;
-        const nilaiDiperoleh = dataUnsur.nilai_diperoleh ?? formatUnsur.nilai_diperoleh ?? 0;
-
-        const row = createElement('div', 'unsur-input-row');
-
-        const inputWrap = createElement('div', 'unsur-input');
-        const input = document.createElement('input');
-        input.type = 'number';
-        input.min = nilaiMin;
-        input.max = nilaiMax;
-        input.step = step;
-        input.value = nilaiDiperoleh;
-        input.id = `input-${key}`;
-        input.addEventListener('input', () => {
-            let val = parseFloat(input.value) || 0;
-            val = Math.max(nilaiMin, Math.min(nilaiMax, val));
-            updateSubjectiveUnsur(key, val);
-        });
-        inputWrap.appendChild(input);
-
-        const range = createElement('div', 'unsur-range');
-        range.textContent = `${nilaiMin} — ${nilaiMax}`;
-
-        row.appendChild(inputWrap);
-        row.appendChild(range);
-        section.appendChild(row);
-
-        return section;
-    }
-
-    // ─── Hukuman Rendering ────────────────────────────────────────────────
-
-    function renderHukuman() {
-        const container = document.getElementById('hukuman-container');
-        if (!container) return;
-        container.innerHTML = '';
-
-        const dataHukuman = dataNilai?.penilaian?.hukuman || {};
-        const formatHukuman = getHukumanFormat();
-
-        if (Object.keys(formatHukuman).length === 0 && Object.keys(dataHukuman).length === 0) {
-            container.innerHTML = '<div class="text-muted small">Belum ada hukuman</div>';
-            return;
+    function setOnline(online) {
+        const el = document.getElementById('online-indicator');
+        if (!el) return;
+        if (online) {
+            el.classList.remove('offline');
+        } else {
+            el.classList.add('offline');
+            el.querySelector('.online-text').textContent = 'Offline';
         }
-
-        const hukumanSource = Object.keys(dataHukuman).length > 0 ? dataHukuman : formatHukuman;
-
-        Object.entries(hukumanSource).forEach(([key, hukuman]) => {
-            const row = createElement('div', 'hukuman-row');
-            const label = createElement('span', 'hukuman-label');
-            label.textContent = key.replace(/_/g, ' ');
-
-            const value = createElement('span', 'hukuman-value');
-            let nilaiHukuman = 0;
-
-            if (hukuman.detail_hukuman) {
-                nilaiHukuman = parseFloat(hukuman.detail_hukuman.nilai_hukuman || 0);
-            } else if (hukuman.nilai_hukuman !== undefined) {
-                nilaiHukuman = parseFloat(hukuman.nilai_hukuman || 0);
-            }
-
-            value.textContent = nilaiHukuman > 0 ? `-${nilaiHukuman}` : '0';
-            value.classList.add(nilaiHukuman > 0 ? '' : 'zero');
-
-            row.appendChild(label);
-            row.appendChild(value);
-            container.appendChild(row);
-        });
     }
 
     // ─── Score Calculation ────────────────────────────────────────────────
 
-    function calculateTotal() {
-        if (!dataNilai || !dataNilai.penilaian) return 0;
-
-        const ringkasan = dataNilai.penilaian.ringkasan;
-        if (!ringkasan) return 0;
-
-        return parseFloat(ringkasan.total_nilai || 0);
+    function hitungTotal() {
+        if (!dataNilai || !dataNilai.unsur_nilai) return 0;
+        let total = 0;
+        Object.values(dataNilai.unsur_nilai).forEach(v => {
+            total += parseFloat(v) || 0;
+        });
+        // Subtract kebenaran potongan
+        if (dataNilai.kebenaran_potongan) {
+            total -= parseFloat(dataNilai.kebenaran_potongan) || 0;
+        }
+        // Subtract hukuman
+        if (dataNilai.total_hukuman) {
+            total -= parseFloat(dataNilai.total_hukuman) || 0;
+        }
+        return Math.max(0, total);
     }
 
-    function recalculateRingkasan() {
-        if (!dataNilai || !dataNilai.penilaian) return;
+    function hitungKebenaranTotal() {
+        const max = parseFloat(dataNilai.kebenaran_max || 10);
+        const pot = parseFloat(dataNilai.kebenaran_potongan || 0);
+        return Math.max(0, max - pot);
+    }
 
-        const unsurNilai = dataNilai.penilaian.unsur_nilai || {};
-        let totalUnsur = 0;
+    function renderTotalNilai() {
+        const el = document.getElementById('total-nilai');
+        if (el) el.textContent = hitungTotal().toFixed(2);
+    }
 
-        Object.entries(unsurNilai).forEach(([key, unsur]) => {
-            totalUnsur += parseFloat(unsur.nilai_diperoleh || 0);
+    function renderKebenaran() {
+        const elMax = document.getElementById('kebenaran-max');
+        const elPot = document.getElementById('kebenaran-potongan');
+        const elTotal = document.getElementById('kebenaran-total');
+        if (elMax) elMax.textContent = parseFloat(dataNilai.kebenaran_max || 10).toFixed(2);
+        if (elPot) elPot.textContent = parseFloat(dataNilai.kebenaran_potongan || 0).toFixed(2);
+        if (elTotal) elTotal.textContent = hitungKebenaranTotal().toFixed(2);
+    }
+
+    // ─── Render Unsur Nilai (Sederhana Mode) ──────────────────────────────
+
+    function renderUnsurNilai() {
+        const container = document.getElementById('unsur-nilai-container');
+        if (!container || !format || !format.unsur_nilai) return;
+
+        container.innerHTML = '';
+        format.unsur_nilai.forEach((unsur, idx) => {
+            const key = unsur.key || unsur.id || ('unsur_' + idx);
+            const currentVal = (dataNilai.unsur_nilai && dataNilai.unsur_nilai[key]) || 0;
+
+            const row = document.createElement('div');
+            row.className = 'unsur-row';
+            row.innerHTML = `
+                <span class="unsur-label">${escHtml(unsur.nama || unsur.label || key)}</span>
+                <span class="unsur-value-display" id="unsur-val-${key}">${parseFloat(currentVal).toFixed(2)}</span>
+                <div class="unsur-btn-group">
+                    <button type="button" class="unsur-btn unsur-btn-minus" data-key="${key}" data-dir="-1">−</button>
+                    <button type="button" class="unsur-btn unsur-btn-plus" data-key="${key}" data-dir="1">+</button>
+                </div>
+            `;
+            container.appendChild(row);
         });
 
-        let totalHukuman = 0;
-        const hukuman = dataNilai.penilaian.hukuman || {};
-        Object.values(hukuman).forEach(h => {
-            if (h.detail_hukuman) {
-                totalHukuman += parseFloat(h.detail_hukuman.nilai_hukuman || 0);
-            }
-        });
-
-        dataNilai.penilaian.ringkasan = dataNilai.penilaian.ringkasan || {};
-        dataNilai.penilaian.ringkasan.total_unsur_nilai = round(totalUnsur, 4);
-        dataNilai.penilaian.ringkasan.total_hukuman = round(totalHukuman, 4);
-        dataNilai.penilaian.ringkasan.total_nilai = round(totalUnsur - totalHukuman, 4);
-    }
-
-    function renderTotal() {
-        recalculateRingkasan();
-        const totalEl = document.getElementById('total-nilai');
-        if (totalEl) {
-            totalEl.textContent = formatNumber(calculateTotal());
-        }
-    }
-
-    // ─── Data Mutation ────────────────────────────────────────────────────
-
-    function incrementKesalahan(jurusName, rgKey, maxGerakan) {
-        if (config.akses === 'ditutup') return;
-        const rg = dataNilai.penilaian.unsur_nilai.kebenaran.jurus[jurusName].rangkaian_gerak[rgKey];
-        if (rg.jumlah_kesalahan < maxGerakan) {
-            rg.jumlah_kesalahan++;
-            recalcKebenaran();
-            render();
-            debounceSave();
-        }
-    }
-
-    function decrementKesalahan(jurusName, rgKey) {
-        if (config.akses === 'ditutup') return;
-        const rg = dataNilai.penilaian.unsur_nilai.kebenaran.jurus[jurusName].rangkaian_gerak[rgKey];
-        if (rg.jumlah_kesalahan > 0) {
-            rg.jumlah_kesalahan--;
-            recalcKebenaran();
-            render();
-            debounceSave();
-        }
-    }
-
-    function toggleGerakan(jurusName, rgKey, gerakanNum, maxGerakan) {
-        if (config.akses === 'ditutup') return;
-        const rg = dataNilai.penilaian.unsur_nilai.kebenaran.jurus[jurusName].rangkaian_gerak[rgKey];
-        // Toggle: if gerakanNum <= current errors, remove error; else add
-        if (gerakanNum <= rg.jumlah_kesalahan) {
-            rg.jumlah_kesalahan = gerakanNum - 1;
-        } else {
-            rg.jumlah_kesalahan = gerakanNum;
-        }
-        rg.jumlah_kesalahan = Math.max(0, Math.min(maxGerakan, rg.jumlah_kesalahan));
-        recalcKebenaran();
-        render();
-        debounceSave();
-    }
-
-    function recalcKebenaran() {
-        const kebenaran = dataNilai.penilaian.unsur_nilai.kebenaran;
-        if (!kebenaran || !kebenaran.jurus) return;
-
-        const step = kebenaran.metadata?.step || formatPenilaian?.penilaian?.unsur_nilai?.kebenaran?.metadata?.step || 0.01;
-        let totalKesalahan = 0;
-        let totalGerakan = 0;
-
-        Object.values(kebenaran.jurus).forEach(jurus => {
-            const rangkaianGerak = jurus.rangkaian_gerak || {};
-            Object.values(rangkaianGerak).forEach(rg => {
-                totalKesalahan += rg.jumlah_kesalahan || 0;
-                totalGerakan += rg.jumlah_gerakan || 0;
-                // Update nilai_diperoleh per rangkaian
-                rg.nilai_diperoleh = round((rg.jumlah_gerakan - rg.jumlah_kesalahan) * step, 4);
-                rg.nilai_maksimal = round(rg.jumlah_gerakan * step, 4);
+        // Bind events
+        container.querySelectorAll('.unsur-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const key = this.dataset.key;
+                const dir = parseInt(this.dataset.dir, 10);
+                adjustUnsur(key, dir);
             });
         });
-
-        kebenaran.total_kesalahan_gerak = totalKesalahan;
-        kebenaran.total_gerakan = totalGerakan;
-        kebenaran.nilai_diperoleh = round((totalGerakan - totalKesalahan) * step, 4);
-        kebenaran.nilai_maksimal = round(totalGerakan * step, 4);
     }
 
-    function updateSubjectiveUnsur(key, value) {
-        if (config.akses === 'ditutup') return;
-        if (!dataNilai.penilaian.unsur_nilai[key]) {
-            dataNilai.penilaian.unsur_nilai[key] = {};
+    function adjustUnsur(key, direction) {
+        if (!dataNilai.unsur_nilai) dataNilai.unsur_nilai = {};
+        let val = parseFloat(dataNilai.unsur_nilai[key] || 0);
+        const step = 0.01;
+
+        val += direction * step;
+        // Clamp
+        if (val < config.rangeMin) val = config.rangeMin;
+        if (val > config.rangeMax) val = config.rangeMax;
+
+        dataNilai.unsur_nilai[key] = val.toFixed(2);
+
+        // Update display
+        const el = document.getElementById('unsur-val-' + key);
+        if (el) el.textContent = val.toFixed(2);
+
+        renderTotalNilai();
+        debouncedSave();
+    }
+
+    // ─── Render Gerakan (Terperinci Mode) ─────────────────────────────────
+
+    function renderGerakan() {
+        const container = document.getElementById('gerakan-container');
+        if (!container || !format || !format.gerakan) return;
+
+        container.innerHTML = '';
+        format.gerakan.forEach((ger, idx) => {
+            const key = ger.key || ger.id || ('ger_' + idx);
+            const isWrong = dataNilai.gerakan_salah && dataNilai.gerakan_salah[key];
+            const deduction = isWrong ? (parseFloat(ger.deduction || config.rangeMax) || 0) : 0;
+
+            const row = document.createElement('div');
+            row.className = 'gerakan-row' + (isWrong ? ' is-wrong' : '');
+            row.dataset.key = key;
+            row.innerHTML = `
+                <span class="gerakan-num">${idx + 1}</span>
+                <span class="gerakan-label">${escHtml(ger.nama || ger.label || ('Gerakan ' + (idx + 1)))}</span>
+                <span class="gerakan-value">${isWrong ? '-' + deduction.toFixed(2) : '✓'}</span>
+                <div class="gerakan-actions">
+                    <button type="button" class="gerakan-btn ${isWrong ? 'gerakan-btn-correct' : 'gerakan-btn-wrong'}"
+                            data-key="${key}" data-deduction="${ger.deduction || config.rangeMax}">
+                        <i class="fas ${isWrong ? 'fa-undo' : 'fa-xmark'}"></i>
+                    </button>
+                </div>
+            `;
+            container.appendChild(row);
+        });
+
+        // Bind events
+        container.querySelectorAll('.gerakan-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                toggleGerakan(this.dataset.key, parseFloat(this.dataset.deduction));
+            });
+        });
+    }
+
+    function toggleGerakan(key, deduction) {
+        if (!dataNilai.gerakan_salah) dataNilai.gerakan_salah = {};
+
+        if (dataNilai.gerakan_salah[key]) {
+            delete dataNilai.gerakan_salah[key];
+        } else {
+            dataNilai.gerakan_salah[key] = deduction;
         }
-        dataNilai.penilaian.unsur_nilai[key].nilai_diperoleh = round(value, 4);
-        renderTotal();
-        debounceSave();
+
+        // Recalculate kebenaran_potongan
+        let totalPotongan = 0;
+        Object.values(dataNilai.gerakan_salah).forEach(d => {
+            totalPotongan += parseFloat(d) || 0;
+        });
+        dataNilai.kebenaran_potongan = totalPotongan.toFixed(2);
+
+        renderGerakan();
+        renderKebenaran();
+        renderTotalNilai();
+        debouncedSave();
     }
 
-    // ─── Save (debounced) ─────────────────────────────────────────────────
+    // ─── Auto-Save (Debounced 800ms) ──────────────────────────────────────
 
-    function debounceSave() {
-        if (saveTimeout) clearTimeout(saveTimeout);
-        saveTimeout = setTimeout(() => save(), 800);
+    function debouncedSave() {
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(doSave, 800);
     }
 
-    function save() {
-        if (isSaving || config.akses === 'ditutup') return;
-        isSaving = true;
+    function doSave() {
+        if (locked) return;
+        locked = true;
 
-        const btnSimpan = document.getElementById('btn-simpan');
-        if (btnSimpan) btnSimpan.classList.add('saving');
-
-        const nilaiAkhir = calculateTotal();
+        const payload = JSON.stringify(dataNilai);
 
         // Save to localStorage as fallback
         try {
-            localStorage.setItem(`seni_backup_${config.idPenampilan}`, JSON.stringify(dataNilai));
+            localStorage.setItem('seni_backup_' + config.idPenampilan, payload);
         } catch (e) { /* ignore */ }
 
-        postJSON(config.endpointEdit, {
-            data_nilai: JSON.stringify(dataNilai),
-            nilai_akhir_per_juri: nilaiAkhir.toString(),
-        })
-        .then(data => {
-            if (data && data.status === true) {
-                // Clear backup on success
-                try { localStorage.removeItem(`seni_backup_${config.idPenampilan}`); } catch (e) {}
-            } else {
-                console.warn('Save gagal:', data?.message);
-            }
-        })
-        .catch(err => {
-            console.warn('Network error, data saved locally:', err);
-        })
-        .finally(() => {
-            isSaving = false;
-            if (btnSimpan) btnSimpan.classList.remove('saving');
-        });
+        postJSON(config.endpointEdit, { data_nilai: payload })
+            .then(data => {
+                if (data && data.status === true) {
+                    // Success — clear backup
+                    try { localStorage.removeItem('seni_backup_' + config.idPenampilan); } catch (e) {}
+                }
+            })
+            .catch(() => {
+                // Offline — data in localStorage
+            })
+            .finally(() => { locked = false; });
     }
 
     // ─── Ready Toggle ─────────────────────────────────────────────────────
 
-    function renderReadyBtn() {
+    function setupReadyBtn() {
+        const btn = document.getElementById('btn-ready');
+        if (!btn) return;
+
+        updateReadyUI();
+        btn.addEventListener('click', () => {
+            postJSON(config.endpointToggleReady, { ready: isReady ? '0' : '1' })
+                .then(data => {
+                    if (data && data.status === true) {
+                        isReady = !isReady;
+                        updateReadyUI();
+                    }
+                })
+                .catch(() => {});
+        });
+    }
+
+    function updateReadyUI() {
         const btn = document.getElementById('btn-ready');
         const text = document.getElementById('ready-text');
-        if (!btn || !text) return;
-
+        if (!btn) return;
         if (isReady) {
             btn.classList.add('is-ready');
-            text.textContent = 'READY ✓';
+            if (text) text.textContent = 'NOT READY';
         } else {
             btn.classList.remove('is-ready');
-            text.textContent = 'READY';
+            if (text) text.textContent = 'READY';
         }
     }
 
-    function toggleReady() {
-        postJSON(config.endpointToggleReady, {})
-            .then(data => {
-                if (data && data.status === true) {
-                    isReady = data.ready;
-                    renderReadyBtn();
+    // ─── Wrong Move Button (global — adds to current pointer) ─────────────
+
+    function setupWrongMove() {
+        const btn = document.getElementById('btn-wrong-move');
+        if (!btn) return;
+
+        btn.addEventListener('click', () => {
+            if (mode === 'terperinci') {
+                // In terperinci, wrong move marks the next unmarked gerakan
+                if (!format || !format.gerakan) return;
+                for (let i = 0; i < format.gerakan.length; i++) {
+                    const key = format.gerakan[i].key || format.gerakan[i].id || ('ger_' + i);
+                    if (!dataNilai.gerakan_salah || !dataNilai.gerakan_salah[key]) {
+                        toggleGerakan(key, parseFloat(format.gerakan[i].deduction || config.rangeMax));
+                        break;
+                    }
                 }
-            })
-            .catch(() => {});
+            } else {
+                // In sederhana, increment kebenaran_potongan by step
+                let pot = parseFloat(dataNilai.kebenaran_potongan || 0);
+                pot += parseFloat(config.rangeMax) || 0.10;
+                dataNilai.kebenaran_potongan = pot.toFixed(2);
+                renderKebenaran();
+                renderTotalNilai();
+                debouncedSave();
+            }
+        });
     }
 
-    // ─── Polling (hukuman sync + status check) ────────────────────────────
+    // ─── Next Move Set (terperinci only) ──────────────────────────────────
+
+    function setupNextMove() {
+        const btn = document.getElementById('btn-next-move');
+        if (!btn) return;
+
+        btn.addEventListener('click', () => {
+            // Scroll to next unscored gerakan
+            const container = document.getElementById('gerakan-container');
+            if (!container) return;
+            const rows = container.querySelectorAll('.gerakan-row:not(.is-wrong)');
+            if (rows.length > 0) {
+                rows[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                rows[0].style.boxShadow = '0 0 0 2px #ffc107';
+                setTimeout(() => { rows[0].style.boxShadow = ''; }, 1500);
+            }
+        });
+    }
+
+    // ─── Hukuman Rendering (from KP, read-only) ───────────────────────────
+
+    function renderHukuman() {
+        const container = document.getElementById('hukuman-container');
+        if (!container || !dataNilai.hukuman) {
+            if (container) container.style.display = 'none';
+            return;
+        }
+
+        container.style.display = 'block';
+        let html = '<div class="d-flex align-items-center gap-2 mb-1"><i class="fas fa-triangle-exclamation text-warning"></i><small class="text-white fw-bold">Hukuman (dari KP)</small></div>';
+
+        if (Array.isArray(dataNilai.hukuman)) {
+            dataNilai.hukuman.forEach(h => {
+                html += `<div class="hukuman-row"><span class="hukuman-label">${escHtml(h.nama || h.label || 'Hukuman')}</span><span class="hukuman-value">-${parseFloat(h.nilai || 0).toFixed(2)}</span></div>`;
+            });
+        }
+
+        const totalH = parseFloat(dataNilai.total_hukuman || 0);
+        if (totalH > 0) {
+            html += `<div class="hukuman-row border-top border-secondary pt-1 mt-1"><span class="hukuman-label fw-bold">Total Hukuman</span><span class="hukuman-value">-${totalH.toFixed(2)}</span></div>`;
+        }
+
+        container.innerHTML = html;
+    }
+
+    // ─── Polling ──────────────────────────────────────────────────────────
 
     function startPolling() {
         pollInterval = setInterval(() => {
@@ -437,80 +372,115 @@
                 .then(data => {
                     if (data && data.reload === true) {
                         window.location.reload();
-                        return;
                     }
-                    if (data && data.status === false) {
-                        // Update hukuman from server (KP authoritative)
-                        if (data.hukuman) {
-                            dataNilai.penilaian.hukuman = data.hukuman;
-                            renderHukuman();
-                            renderTotal();
-                        }
-                        // Check akses
-                        if (data.akses_penilaian === 'ditutup' && config.akses !== 'ditutup') {
-                            config.akses = 'ditutup';
-                            document.getElementById('scoring-body')?.classList.add('is-locked');
-                        }
+                    if (data && data.hukuman) {
+                        dataNilai.hukuman = data.hukuman;
+                        dataNilai.total_hukuman = data.total_hukuman || 0;
+                        renderHukuman();
+                        renderTotalNilai();
+                    }
+                    if (data && data.akses) {
+                        config.akses = data.akses;
+                        handleAksesChange(data.akses);
                     }
                 })
                 .catch(() => {});
-        }, 3000);
+        }, 5000);
     }
 
-    // ─── Manual Save Button ───────────────────────────────────────────────
+    function handleAksesChange(akses) {
+        const actionBar = document.querySelector('.seni-action-bar');
+        const overlay = document.querySelector('.locked-overlay');
+        if (akses === 'ditutup') {
+            if (actionBar) actionBar.classList.add('is-locked');
+            if (!overlay) {
+                const ov = document.createElement('div');
+                ov.className = 'locked-overlay';
+                ov.innerHTML = '<div class="locked-message"><i class="fas fa-lock fa-3x mb-3"></i><p class="fs-5">Penilaian Ditutup</p></div>';
+                wrapper.appendChild(ov);
+            }
+        } else {
+            if (actionBar) actionBar.classList.remove('is-locked');
+            if (overlay) overlay.remove();
+        }
+    }
 
-    document.getElementById('btn-simpan')?.addEventListener('click', () => {
-        if (saveTimeout) clearTimeout(saveTimeout);
-        save();
-    });
+    // ─── Socket.IO Integration ────────────────────────────────────────────
 
-    document.getElementById('btn-ready')?.addEventListener('click', () => {
-        // Save before toggle ready
-        save();
-        setTimeout(toggleReady, 300);
-    });
+    function initSocket() {
+        if (typeof io === 'undefined') return;
+        const url = window.SOCKET_URL || 'http://localhost:3000';
+        const socket = io(url);
+
+        socket.emit('JOIN_ROOM', { id_penampilan_seni: config.idPenampilan });
+
+        socket.on('HUKUMAN_UPDATE', data => {
+            if (data && String(data.id_penampilan_seni) === config.idPenampilan) {
+                dataNilai.hukuman = data.hukuman;
+                dataNilai.total_hukuman = data.total_hukuman || 0;
+                renderHukuman();
+                renderTotalNilai();
+            }
+        });
+
+        socket.on('AKSES_PENILAIAN', data => {
+            if (data && String(data.id_penampilan_seni) === config.idPenampilan) {
+                handleAksesChange(data.akses);
+            }
+        });
+
+        socket.on('PENAMPILAN_SELESAI', data => {
+            if (data && String(data.id_penampilan_seni) === config.idPenampilan) {
+                window.location.reload();
+            }
+        });
+    }
 
     // ─── Offline Recovery ─────────────────────────────────────────────────
 
-    function tryRecoverFromLocal() {
+    function checkOfflineBackup() {
         try {
-            const backup = localStorage.getItem(`seni_backup_${config.idPenampilan}`);
-            if (backup && !dataNilai) {
-                dataNilai = JSON.parse(backup);
-                console.info('Recovered seni data from localStorage');
+            const backup = localStorage.getItem('seni_backup_' + config.idPenampilan);
+            if (backup) {
+                const parsed = JSON.parse(backup);
+                // If server data is empty but we have local, restore
+                if ((!dataNilai.unsur_nilai || Object.keys(dataNilai.unsur_nilai).length === 0) && parsed.unsur_nilai) {
+                    dataNilai = parsed;
+                    doSave(); // Try to sync back
+                }
             }
         } catch (e) { /* ignore */ }
     }
 
-    // ─── Utilities ────────────────────────────────────────────────────────
+    // ─── Utility ──────────────────────────────────────────────────────────
 
-    function createElement(tag, className) {
-        const el = document.createElement(tag);
-        if (className) el.className = className;
-        return el;
-    }
-
-    function formatNumber(num) {
-        return parseFloat(num).toFixed(2);
-    }
-
-    function round(num, decimals) {
-        return Math.round(num * Math.pow(10, decimals)) / Math.pow(10, decimals);
-    }
-
-    function capitalize(str) {
-        return str.charAt(0).toUpperCase() + str.slice(1);
+    function escHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
     }
 
     // ─── Init ─────────────────────────────────────────────────────────────
 
-    if (!dataNilai && formatPenilaian) {
-        // Use format as initial data structure
-        dataNilai = JSON.parse(JSON.stringify(formatPenilaian));
+    function init() {
+        checkOfflineBackup();
+
+        if (mode === 'sederhana') {
+            renderUnsurNilai();
+        } else if (mode === 'terperinci') {
+            renderGerakan();
+            renderKebenaran();
+            setupNextMove();
+        }
+
+        renderHukuman();
+        renderTotalNilai();
+        setupReadyBtn();
+        setupWrongMove();
+        startPolling();
+        initSocket();
     }
 
-    tryRecoverFromLocal();
-    render();
-    startPolling();
+    init();
 
 })();

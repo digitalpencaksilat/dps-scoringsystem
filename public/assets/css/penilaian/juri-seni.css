@@ -1,400 +1,447 @@
-/* Juri Seni PERSILAT — scoring interface */
+/* ══════════════════════════════════════════════════════════════════════════
+   Juri Seni PERSILAT — parity legacy UI/UX
+   Full dark theme, online indicator, large action buttons, kebenaran formula
+   ══════════════════════════════════════════════════════════════════════════ */
 
-.juri-seni-wrapper {
-    min-height: 100vh;
+/* ─── Header Bar ───────────────────────────────────────────────────────── */
+.seni-header-bar {
     display: flex;
-    flex-direction: column;
-    background: var(--bg-color, #f4f6f9);
+    align-items: center;
+    padding: 10px 16px;
+    background: #111;
+    border-bottom: 2px solid transparent;
+}
+.seni-header-bar.accent-warning {
+    border-bottom-color: #ffc107;
+}
+.seni-header-bar.accent-blue {
+    border-bottom-color: #1d2af4;
+}
+.seni-header-bar.accent-red {
+    border-bottom-color: #dd0a35;
 }
 
-.juri-seni-topbar {
+.header-kategori {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.8rem;
+}
+
+/* ─── Online Indicator (parity legacy blink animation) ─────────────────── */
+.online-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.blink-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #28a745;
+    animation: blink 1.2s ease-in-out infinite;
+}
+.online-text {
+    font-size: 0.7rem;
+    color: #28a745;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.offline .blink-dot {
+    background: #dc3545;
+    animation: none;
+}
+.offline .online-text {
+    color: #dc3545;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+/* ─── Peserta Bar ──────────────────────────────────────────────────────── */
+.seni-peserta-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 10px 16px;
-    background: var(--brand-dark, #212529);
+    background: #1a1a1a;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.peserta-main {
+    display: flex;
+    flex-direction: column;
+}
+.peserta-nama-display {
     color: #fff;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-}
-
-.topbar-kategori {
-    font-size: 0.82rem;
-    opacity: 0.85;
-    letter-spacing: 0.5px;
-}
-
-.bg-brand-primary {
-    background-color: var(--brand-primary, #c60000) !important;
-}
-
-.juri-logout {
-    color: #fff;
-    opacity: 0.8;
-    text-decoration: none;
-    font-size: 1.1rem;
-}
-.juri-logout:hover { opacity: 1; color: #fff; }
-
-/* ─── Peserta Info ─────────────────────────────────────────────────── */
-
-.peserta-info-bar {
-    background: #fff;
-    padding: 12px 16px;
-    border-bottom: 1px solid #e9ecef;
-    text-align: center;
-}
-
-.peserta-nama {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--brand-dark);
-}
-
-.peserta-kontingen {
-    font-size: 0.85rem;
-    color: #6c757d;
-}
-
-/* ─── Scoring Body ─────────────────────────────────────────────────── */
-
-.seni-scoring-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 16px;
-    padding-bottom: 100px; /* space for bottom bar */
-}
-
-.seni-scoring-body.is-locked {
-    pointer-events: none;
-    opacity: 0.6;
-}
-
-/* ─── Scoring Sections ─────────────────────────────────────────────── */
-
-.scoring-section {
-    background: #fff;
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 14px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-}
-
-.section-header {
-    font-weight: 600;
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--brand-dark);
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-}
-
-.section-subheader {
-    font-size: 0.8rem;
-    color: #6c757d;
-    margin-bottom: 8px;
-    font-weight: 500;
-}
-
-/* ─── Kebenaran Grid (gerakan cells) ───────────────────────────────── */
-
-.kebenaran-jurus-group {
-    margin-bottom: 12px;
-}
-
-.jurus-label {
-    font-weight: 600;
-    font-size: 0.82rem;
-    color: #495057;
-    margin-bottom: 6px;
-    text-transform: capitalize;
-}
-
-.kebenaran-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-}
-
-.nilai-cell {
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: transform 0.1s ease, background 0.15s ease;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-    border: 1px solid transparent;
-}
-
-.nilai-cell:active {
-    transform: scale(0.92);
-}
-
-.nilai-cell.perfect {
-    background: #d4edda;
-    color: #155724;
-    border-color: #c3e6cb;
-}
-
-.nilai-cell.reduced {
-    background: #fff3cd;
-    color: #856404;
-    border-color: #ffeeba;
-}
-
-.nilai-cell.zero {
-    background: #f8d7da;
-    color: #721c24;
-    border-color: #f5c6cb;
-}
-
-.nilai-cell.active-pointer {
-    box-shadow: 0 0 0 3px var(--brand-primary, #c60000);
-    transform: scale(1.1);
-}
-
-/* Terperinci mode: larger cells */
-.terperinci-grid .nilai-cell {
-    width: 44px;
-    height: 44px;
-    font-size: 0.85rem;
-}
-
-/* ─── Subjective Unsur (kemantapan, kekompakan, etc) ───────────────── */
-
-.unsur-input-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 10px;
-}
-
-.unsur-label {
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: #495057;
-    min-width: 130px;
-}
-
-.unsur-input {
-    flex: 1;
-    max-width: 120px;
-}
-
-.unsur-input input[type="number"] {
-    width: 100%;
-    padding: 8px 12px;
-    border: 2px solid #dee2e6;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 600;
-    text-align: center;
-    transition: border-color 0.2s;
-}
-
-.unsur-input input[type="number"]:focus {
-    border-color: var(--brand-primary, #c60000);
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(198, 0, 0, 0.1);
-}
-
-.unsur-range {
-    font-size: 0.75rem;
-    color: #6c757d;
-}
-
-.unsur-subtotal {
     font-size: 1rem;
     font-weight: 700;
-    color: var(--brand-dark);
-    min-width: 60px;
+    line-height: 1.2;
+}
+.peserta-kontingen-display {
+    color: rgba(255,255,255,0.5);
+    font-size: 0.8rem;
+}
+.peserta-sub {
     text-align: right;
 }
 
-/* ─── Hukuman (read-only) ──────────────────────────────────────────── */
-
-.hukuman-section {
-    border-left: 4px solid #ffc107;
+/* ─── Skor Akhir Display (parity legacy 3.5rem) ───────────────────────── */
+.skor-akhir-display {
+    text-align: center;
+    padding: 12px 0;
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px;
+}
+.skor-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 4px;
+}
+.skor-value {
+    font-size: clamp(2.5rem, 8vw, 3.5rem);
+    font-weight: 700;
+    color: #fff;
+    line-height: 1;
 }
 
-.hukuman-grid {
+/* Compact variant for terperinci */
+.skor-compact {
+    padding: 8px 0;
+}
+.skor-label-sm {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,0.5);
+}
+.skor-value-sm {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+/* ─── Kebenaran Section (Max - Potongan = Total) ───────────────────────── */
+.kebenaran-section {
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px;
+    padding: 10px 16px;
+}
+.kebenaran-box {
+    text-align: center;
+}
+.kebenaran-label {
+    display: block;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 2px;
+}
+.kebenaran-val {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #fff;
+}
+.kebenaran-op {
+    font-size: 1.5rem;
+    font-weight: 300;
+    color: rgba(255,255,255,0.3);
+    margin-top: 12px;
+}
+
+/* ─── Unsur Nilai Container (Sederhana mode) ───────────────────────────── */
+#unsur-nilai-container {
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
+.unsur-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #25282c;
+    border-radius: 8px;
+    padding: 10px 12px;
+    transition: background 0.15s;
+}
+.unsur-row:active {
+    background: #333;
+}
+.unsur-label {
+    flex: 1;
+    font-size: 0.85rem;
+    color: #fff;
+    font-weight: 500;
+}
+.unsur-value-display {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #ffc107;
+    min-width: 48px;
+    text-align: center;
+}
+.unsur-btn-group {
+    display: flex;
+    gap: 4px;
+}
+.unsur-btn {
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.3rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.06s, background 0.1s;
+    -webkit-tap-highlight-color: transparent;
+}
+.unsur-btn:active {
+    transform: scale(0.92);
+}
+.unsur-btn-minus {
+    background: #dc3545;
+    color: #fff;
+}
+.unsur-btn-plus {
+    background: #28a745;
+    color: #fff;
+}
 
+/* ─── Gerakan Container (Terperinci mode) ──────────────────────────────── */
+.gerakan-container {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-right: 4px;
+}
+.gerakan-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #25282c;
+    border-radius: 8px;
+    padding: 8px 12px;
+    min-height: 50px;
+}
+.gerakan-num {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.6);
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.gerakan-label {
+    flex: 1;
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.8);
+    line-height: 1.3;
+}
+.gerakan-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #ffc107;
+    min-width: 40px;
+    text-align: center;
+}
+.gerakan-actions {
+    display: flex;
+    gap: 4px;
+}
+.gerakan-btn {
+    width: 38px;
+    height: 38px;
+    border: none;
+    border-radius: 6px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+.gerakan-btn:active {
+    transform: scale(0.9);
+}
+.gerakan-btn-wrong {
+    background: #dc3545;
+    color: #fff;
+}
+.gerakan-btn-correct {
+    background: #28a745;
+    color: #fff;
+}
+.gerakan-row.is-wrong {
+    background: rgba(220, 53, 69, 0.15);
+    border-left: 3px solid #dc3545;
+}
+
+/* ─── Hukuman Bar ──────────────────────────────────────────────────────── */
+.hukuman-bar {
+    background: #1e2125;
+    border-radius: 8px;
+    padding: 8px 12px;
+}
 .hukuman-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 12px;
-    background: #fffdf5;
-    border-radius: 8px;
-    border: 1px solid #fff3cd;
+    padding: 4px 0;
 }
-
 .hukuman-label {
-    font-size: 0.85rem;
-    color: #495057;
+    color: rgba(255,255,255,0.7);
+    font-size: 0.8rem;
 }
-
 .hukuman-value {
     font-weight: 700;
+    font-size: 1rem;
     color: #dc3545;
-    font-size: 0.95rem;
 }
 
-.hukuman-value.zero {
-    color: #28a745;
-}
-
-/* ─── Bottom Bar ───────────────────────────────────────────────────── */
-
-.seni-bottom-bar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: var(--brand-dark, #212529);
-    color: #fff;
-    padding: 12px 16px;
+/* ─── Action Bar (Bottom Buttons — parity legacy 20vh) ─────────────────── */
+.seni-action-bar {
     display: flex;
+    gap: 2px;
+    background: #000;
+}
+.seni-action-bar.is-locked {
+    pointer-events: none;
+    opacity: 0.3;
+}
+
+.btn-seni-action {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: space-between;
-    z-index: 200;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
-}
-
-.total-section {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-}
-
-.total-label {
-    font-size: 0.8rem;
+    justify-content: center;
+    gap: 8px;
+    min-height: 20vh;
+    border: none;
+    font-size: 1rem;
+    font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 1px;
-    opacity: 0.8;
+    cursor: pointer;
+    transition: transform 0.06s, opacity 0.15s;
+    -webkit-tap-highlight-color: transparent;
 }
-
-.total-value {
+.btn-seni-action:active {
+    transform: scale(0.97);
+}
+.btn-seni-action i {
     font-size: 1.8rem;
-    font-weight: 700;
-    letter-spacing: 1px;
 }
 
-.action-buttons {
-    display: flex;
-    gap: 10px;
-}
-
-.btn-ready {
+.btn-ready-action {
     background: #28a745;
     color: #fff;
-    border: none;
-    border-radius: 10px;
-    padding: 10px 20px;
-    font-weight: 600;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    transition: background 0.15s;
 }
-
-.btn-ready:hover { background: #218838; color: #fff; }
-.btn-ready.is-ready {
+.btn-ready-action.is-ready {
     background: #ffc107;
-    color: #212529;
+    color: #000;
 }
 
-.btn-simpan {
-    background: var(--brand-primary, #c60000);
+.btn-next-move {
+    background: #1d2af4;
     color: #fff;
-    border: none;
-    border-radius: 10px;
-    padding: 10px 20px;
-    font-weight: 600;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    transition: background 0.15s;
 }
 
-.btn-simpan:hover { background: #a50000; color: #fff; }
-.btn-simpan.saving {
-    opacity: 0.6;
-    pointer-events: none;
+.btn-wrong-action {
+    background: #dc3545;
+    color: #fff;
 }
 
-/* ─── Locked Overlay ───────────────────────────────────────────────── */
-
+/* ─── Locked Overlay ───────────────────────────────────────────────────── */
 .locked-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.7);
+    background: rgba(0, 0, 0, 0.85);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 999;
+    z-index: 9999;
 }
-
 .locked-message {
     text-align: center;
     color: #fff;
-    font-size: 1.2rem;
 }
 
-/* ─── Responsive ───────────────────────────────────────────────────── */
+/* ─── Responsive: Tablet (parity legacy 768-1366 breakpoint) ───────────── */
+@media (min-width: 768px) and (max-width: 1366px) {
+    .btn-seni-action {
+        min-height: 16vh;
+    }
+    .skor-value {
+        font-size: 3rem;
+    }
+    .unsur-btn {
+        width: 50px;
+        height: 50px;
+    }
+}
 
+/* ─── Responsive: Mobile ───────────────────────────────────────────────── */
 @media (max-width: 575.98px) {
-    .nilai-cell {
-        width: 32px;
-        height: 32px;
-        font-size: 0.7rem;
+    .btn-seni-action {
+        min-height: 14vh;
+        font-size: 0.85rem;
     }
-
-    .unsur-input-row {
-        flex-wrap: wrap;
+    .btn-seni-action i {
+        font-size: 1.4rem;
     }
-
-    .unsur-label {
-        min-width: 100%;
-    }
-
-    .seni-bottom-bar {
-        flex-direction: column;
-        gap: 8px;
-        padding: 10px;
-    }
-
-    .action-buttons {
-        width: 100%;
-    }
-
-    .btn-ready, .btn-simpan {
-        flex: 1;
-    }
-}
-
-@media (min-width: 768px) and (orientation: landscape) {
-    .seni-scoring-body {
-        max-width: 900px;
-        margin: 0 auto;
-    }
-
-    .nilai-cell {
+    .unsur-btn {
         width: 40px;
         height: 40px;
-        font-size: 0.8rem;
+        font-size: 1.1rem;
     }
+    .gerakan-btn {
+        width: 34px;
+        height: 34px;
+    }
+    .skor-value {
+        font-size: 2.2rem;
+    }
+}
+
+/* ─── Landscape fullscreen (scoring device) ────────────────────────────── */
+@media (orientation: landscape) and (max-height: 600px) {
+    .btn-seni-action {
+        min-height: 25vh;
+    }
+    .seni-header-bar {
+        padding: 6px 12px;
+    }
+    .seni-peserta-bar {
+        padding: 6px 12px;
+    }
+}
+
+/* ─── Scrollbar (dark theme) ───────────────────────────────────────────── */
+.gerakan-container::-webkit-scrollbar {
+    width: 4px;
+}
+.gerakan-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+.gerakan-container::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.2);
+    border-radius: 4px;
+}
+
+/* ─── Shared Utilities ─────────────────────────────────────────────────── */
+.penilaian-display-font {
+    font-family: 'Oswald', 'Poppins', sans-serif;
+    font-variant-numeric: tabular-nums;
 }

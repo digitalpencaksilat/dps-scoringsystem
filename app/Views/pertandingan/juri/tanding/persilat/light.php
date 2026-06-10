@@ -2,25 +2,24 @@
 
 <?= $this->section('styles') ?>
 <link rel="stylesheet" href="<?= base_url('assets/css/penilaian/juri-tanding.css') ?>">
-<?php if (($theme ?? 'light') === 'dark') : ?>
-<style>
-body.penilaian-body { background: #0f1115; }
-.juri-topbar { background: #1a1d24; color: #fff; }
-.juri-corners { background: #1a1d24; }
-</style>
-<?php endif; ?>
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
 <?php
     $idP   = (int) $pertandingan->id_pertandingan;
     $ronde = (string) $pertandingan->ronde_pertandingan;
+    $totalRonde = (int) ($pertandingan->total_ronde ?? 3);
     $namaMerah = $atlet_merah->nama_pendaftar ?? 'Atlet Merah';
     $namaBiru  = $atlet_biru->nama_pendaftar ?? 'Atlet Biru';
     $kontMerah = $atlet_merah->nama_kontingen ?? '-';
     $kontBiru  = $atlet_biru->nama_kontingen ?? '-';
+    $skorMerah = (int) ($pertandingan->skor_merah ?? 0);
+    $skorBiru  = (int) ($pertandingan->skor_biru ?? 0);
+    $isDark    = ($theme ?? 'light') === 'dark';
 ?>
-<div class="juri-wrapper" id="juri-wrapper"
+
+<div class="container-fluid <?= $isDark ? 'bg-black' : '' ?> min-vh-100 d-flex flex-column p-0"
+     id="juri-wrapper"
      data-id-pertandingan="<?= $idP ?>"
      data-ronde="<?= esc($ronde, 'attr') ?>"
      data-endpoint-edit="<?= base_url('juri/edit-penilaian-tanding/' . $idP) ?>"
@@ -29,68 +28,112 @@ body.penilaian-body { background: #0f1115; }
      data-csrf-name="<?= csrf_token() ?>"
      data-csrf-hash="<?= csrf_hash() ?>">
 
-    <header class="juri-topbar">
-        <span class="juri-ronde-badge penilaian-display-font">Ronde <?= esc($ronde) ?></span>
-        <span class="juri-format">PERSILAT &middot; Juri</span>
-        <a href="<?= base_url('perangkat-pertandingan/logout') ?>" class="juri-logout" title="Keluar">
-            <i class="fas fa-right-from-bracket"></i>
-        </a>
-    </header>
+    <!-- ═══ Header: Atlet + Skor ═══ -->
+    <div class="card bg-dark card-container-juri border-0 rounded-0 m-0">
+        <div class="card-body p-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <!-- Atlet Biru -->
+                <div class="text-center flex-grow-1" style="max-width: 30%;">
+                    <div class="fw-bolder <?= $isDark ? 'text-white' : '' ?> text-truncate" style="font-size: 0.95rem;">
+                        <?= esc($namaBiru) ?>
+                    </div>
+                    <small class="text-muted"><?= esc($kontBiru) ?></small>
+                </div>
 
-    <div class="juri-corners">
-        <!-- SUDUT BIRU -->
-        <section class="juri-corner corner-biru">
-            <div class="corner-head">
-                <div class="corner-skor penilaian-display-font" id="skor-biru">0</div>
-                <div class="corner-atlet">
-                    <div class="corner-nama"><?= esc($namaBiru) ?></div>
-                    <div class="corner-kontingen"><?= esc($kontBiru) ?></div>
+                <!-- Skor Center -->
+                <div class="text-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="fw-bolder text-primary" style="font-size: 2.2rem;" id="skor-biru"><?= $skorBiru ?></span>
+                        <div class="text-center">
+                            <div class="badge bg-danger rounded-pill px-3 py-1 mb-1" style="font-size: 0.75rem;">
+                                Ronde <?= esc($ronde) ?>
+                            </div>
+                            <div class="<?= $isDark ? 'text-white' : '' ?>" style="font-size: 0.7rem; letter-spacing: 1px;">PERSILAT</div>
+                        </div>
+                        <span class="fw-bolder text-danger" style="font-size: 2.2rem;" id="skor-merah"><?= $skorMerah ?></span>
+                    </div>
+                </div>
+
+                <!-- Atlet Merah -->
+                <div class="text-center flex-grow-1" style="max-width: 30%;">
+                    <div class="fw-bolder <?= $isDark ? 'text-white' : '' ?> text-truncate" style="font-size: 0.95rem;">
+                        <?= esc($namaMerah) ?>
+                    </div>
+                    <small class="text-muted"><?= esc($kontMerah) ?></small>
                 </div>
             </div>
-            <div class="corner-buttons">
-                <button type="button" class="btn-nilai" data-sudut="biru" data-nilai="1">
-                    <span class="nilai-angka penilaian-display-font">1</span>
-                    <span class="nilai-label">Pukulan</span>
-                </button>
-                <button type="button" class="btn-nilai" data-sudut="biru" data-nilai="2">
-                    <span class="nilai-angka penilaian-display-font">2</span>
-                    <span class="nilai-label">Tendangan</span>
-                </button>
-                <button type="button" class="btn-hapus" data-sudut="biru">
-                    <i class="fas fa-rotate-left"></i>
-                    <span class="nilai-label">Hapus</span>
-                </button>
-            </div>
-        </section>
+        </div>
+    </div>
 
-        <!-- SUDUT MERAH -->
-        <section class="juri-corner corner-merah">
-            <div class="corner-head">
-                <div class="corner-skor penilaian-display-font" id="skor-merah">0</div>
-                <div class="corner-atlet">
-                    <div class="corner-nama"><?= esc($namaMerah) ?></div>
-                    <div class="corner-kontingen"><?= esc($kontMerah) ?></div>
-                </div>
-            </div>
-            <div class="corner-buttons">
-                <button type="button" class="btn-nilai" data-sudut="merah" data-nilai="1">
-                    <span class="nilai-angka penilaian-display-font">1</span>
-                    <span class="nilai-label">Pukulan</span>
-                </button>
-                <button type="button" class="btn-nilai" data-sudut="merah" data-nilai="2">
-                    <span class="nilai-angka penilaian-display-font">2</span>
-                    <span class="nilai-label">Tendangan</span>
-                </button>
-                <button type="button" class="btn-hapus" data-sudut="merah">
-                    <i class="fas fa-rotate-left"></i>
-                    <span class="nilai-label">Hapus</span>
-                </button>
-            </div>
-        </section>
+    <!-- ═══ Tabel Skor Per Ronde ═══ -->
+    <div class="px-3 py-2">
+        <table class="table table-sm table-bordered text-center align-middle mb-0 <?= $isDark ? 'table-dark' : '' ?>" style="font-size: 0.8rem;">
+            <thead>
+                <tr>
+                    <th class="bg-gradient-180-blue text-white" style="width: 15%;">Biru</th>
+                    <?php for ($r = 1; $r <= $totalRonde; $r++): ?>
+                    <th class="<?= $isDark ? 'text-white' : '' ?>">R<?= $r ?></th>
+                    <?php endfor; ?>
+                    <th class="bg-gradient-180-red text-white" style="width: 15%;">Merah</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="fw-bold text-primary" id="total-biru">0</td>
+                    <?php for ($r = 1; $r <= $totalRonde; $r++): ?>
+                    <td class="<?= $isDark ? 'text-white' : '' ?>">
+                        <span id="ronde-biru-<?= $r ?>">0</span> : <span id="ronde-merah-<?= $r ?>">0</span>
+                    </td>
+                    <?php endfor; ?>
+                    <td class="fw-bold text-danger" id="total-merah">0</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ═══ Action Buttons (2 columns: Biru | Merah) ═══ -->
+    <div class="flex-grow-1 d-flex">
+        <!-- Sudut BIRU -->
+        <div class="flex-grow-1 d-flex flex-column gap-2 p-2 bg-gradient-180-blue">
+            <button type="button" class="btn-scoring btn-pukulan flex-grow-1" data-sudut="biru" data-nilai="1">
+                <img src="<?= base_url('assets/images/icons/pukulan.png') ?>" alt="Pukulan" class="scoring-icon" onerror="this.style.display='none'">
+                <span class="scoring-label">Pukulan</span>
+                <span class="scoring-value penilaian-display-font">+1</span>
+            </button>
+            <button type="button" class="btn-scoring btn-tendangan flex-grow-1" data-sudut="biru" data-nilai="2">
+                <img src="<?= base_url('assets/images/icons/tendangan.png') ?>" alt="Tendangan" class="scoring-icon" onerror="this.style.display='none'">
+                <span class="scoring-label">Tendangan</span>
+                <span class="scoring-value penilaian-display-font">+2</span>
+            </button>
+        </div>
+
+        <!-- Sudut MERAH -->
+        <div class="flex-grow-1 d-flex flex-column gap-2 p-2 bg-gradient-180-red">
+            <button type="button" class="btn-scoring btn-pukulan flex-grow-1" data-sudut="merah" data-nilai="1">
+                <img src="<?= base_url('assets/images/icons/pukulan.png') ?>" alt="Pukulan" class="scoring-icon" onerror="this.style.display='none'">
+                <span class="scoring-label">Pukulan</span>
+                <span class="scoring-value penilaian-display-font">+1</span>
+            </button>
+            <button type="button" class="btn-scoring btn-tendangan flex-grow-1" data-sudut="merah" data-nilai="2">
+                <img src="<?= base_url('assets/images/icons/tendangan.png') ?>" alt="Tendangan" class="scoring-icon" onerror="this.style.display='none'">
+                <span class="scoring-label">Tendangan</span>
+                <span class="scoring-value penilaian-display-font">+2</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ═══ Hapus Button (bottom) ═══ -->
+    <div class="d-flex">
+        <button type="button" class="btn-hapus-scoring flex-grow-1" data-sudut="biru">
+            <i class="fas fa-rotate-left me-1"></i> Hapus Biru
+        </button>
+        <button type="button" class="btn-hapus-scoring flex-grow-1 border-start" data-sudut="merah">
+            <i class="fas fa-rotate-left me-1"></i> Hapus Merah
+        </button>
     </div>
 </div>
 
-<!-- Modal Verifikasi Jatuhan -->
+<!-- ═══ Modal Verifikasi Jatuhan ═══ -->
 <div class="modal fade" id="modalVerifikasiJatuhan" data-bs-backdrop="static" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content bg-dark text-white border-warning">
@@ -112,7 +155,7 @@ body.penilaian-body { background: #0f1115; }
     </div>
 </div>
 
-<!-- Modal Verifikasi Pelanggaran -->
+<!-- ═══ Modal Verifikasi Pelanggaran ═══ -->
 <div class="modal fade" id="modalVerifikasiPelanggaran" data-bs-backdrop="static" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content bg-dark text-white border-warning">
@@ -138,6 +181,8 @@ body.penilaian-body { background: #0f1115; }
 <?= $this->section('scripts') ?>
 <script>
     const JURI_TANDING_INIT = <?= json_encode($data_nilai) ?>;
+    const JURI_TANDING_RONDE = <?= json_encode($ronde) ?>;
+    const JURI_TANDING_TOTAL_RONDE = <?= $totalRonde ?>;
 </script>
 <script src="<?= base_url('assets/js/penilaian/juri_tanding_persilat.js') ?>"></script>
 <?= $this->endSection() ?>

@@ -1,139 +1,112 @@
-/* Juri input tanding PERSILAT — baseline tema dps-ci4 + token sudut */
-.juri-wrapper {
-    min-height: 100vh;
+/* ══════════════════════════════════════════════════════════════════════════
+   Juri Tanding PERSILAT — parity legacy UI/UX
+   Gradient corners, score table, large touch buttons
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Gradient Backgrounds (parity legacy argon-dashboard) ─────────────── */
+.bg-gradient-180-blue {
+    background: linear-gradient(180deg, #1d2af4 55%, #0118d8 75%);
+}
+.bg-gradient-180-red {
+    background: linear-gradient(180deg, #dd0a35 55%, #b80c0c 75%);
+}
+.bg-gradient-180-dark {
+    background: linear-gradient(180deg, #23303e 0%, #0a0d11 100%);
+}
+
+/* ─── Card Container ───────────────────────────────────────────────────── */
+.card-container-juri {
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+/* ─── Score Table ──────────────────────────────────────────────────────── */
+.table-dark {
+    --bs-table-bg: #1a1d24;
+}
+
+/* ─── Scoring Buttons (large, touch-friendly — parity legacy 20vh) ─────── */
+.btn-scoring {
     display: flex;
     flex-direction: column;
-}
-
-.juri-topbar {
-    display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 10px 18px;
-    background: var(--brand-dark);
+    justify-content: center;
+    gap: 8px;
+    border: none;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.12);
     color: #fff;
+    min-height: 20vh;
+    cursor: pointer;
+    transition: transform 0.06s ease, background 0.15s ease, opacity 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    padding: 16px;
 }
 
-.juri-ronde-badge {
-    background: var(--brand-primary);
-    padding: 4px 14px;
-    border-radius: 999px;
-    font-size: 1rem;
-    letter-spacing: 1px;
-    text-transform: uppercase;
+.btn-scoring:active {
+    transform: scale(0.96);
+    background: rgba(255, 255, 255, 0.25);
 }
 
-.juri-format {
+.btn-scoring:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.scoring-icon {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    filter: brightness(0) invert(1);
+    opacity: 0.9;
+}
+
+.scoring-label {
     font-size: 0.85rem;
-    opacity: 0.8;
-    letter-spacing: 1px;
     text-transform: uppercase;
-}
-
-.juri-logout {
-    color: #fff;
-    opacity: 0.8;
-    text-decoration: none;
-    font-size: 1.1rem;
-}
-.juri-logout:hover { opacity: 1; color: #fff; }
-
-.juri-corners {
-    flex: 1;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2px;
-    background: #d9dee5;
-}
-
-.juri-corner {
-    display: flex;
-    flex-direction: column;
-    padding: 18px;
-    color: #fff;
-}
-
-.corner-biru  { background: var(--corner-blue); }
-.corner-merah { background: var(--corner-red); }
-
-.corner-head {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 18px;
-}
-
-.corner-skor {
-    font-size: clamp(3rem, 9vw, 6rem);
-    line-height: 1;
-    font-weight: 700;
-    min-width: 1.6em;
-    text-align: center;
-}
-
-.corner-nama {
-    font-size: 1.1rem;
-    font-weight: 600;
-}
-.corner-kontingen {
-    font-size: 0.85rem;
+    letter-spacing: 1px;
     opacity: 0.85;
 }
 
-.corner-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    flex: 1;
+.scoring-value {
+    font-size: clamp(1.8rem, 5vw, 3rem);
+    font-weight: 700;
+    line-height: 1;
 }
 
-.btn-nilai,
-.btn-hapus {
-    border: none;
-    border-radius: 16px;
-    color: #fff;
-    background: rgba(255, 255, 255, 0.16);
+/* ─── Hapus Button ─────────────────────────────────────────────────────── */
+.btn-hapus-scoring {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 14px;
-    padding: 22px;
-    cursor: pointer;
-    flex: 1;
-    transition: transform 0.06s ease, background 0.15s ease;
-    -webkit-tap-highlight-color: transparent;
-    user-select: none;
-}
-
-.btn-nilai:active,
-.btn-hapus:active { transform: scale(0.97); }
-
-.btn-nilai:hover,
-.btn-hapus:hover { background: rgba(255, 255, 255, 0.26); }
-
-.btn-nilai .nilai-angka {
-    font-size: clamp(2rem, 5vw, 3.2rem);
-    font-weight: 700;
-}
-
-.nilai-label {
-    font-size: 1rem;
+    gap: 6px;
+    padding: 14px;
+    background: #1a1d24;
+    color: #fff;
+    border: none;
+    font-size: 0.85rem;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: background 0.15s;
+    -webkit-tap-highlight-color: transparent;
 }
 
-.btn-hapus {
-    flex: 0 0 auto;
-    background: rgba(0, 0, 0, 0.22);
-    font-size: 1.1rem;
+.btn-hapus-scoring:active,
+.btn-hapus-scoring:hover {
+    background: #2d3239;
 }
 
+.border-start {
+    border-left: 1px solid rgba(255,255,255,0.1) !important;
+}
+
+/* ─── Loading & Feedback ───────────────────────────────────────────────── */
 .is-loading {
     opacity: 0.5;
     pointer-events: none;
 }
 
-/* Pulse feedback on tap */
 .pulse-success {
     animation: pulseGreen 0.3s ease;
 }
@@ -142,17 +115,56 @@
 }
 
 @keyframes pulseGreen {
-    0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.6); }
-    100% { box-shadow: 0 0 0 12px rgba(40, 167, 69, 0); }
+    0% { box-shadow: inset 0 0 0 0 rgba(40, 167, 69, 0.5); }
+    100% { box-shadow: inset 0 0 40px 0 rgba(40, 167, 69, 0); }
 }
 @keyframes pulseRed {
-    0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.6); }
-    100% { box-shadow: 0 0 0 12px rgba(220, 53, 69, 0); }
+    0% { box-shadow: inset 0 0 0 0 rgba(220, 53, 69, 0.5); }
+    100% { box-shadow: inset 0 0 40px 0 rgba(220, 53, 69, 0); }
 }
 
+/* ─── Responsive: Tablet Landscape (parity legacy @media 768-1366px) ──── */
+@media (min-width: 768px) and (max-width: 1366px) {
+    .btn-scoring {
+        min-height: 18vh;
+    }
+    .scoring-value {
+        font-size: 2.2rem;
+    }
+    .scoring-icon {
+        width: 40px;
+        height: 40px;
+    }
+}
+
+/* ─── Responsive: Mobile Portrait ──────────────────────────────────────── */
 @media (max-width: 575.98px) {
-    .juri-corners { grid-template-columns: 1fr; }
-    .corner-skor { font-size: 3.4rem; }
-    .btn-nilai { padding: 18px; }
-    .nilai-angka { font-size: 2rem !important; }
+    .btn-scoring {
+        min-height: 15vh;
+        border-radius: 8px;
+    }
+    .scoring-value {
+        font-size: 1.6rem;
+    }
+    .scoring-icon {
+        width: 36px;
+        height: 36px;
+    }
+    .scoring-label {
+        font-size: 0.75rem;
+    }
+}
+
+/* ─── Landscape Fullscreen (scoring device) ────────────────────────────── */
+@media (orientation: landscape) and (max-height: 600px) {
+    .btn-scoring {
+        min-height: 30vh;
+        gap: 4px;
+    }
+    .card-container-juri .card-body {
+        padding: 8px 12px !important;
+    }
+    .px-3.py-2 {
+        padding: 4px 8px !important;
+    }
 }
