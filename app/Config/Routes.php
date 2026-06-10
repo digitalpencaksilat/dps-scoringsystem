@@ -108,10 +108,21 @@ $routes->group('sekretaris-pertandingan', ['filter' => 'perangkat:sekretaris,tim
 });
 $routes->get('layar', 'Pertandingan\Layar::index', ['filter' => 'perangkat:layar']);
 $routes->group('layar', ['filter' => 'perangkat:layar'], static function ($routes) {
+    $routes->get('home', 'Pertandingan\Layar::index');
+
+    // Tanding
     $routes->get('tanding', 'Pertandingan\Layar::tanding');
     $routes->get('tanding/(:segment)', 'Pertandingan\Layar::tanding/$1');
     $routes->post('refresh-status-pertandingan/(:num)', 'Pertandingan\Layar::refreshStatusPertandingan/$1');
     $routes->post('refresh-status-pertandingan', 'Pertandingan\Layar::refreshStatusPertandingan');
+
+    // Seni
+    $routes->get('seni', 'Pertandingan\Layar::seni');
+    $routes->get('seni/(:segment)', 'Pertandingan\Layar::seni/$1');
+    $routes->post('refresh-status-seni/(:num)', 'Pertandingan\Layar::refreshStatusSeni/$1');
+    $routes->post('refresh-status-seni', 'Pertandingan\Layar::refreshStatusSeni');
+    $routes->get('hasil-pool-seni/(:num)', 'Pertandingan\Layar::hasilPoolSeni/$1');
+    $routes->get('hasil-battle-seni/(:num)', 'Pertandingan\Layar::hasilBattleSeni/$1');
 });
 $routes->get('broadcast-operator', 'Pertandingan\BroadcastOperator::index', ['filter' => 'perangkat:broadcast_operator']);
 $routes->group('broadcast-operator', ['filter' => 'perangkat:broadcast_operator'], static function ($routes) {

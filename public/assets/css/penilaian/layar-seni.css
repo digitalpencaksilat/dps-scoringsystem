@@ -1,0 +1,265 @@
+/* ═══════════════════════════════════════════════════════════════
+   Layar Seni — scoreboard display for seni penampilan
+   Parity: legacy layar/seni/persilat/dark.php styling
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── WRAPPER ─────────────────────────────────────────────────── */
+.layar-seni-wrapper {
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    color: #fff; padding: 3vh 3vw;
+    gap: 3vh;
+}
+.layar-seni-wrapper.theme-dark {
+    background: linear-gradient(180deg, #0d1117 0%, #161b22 100%);
+}
+.layar-seni-wrapper.theme-light {
+    background: #f4f6f9; color: #212529;
+}
+
+/* ── HEADER ──────────────────────────────────────────────────── */
+.layar-seni-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 2vh 2vw;
+    background: rgba(255,255,255,.04);
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,.08);
+}
+.theme-light .layar-seni-header {
+    background: #fff; border-color: #dee2e6;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+
+.layar-seni-nomor {
+    display: flex; flex-direction: column; align-items: center;
+    min-width: 100px;
+}
+.layar-seni-nomor .label-nomor {
+    font-size: 0.9rem; opacity: 0.6; text-transform: uppercase; letter-spacing: 1px;
+}
+.layar-seni-nomor .nilai-nomor {
+    font-size: 3rem; font-weight: 700; color: var(--brand-secondary, #c5a017);
+}
+
+.layar-seni-peserta { flex: 1; text-align: center; }
+.layar-seni-nama { font-size: clamp(1.8rem, 4vw, 3.5rem); font-weight: 700; }
+.layar-seni-kontingen { font-size: clamp(1rem, 2vw, 1.5rem); opacity: 0.7; margin-top: 0.3rem; }
+
+.layar-seni-timer-container {
+    display: flex; flex-direction: column; align-items: center;
+    min-width: 140px;
+}
+.layar-seni-timer {
+    font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 700;
+    color: #4caf50;
+}
+.layar-seni-timer-label {
+    font-size: 0.85rem; opacity: 0.6; text-transform: uppercase; letter-spacing: 1px;
+}
+
+/* ── JURI GRID ───────────────────────────────────────────────── */
+.layar-seni-juri-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1.5vw;
+    flex: 1;
+    align-content: center;
+}
+
+.layar-seni-juri-card {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: rgba(255,255,255,.05);
+    border: 2px solid rgba(255,255,255,.1);
+    border-radius: 16px;
+    padding: 3vh 1.5vw;
+    transition: all 0.4s ease;
+    position: relative;
+    overflow: hidden;
+}
+.theme-light .layar-seni-juri-card {
+    background: #fff; border-color: #dee2e6;
+    box-shadow: 0 2px 8px rgba(0,0,0,.05);
+}
+
+.layar-seni-juri-card.terpilih {
+    border-color: var(--brand-secondary, #c5a017);
+    background: rgba(197,160,23,.08);
+    box-shadow: 0 0 20px rgba(197,160,23,.15);
+}
+.layar-seni-juri-card.terpilih::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--brand-secondary, #c5a017);
+}
+
+.juri-card-header {
+    font-size: clamp(0.9rem, 1.5vw, 1.2rem);
+    text-transform: uppercase; letter-spacing: 2px;
+    opacity: 0.6; margin-bottom: 1vh;
+}
+
+.juri-card-nilai {
+    font-size: clamp(2.5rem, 5vw, 5rem); font-weight: 700;
+    line-height: 1.1;
+}
+.layar-seni-juri-card.terpilih .juri-card-nilai {
+    color: var(--brand-secondary, #c5a017);
+}
+
+.juri-card-status {
+    margin-top: 1vh; font-size: 1.4rem;
+}
+.juri-card-status .fa-circle-check { font-size: 1.6rem; }
+.juri-card-status .fa-clock { font-size: 1.4rem; }
+
+/* ── FOOTER / NILAI AKHIR ────────────────────────────────────── */
+.layar-seni-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 2vh 3vw;
+    background: rgba(255,255,255,.04);
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,.08);
+}
+.theme-light .layar-seni-footer {
+    background: #fff; border-color: #dee2e6;
+}
+
+.layar-seni-nilai-akhir {
+    display: flex; align-items: baseline; gap: 1.5vw;
+}
+.layar-seni-nilai-akhir .label-akhir {
+    font-size: clamp(1rem, 2vw, 1.5rem);
+    text-transform: uppercase; letter-spacing: 3px;
+    opacity: 0.7;
+}
+.layar-seni-nilai-akhir .nilai-akhir {
+    font-size: clamp(3rem, 7vw, 6rem);
+    font-weight: 700;
+    color: var(--brand-secondary, #c5a017);
+    text-shadow: 0 2px 12px rgba(197,160,23,.3);
+}
+
+.layar-seni-status {}
+.pulse-badge {
+    animation: pulseBadge 2s ease-in-out infinite;
+}
+@keyframes pulseBadge {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* ── HASIL VIEWS ─────────────────────────────────────────────── */
+.layar-hasil-wrapper {
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    padding: 4vh 4vw;
+    color: #fff;
+}
+.layar-hasil-wrapper.theme-dark {
+    background: linear-gradient(180deg, #0d1117 0%, #161b22 100%);
+}
+
+.layar-hasil-header {
+    text-align: center; margin-bottom: 4vh;
+}
+.layar-hasil-header h1 {
+    font-size: clamp(2rem, 5vw, 4rem); font-weight: 700;
+    margin: 0;
+}
+.layar-hasil-subtitle {
+    font-size: clamp(1rem, 2vw, 1.3rem);
+    color: var(--brand-secondary, #c5a017);
+    opacity: 0.8; margin-top: 0.5rem;
+}
+
+.layar-hasil-table-container { flex: 1; overflow: auto; }
+
+.layar-hasil-table {
+    width: 100%; border-collapse: separate; border-spacing: 0 8px;
+}
+.layar-hasil-table thead th {
+    font-size: clamp(0.9rem, 1.5vw, 1.2rem);
+    text-transform: uppercase; letter-spacing: 1px;
+    color: #9aa4b2; padding: 1vh 1.5vw;
+    border-bottom: 1px solid rgba(255,255,255,.1);
+}
+.layar-hasil-table tbody tr {
+    background: rgba(255,255,255,.04);
+    border-radius: 8px;
+    transition: transform 0.2s;
+}
+.layar-hasil-table tbody tr:hover { transform: scale(1.01); }
+.layar-hasil-table tbody td {
+    padding: 2vh 1.5vw; vertical-align: middle;
+    font-size: clamp(1rem, 1.8vw, 1.4rem);
+}
+
+/* Rank badges */
+.rank-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 48px; height: 48px; border-radius: 50%;
+    font-weight: 700; font-size: 1.4rem;
+    background: rgba(255,255,255,.08);
+}
+tr.rank-gold .rank-badge { background: linear-gradient(135deg, #ffd700, #b8860b); color: #1a1a00; }
+tr.rank-silver .rank-badge { background: linear-gradient(135deg, #c0c0c0, #808080); color: #1a1a1a; }
+tr.rank-bronze .rank-badge { background: linear-gradient(135deg, #cd7f32, #8b4513); color: #fff; }
+
+tr.rank-gold { background: rgba(255,215,0,.06); }
+tr.rank-silver { background: rgba(192,192,192,.04); }
+tr.rank-bronze { background: rgba(205,127,50,.04); }
+
+.nama-peserta { font-weight: 600; }
+.nilai-cell { font-weight: 700; font-size: clamp(1.2rem, 2.5vw, 2rem); }
+tr.rank-gold .nilai-cell { color: #ffd700; }
+
+/* ── BATTLE HASIL ────────────────────────────────────────────── */
+.layar-battle-container {
+    flex: 1; display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center; gap: 2vw;
+}
+
+.layar-battle-side {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 4vh 2vw; border-radius: 16px;
+}
+.layar-battle-side.corner-biru { background: linear-gradient(160deg, #1565c0, #0d47a1); }
+.layar-battle-side.corner-merah { background: linear-gradient(160deg, #c62828, #8e0000); }
+
+.battle-sudut-label {
+    font-size: clamp(1rem, 2vw, 1.4rem);
+    text-transform: uppercase; letter-spacing: 4px;
+    opacity: 0.7;
+}
+.battle-peserta { font-size: clamp(1.5rem, 3vw, 2.5rem); font-weight: 700; margin: 1vh 0; }
+.battle-kontingen { font-size: clamp(0.9rem, 1.5vw, 1.2rem); opacity: 0.7; }
+.battle-nilai {
+    font-size: clamp(3rem, 8vw, 7rem); font-weight: 700;
+    margin-top: 2vh; text-shadow: 0 4px 20px rgba(0,0,0,.4);
+}
+
+.layar-battle-center { text-align: center; }
+.battle-vs {
+    font-size: clamp(2rem, 4vw, 3rem); font-weight: 700;
+    color: var(--brand-secondary, #c5a017); letter-spacing: 4px;
+}
+.battle-winner {
+    margin-top: 2vh; color: #ffd700;
+}
+.battle-winner i { font-size: 3rem; display: block; margin-bottom: 1vh; }
+.battle-winner span { font-size: 1.4rem; letter-spacing: 2px; }
+
+.layar-hasil-footer {
+    text-align: center; margin-top: 3vh;
+}
+
+/* ── RESPONSIVE ──────────────────────────────────────────────── */
+@media (max-width: 767.98px) {
+    .layar-seni-header { flex-direction: column; gap: 2vh; }
+    .layar-seni-juri-grid { grid-template-columns: repeat(3, 1fr); gap: 2vw; }
+    .layar-seni-footer { flex-direction: column; gap: 2vh; text-align: center; }
+    .layar-battle-container { grid-template-columns: 1fr; }
+    .layar-battle-center { order: -1; }
+    .layar-hasil-table-container { font-size: 0.9rem; }
+}

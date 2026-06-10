@@ -1,6 +1,11 @@
-/* Layar / scoreboard tanding PERSILAT — display besar, kontras tinggi */
-body.penilaian-body { background: #0b0d12; }
+/* ═══════════════════════════════════════════════════════════════
+   Layar / Scoreboard — master CSS (tanding + home + standby)
+   Parity: legacy layar views with modern CSS grid/flex
+   ═══════════════════════════════════════════════════════════════ */
 
+body.penilaian-body { background: #0b0d12; overflow: hidden; }
+
+/* ── TANDING SCOREBOARD ──────────────────────────────────────── */
 .layar-wrapper {
     min-height: 100vh;
     display: grid;
@@ -22,7 +27,7 @@ body.penilaian-body { background: #0b0d12; }
 
 .layar-kontingen { font-size: 2.2vw; opacity: 0.9; text-transform: uppercase; letter-spacing: 1px; }
 .layar-nama { font-size: 3.2vw; font-weight: 700; margin: 0.4vh 0 1vh; text-align: center; }
-.layar-skor { font-size: 22vh; line-height: 1; font-weight: 700; }
+.layar-skor { font-size: 22vh; line-height: 1; font-weight: 700; text-shadow: 0 4px 20px rgba(0,0,0,.4); }
 .layar-sudut-label {
     position: absolute; bottom: 2vh; font-size: 1.6vw; letter-spacing: 4px;
     opacity: 0.7; font-weight: 600;
@@ -32,27 +37,147 @@ body.penilaian-body { background: #0b0d12; }
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     background: #0b0d12; padding: 0 3vw; min-width: 26vw;
 }
-.layar-ronde { font-size: 3vw; color: var(--brand-secondary); letter-spacing: 3px; }
+.layar-ronde { font-size: 3vw; color: var(--brand-secondary, #c5a017); letter-spacing: 3px; }
 .layar-timer { font-size: 12vw; font-weight: 700; line-height: 1.1; }
 .layar-status {
     font-size: 1.8vw; text-transform: uppercase; letter-spacing: 3px;
     color: #9aa4b2; margin-top: 1vh;
 }
 
-/* Standby */
+/* ── HOME / IDLE SCREEN ──────────────────────────────────────── */
+.layar-home {
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: radial-gradient(ellipse at 50% 40%, #1a2332 0%, #0b0d12 70%);
+    color: #fff; text-align: center;
+    gap: 4vh;
+}
+
+.layar-home-logo {
+    animation: logoFloat 4s ease-in-out infinite;
+}
+.layar-logo-img {
+    max-width: 280px; max-height: 180px;
+    filter: drop-shadow(0 8px 32px rgba(197,160,23,.3));
+}
+
+.layar-home-info {}
+.layar-home-title {
+    font-size: clamp(2rem, 5vw, 4rem); font-weight: 700;
+    color: #fff; margin: 0;
+}
+.layar-home-subtitle {
+    font-size: clamp(1rem, 2vw, 1.5rem);
+    color: var(--brand-secondary, #c5a017); opacity: 0.9;
+    letter-spacing: 2px; margin-top: 0.5rem;
+}
+
+.layar-home-status {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 1.2rem; color: #9aa4b2;
+}
+
+@keyframes logoFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+}
+
+/* ── STANDBY SCREEN ──────────────────────────────────────────── */
 .layar-standby {
     min-height: 100vh; display: flex; align-items: center; justify-content: center;
     background: radial-gradient(circle at center, #16202e, #0b0d12);
     color: #fff; text-align: center;
 }
-.layar-standby-brand { font-size: 3vw; color: var(--brand-secondary); letter-spacing: 2px; }
-.layar-standby-title { font-size: 5vw; font-weight: 700; margin: 2vh 0; }
-.layar-standby-gelanggang { font-size: 2vw; opacity: 0.8; }
+.layar-standby-content {
+    display: flex; flex-direction: column; align-items: center; gap: 2vh;
+}
+.layar-standby-icon {
+    font-size: 6vw; color: var(--brand-secondary, #c5a017);
+    opacity: 0.8;
+}
+.layar-standby-title { font-size: 5vw; font-weight: 700; margin: 0; }
+.layar-standby-text { font-size: 2vw; opacity: 0.7; margin: 0; }
+.layar-standby-pulse { margin-top: 2vh; }
 
+/* ── PULSE ANIMATION ─────────────────────────────────────────── */
+.layar-pulse {
+    width: 14px; height: 14px;
+    background: #4caf50; border-radius: 50%;
+    position: relative;
+    animation: pulseGlow 2s ease-in-out infinite;
+}
+.layar-pulse::after {
+    content: '';
+    position: absolute; inset: -6px;
+    border: 2px solid #4caf50; border-radius: 50%;
+    animation: pulseRing 2s ease-in-out infinite;
+    opacity: 0;
+}
+
+@keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 4px #4caf50; }
+    50% { box-shadow: 0 0 16px #4caf50, 0 0 30px rgba(76,175,80,.3); }
+}
+@keyframes pulseRing {
+    0% { transform: scale(1); opacity: 0.6; }
+    100% { transform: scale(2.5); opacity: 0; }
+}
+
+/* ── STINGER OVERLAY (round change) ──────────────────────────── */
+.layar-stinger {
+    position: fixed; inset: 0; z-index: 9999;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,.92);
+    pointer-events: none;
+}
+.stinger-content {
+    font-size: clamp(4rem, 12vw, 10rem); font-weight: 700;
+    color: var(--brand-secondary, #c5a017);
+    text-shadow: 0 4px 40px rgba(197,160,23,.5);
+    animation: stingerZoom 2.5s ease-out forwards;
+}
+@keyframes stingerZoom {
+    0% { transform: scale(0.3); opacity: 0; }
+    20% { transform: scale(1.1); opacity: 1; }
+    80% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(1.5); opacity: 0; }
+}
+
+/* ── VERIFIKASI OVERLAY ──────────────────────────────────────── */
+.layar-verifikasi-overlay {
+    position: fixed; inset: 0; z-index: 9998;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,.85);
+}
+.verifikasi-content { text-align: center; }
+.verifikasi-title {
+    font-size: clamp(2.5rem, 6vw, 5rem); font-weight: 700;
+    color: #ff9800; letter-spacing: 4px;
+    animation: verifikasiPulse 1.5s ease-in-out infinite;
+}
+.verifikasi-detail {
+    font-size: clamp(1rem, 2.5vw, 1.8rem);
+    color: #fff; opacity: 0.8; margin-top: 2vh;
+}
+@keyframes verifikasiPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.02); }
+}
+
+/* ── RESPONSIVE ──────────────────────────────────────────────── */
 @media (max-width: 767.98px) {
-    .layar-wrapper { grid-template-columns: 1fr; }
+    .layar-wrapper { grid-template-columns: 1fr; grid-template-rows: 1fr auto 1fr; }
     .layar-skor { font-size: 16vh; }
     .layar-nama { font-size: 6vw; }
     .layar-timer { font-size: 18vw; }
-    .layar-center { padding: 4vh 0; }
+    .layar-center { padding: 4vh 0; min-width: auto; }
+    .layar-kontingen { font-size: 4vw; }
+    .layar-sudut-label { font-size: 3vw; }
+    .layar-ronde { font-size: 5vw; }
+    .layar-status { font-size: 3vw; }
+    .layar-standby-title { font-size: 8vw; }
+    .layar-standby-text { font-size: 4vw; }
+    .layar-standby-icon { font-size: 12vw; }
+    .layar-logo-img { max-width: 180px; }
 }
