@@ -30,7 +30,8 @@ $routes->group('perangkat-pertandingan', ['filter' => 'perangkat'], static funct
 // --- JURI (PERSILAT tanding + seni) ---
 $routes->group('juri', ['filter' => 'perangkat:juri'], static function ($routes) {
     // Tanding
-    $routes->get('', 'Pertandingan\\Juri::tanding');
+    $routes->get('', 'Pertandingan\\Juri::index');
+    $routes->get('home', 'Pertandingan\\Juri::index');
     $routes->get('tanding', 'Pertandingan\\Juri::tanding');
     $routes->get('tanding/(:segment)', 'Pertandingan\\Juri::tanding/$1');
     $routes->post('edit-penilaian-tanding/(:num)', 'Pertandingan\\Juri::editPenilaianTanding/$1');

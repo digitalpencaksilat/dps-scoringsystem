@@ -58,6 +58,21 @@ class Juri extends BaseController
     }
 
     // ═══════════════════════════════════════════════════════════════════════
+    //  HOME / DASHBOARD
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /**
+     * Halaman home juri — pilihan masuk ke tanding atau seni.
+     * Parity legacy: Juri::index() → views/pertandingan/juri/home.php
+     */
+    public function index()
+    {
+        return view('pertandingan/juri/home', [
+            'title' => 'Panel Juri',
+        ]);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
     //  TANDING
     // ═══════════════════════════════════════════════════════════════════════
 
