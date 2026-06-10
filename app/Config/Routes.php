@@ -116,6 +116,11 @@ $routes->group('layar', ['filter' => 'perangkat:layar'], static function ($route
     $routes->post('refresh-status-pertandingan/(:num)', 'Pertandingan\Layar::refreshStatusPertandingan/$1');
     $routes->post('refresh-status-pertandingan', 'Pertandingan\Layar::refreshStatusPertandingan');
 
+    // Tanding extras
+    $routes->get('transisi', 'Pertandingan\Layar::transisi');
+    $routes->get('transisi/(:segment)', 'Pertandingan\Layar::transisi/$1');
+    $routes->get('hasil-tanding/(:num)', 'Pertandingan\Layar::hasilTanding/$1');
+
     // Seni
     $routes->get('seni', 'Pertandingan\Layar::seni');
     $routes->get('seni/(:segment)', 'Pertandingan\Layar::seni/$1');

@@ -237,4 +237,44 @@ class Layar extends BaseController
             'id_battle_seni' => $idBattleSeni,
         ]);
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  TRANSISI & HASIL TANDING
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /**
+     * Transisi/idle screen between matches.
+     * Shows logo animation or sponsor video, polls for next match.
+     * Parity legacy: Layar standby_tanding() with video_sponsor/animasi_logo
+     */
+    public function transisi(string $mode = 'tanding')
+    {
+        $mode = in_array($mode, ['tanding', 'seni'], true) ? $mode : 'tanding';
+
+        return view('pertandingan/layar/transisi', [
+            'title'           => 'Layar — Transisi',
+            'nama_gelanggang' => session()->get('nama_gelanggang') ?? 'Gelanggang',
+            'mode'            => $mode,
+        ]);
+    }
+
+    /**
+     * Hasil pertandingan tanding — winner display after match ends.
+     * Parity legacy: Layar with hasil_pertandingan/dark view
+     */
+    public function hasilTanding(int $idPertandingan)
+    {
+        $pertandingan = $this->pertandinganModel->find($idPertandingan);
+
+        if ($pertandingan === null) {
+            return redirect()->to(base_url('layar/home'));
+        }
+
+        return view('pertandingan/layar/hasil_tanding', [
+            'title'        => 'Hasil Pertandingan',
+            'pertandingan' => $pertandingan,
+            'atlet_merah'  => $this->pertandinganModel->getAtletPertandingan($idPertandingan, 'merah'),
+            'atlet_biru'   => $this->pertandinganModel->getAtletPertandingan($idPertandingan, 'biru'),
+        ]);
+    }
 }
