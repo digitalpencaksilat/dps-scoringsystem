@@ -126,3 +126,5 @@ _modules/*
 /phpunit.xml
 .env.bak*
 realtime-server/node_modules/
+Screenshot*
+*.bak

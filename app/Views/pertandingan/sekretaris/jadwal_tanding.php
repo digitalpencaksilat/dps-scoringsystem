@@ -30,7 +30,6 @@
 						<li><a class="dropdown-item py-2" href="<?= base_url('sekretaris-pertandingan/timer-tanding') ?>" target="_blank">Timer Tanding</a></li>
 						<li><hr class="dropdown-divider bg-secondary"></li>
 						<li><a class="dropdown-item py-2" href="<?= base_url('sekretaris-pertandingan/timer-seni') ?>" target="_blank">Timer Seni (Pool)</a></li>
-						<li><a class="dropdown-item py-2" href="<?= base_url('sekretaris-pertandingan/timer-seni/battle') ?>" target="_blank">Timer Seni (Battle)</a></li>
 					</ul>
 				</li>
 			</ul>
@@ -55,12 +54,12 @@
 <div class="container">
 	<div class="row min-vh-75 pt-5">
 		<div class="col-md-12 text-center">
-			<h1 class="h3 text-capitalize">Gelanggang <?= esc($gelanggang->nama_gelanggang ?? '') ?></h1>
+			<h1 class="h3 text-capitalize">Gelanggang <?= esc($jadwal->nama_gelanggang ?? $nama_gelanggang ?? '') ?></h1>
 			<h4>Kategori Tanding</h4>
 			<p>
-				<?= esc($jadwal_tanding->tanggal_formatted ?? '') ?><br>
-				<?= esc($jadwal_tanding->jam_mulai_formatted ?? '') ?> - <?= esc($jadwal_tanding->jam_selesai_formatted ?? '') ?><br>
-				<?= esc($jadwal_tanding->keterangan_jadwal ?? '') ?>
+				<?= esc($jadwal->tanggal_formatted ?? '') ?><br>
+				<?= esc($jadwal->jam_mulai_formatted ?? '') ?> - <?= esc($jadwal->jam_selesai_formatted ?? '') ?><br>
+				<?= esc($jadwal->keterangan ?? '') ?>
 			</p>
 		</div>
 		<div class="col-md-12">
@@ -75,13 +74,14 @@
 								<th>Babak</th>
 								<th>Sudut Biru</th>
 								<th>Sudut Merah</th>
+								<th>Pemenang</th>
 								<th>Status</th>
 								<th>Aksi</th>
 							</tr>
 						</thead>
 						<tbody>
 							<?php $i = 1; ?>
-							<?php foreach ($data_detail_jadwal_tanding ?? [] as $row) : ?>
+							<?php foreach ($partai ?? [] as $row) : ?>
 								<tr>
 									<td><?= $i++ ?></td>
 									<td><?= esc($row->nomor_partai ?? '') ?></td>
@@ -101,14 +101,30 @@
 									</td>
 									<td>
 										<?php
-										$status = $row->status ?? 'belum_dimulai';
+										$wp = '';
+										if ($row->status_pertandingan === 'selesai' && !empty($row->id_pemenang)) {
+											if ($row->id_pemenang == $row->id_atlet_merah) {
+												$wp = '<span class="badge bg-danger">Merah</span>';
+											} elseif ($row->id_pemenang == $row->id_atlet_biru) {
+												$wp = '<span class="badge bg-primary">Biru</span>';
+											}
+											if (!empty($row->jenis_kemenangan)) {
+												$wp .= ' <small class="text-muted">(' . esc($row->jenis_kemenangan) . ')</small>';
+											}
+										}
+										echo $wp ?: '<span class="text-muted">—</span>';
+										?>
+									</td>
+									<td>
+										<?php
+										$status = $row->status_pertandingan ?? 'belum_dimulai';
 										$badgeClass = match ($status) {
-											'sedang_berlangsung' => 'bg-success',
+											'berlangsung', 'standby' => 'bg-success',
 											'selesai' => 'bg-secondary',
 											default => 'bg-warning text-dark',
 										};
 										$statusLabel = match ($status) {
-											'sedang_berlangsung' => 'Berlangsung',
+											'berlangsung', 'standby' => 'Berlangsung',
 											'selesai' => 'Selesai',
 											default => 'Belum Dimulai',
 										};
@@ -116,21 +132,12 @@
 										<span class="badge <?= $badgeClass ?>"><?= $statusLabel ?></span>
 									</td>
 									<td>
-										<?php if ($status == 'belum_dimulai') : ?>
+										<?php if (in_array($status, ['belum_dimulai', 'selesai'])) : ?>
 											<a href="<?= base_url('sekretaris-pertandingan/mulai-pertandingan/' . ($row->id_pertandingan ?? '')) ?>"
-												class="btn btn-sm btn-primary">
-												Mulai
-											</a>
-										<?php elseif ($status == 'sedang_berlangsung') : ?>
+												class="btn btn-sm btn-primary">Mulai</a>
+										<?php elseif (in_array($status, ['berlangsung', 'standby', 'berhenti'])) : ?>
 											<a href="<?= base_url('sekretaris-pertandingan/timer-tanding') ?>"
-												class="btn btn-sm btn-success" target="_blank">
-												Timer
-											</a>
-										<?php elseif ($status == 'selesai') : ?>
-											<a href="<?= base_url('sekretaris-pertandingan/mulai-pertandingan/' . ($row->id_pertandingan ?? '')) ?>"
-												class="btn btn-sm btn-warning btn-sm">
-												Mulai Ulang
-											</a>
+												class="btn btn-sm btn-success" target="_blank">Timer</a>
 										<?php endif; ?>
 									</td>
 								</tr>
@@ -149,15 +156,8 @@
 $(document).ready(function() {
 	if ($('#tabelDetailJadwalTanding').length) {
 		$('#tabelDetailJadwalTanding').DataTable({
-			language: {
-				paginate: { next: ">", previous: "<" }
-			},
-			autoWidth: false,
-			paging: true,
-			searching: true,
-			ordering: true,
-			info: true,
-			responsive: true,
+			language: { paginate: { next: ">", previous: "<" } },
+			autoWidth: false, paging: true, searching: true, ordering: true, info: true, responsive: true,
 		});
 	}
 });

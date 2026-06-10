@@ -3,35 +3,55 @@
 namespace App\Controllers\Pertandingan;
 
 use App\Controllers\BaseController;
+use App\Models\BattleSeniModel;
+use App\Models\DetailJadwalSeniModel;
+use App\Models\DetailJadwalTandingModel;
+use App\Models\JadwalSeniModel;
+use App\Models\JadwalTandingModel;
+use App\Models\KelompokPesertaSeniModel;
+use App\Models\KompetisiSeniModel;
+use App\Models\KompetisiTandingModel;
+use App\Models\PenampilanSeniModel;
+use App\Models\PenilaianSeniModel;
 use App\Models\PenilaianTandingModel;
+use App\Models\PerangkatPertandinganModel;
 use App\Models\PertandinganModel;
+use App\Services\Scoring\Persilat\PersilatSeniService;
 use App\Services\Scoring\Persilat\PersilatTandingService;
 
-/**
- * Controller Sekretaris Pertandingan — kontrol alur partai & timer tanding PERSILAT.
- *
- * Parity legacy controllers/pertandingan/Sekretaris_pertandingan.php (subset tanding):
- * - index/home: dashboard jadwal tanding & seni di gelanggang aktif.
- * - jadwalTanding: detail jadwal tanding (daftar partai).
- * - timerTanding: tampilkan timer partai berlangsung atau standby+daftar partai.
- * - mulaiPertandingan: set partai ke 'standby' lalu masuk timer.
- * - toggleTimerTanding: simpan status + data_waktu (broadcast ke Layar via Socket.IO).
- * - pindahRondeTanding: ganti ronde aktif.
- * - selesaikanPertandingan: set pemenang + jenis kemenangan + status selesai.
- *
- * Scope: tanding PERSILAT. Seni & bracket-advancement di luar scope penilaian.
- */
 class SekretarisPertandingan extends BaseController
 {
     protected PertandinganModel $pertandinganModel;
     protected PenilaianTandingModel $penilaianModel;
-    protected PersilatTandingService $service;
+    protected PersilatTandingService $tandingService;
+    protected PersilatSeniService $seniService;
+    protected PenampilanSeniModel $penampilanSeniModel;
+    protected BattleSeniModel $battleSeniModel;
+    protected PenilaianSeniModel $penilaianSeniModel;
+    protected KelompokPesertaSeniModel $kelompokPesertaSeniModel;
+    protected KompetisiSeniModel $kompetisiSeniModel;
+    protected KompetisiTandingModel $kompetisiTandingModel;
+    protected JadwalTandingModel $jadwalTandingModel;
+    protected JadwalSeniModel $jadwalSeniModel;
+    protected DetailJadwalTandingModel $detailJadwalTandingModel;
+    protected DetailJadwalSeniModel $detailJadwalSeniModel;
 
     public function __construct()
     {
-        $this->pertandinganModel = new PertandinganModel();
-        $this->penilaianModel    = new PenilaianTandingModel();
-        $this->service           = new PersilatTandingService();
+        $this->pertandinganModel        = new PertandinganModel();
+        $this->penilaianModel           = new PenilaianTandingModel();
+        $this->tandingService           = new PersilatTandingService();
+        $this->seniService              = new PersilatSeniService();
+        $this->penampilanSeniModel      = new PenampilanSeniModel();
+        $this->battleSeniModel          = new BattleSeniModel();
+        $this->penilaianSeniModel       = new PenilaianSeniModel();
+        $this->kelompokPesertaSeniModel = new KelompokPesertaSeniModel();
+        $this->kompetisiSeniModel       = new KompetisiSeniModel();
+        $this->kompetisiTandingModel    = new KompetisiTandingModel();
+        $this->jadwalTandingModel       = new JadwalTandingModel();
+        $this->jadwalSeniModel          = new JadwalSeniModel();
+        $this->detailJadwalTandingModel = new DetailJadwalTandingModel();
+        $this->detailJadwalSeniModel    = new DetailJadwalSeniModel();
     }
 
     private function idGelanggang(): int
@@ -116,7 +136,8 @@ class SekretarisPertandingan extends BaseController
         $partai = $db->table('detail_jadwal_tanding')
             ->select('detail_jadwal_tanding.nomor_partai,
                 pertandingan.id_pertandingan, pertandingan.babak, pertandingan.status_pertandingan,
-                pertandingan.skor_merah, pertandingan.skor_biru, pertandingan.id_atlet_merah, pertandingan.id_atlet_biru, pertandingan.id_pemenang,
+                pertandingan.skor_merah, pertandingan.skor_biru, pertandingan.id_atlet_merah, pertandingan.id_atlet_biru,
+                pertandingan.id_pemenang, pertandingan.jenis_kemenangan,
                 kelas_tanding.label as nama_kelas,
                 kategori_usia.nama_kategori_usia, kategori_usia.jenis_kelamin,
                 pm.nama_pendaftar as nama_atlet_merah, km.nama_kontingen as nama_kontingen_merah,
@@ -200,13 +221,19 @@ class SekretarisPertandingan extends BaseController
         $battle = $db->table('detail_jadwal_seni djs')
             ->select('djs.id_detail_jadwal_seni, djs.nomor_partai, djs.id_battle_seni,
                 bs.babak, bs.id_penampilan_seni_biru, bs.id_penampilan_seni_merah, bs.id_penampilan_seni_pemenang,
+                psb.id_penampilan_seni as penampilan_biru_id, psm.id_penampilan_seni as penampilan_merah_id,
                 psb.status_penampilan as status_biru, psm.status_penampilan as status_merah,
+                kb.nama_kontingen as nama_kontingen_biru, km.nama_kontingen as nama_kontingen_merah,
                 ks.nomor_pool, sks.jenis_seni, sks.nama_seni, ku.nama_kategori_usia, ku.jenis_kelamin,
                 ' . $anggota('bs.id_penampilan_seni_biru') . ' as anggota_biru,
                 ' . $anggota('bs.id_penampilan_seni_merah') . ' as anggota_merah', false)
             ->join('battle_seni bs', 'bs.id_battle_seni = djs.id_battle_seni')
             ->join('penampilan_seni psb', 'psb.id_penampilan_seni = bs.id_penampilan_seni_biru', 'left')
             ->join('penampilan_seni psm', 'psm.id_penampilan_seni = bs.id_penampilan_seni_merah', 'left')
+            ->join('kelompok_peserta_seni kpsb', 'kpsb.id_kelompok_peserta_seni = psb.id_kelompok_peserta_seni', 'left')
+            ->join('kontingen kb', 'kb.id_kontingen = kpsb.id_kontingen', 'left')
+            ->join('kelompok_peserta_seni kpsm', 'kpsm.id_kelompok_peserta_seni = psm.id_kelompok_peserta_seni', 'left')
+            ->join('kontingen km', 'km.id_kontingen = kpsm.id_kontingen', 'left')
             ->join('kompetisi_seni ks', 'ks.id_kompetisi_seni = bs.id_kompetisi_seni')
             ->join('sub_kategori_seni sks', 'sks.id_sub_kategori_seni = ks.id_sub_kategori_seni')
             ->join('kategori_lomba kl', 'kl.id_kategori_lomba = sks.id_kategori_lomba')
@@ -285,15 +312,16 @@ class SekretarisPertandingan extends BaseController
         }
 
         return view('pertandingan/sekretaris/timer_tanding', [
-            'title'         => 'Timer Tanding',
-            'pertandingan'  => $pertandingan,
-            'data_waktu'    => $pertandingan->data_waktu ? json_decode($pertandingan->data_waktu) : null,
-            'atlet_merah'   => $this->pertandinganModel->getAtletPertandingan((int) $pertandingan->id_pertandingan, 'merah'),
-            'atlet_biru'    => $this->pertandinganModel->getAtletPertandingan((int) $pertandingan->id_pertandingan, 'biru'),
-            'daftar_partai' => $daftarPartai,
-            'partai_next'   => $this->pertandinganModel->getPartaiTetangga((int) $pertandingan->id_jadwal_tanding, (int) $pertandingan->nomor_partai, 'next'),
-            'partai_prev'   => $this->pertandinganModel->getPartaiTetangga((int) $pertandingan->id_jadwal_tanding, (int) $pertandingan->nomor_partai, 'prev'),
-            'nama_gelanggang' => session()->get('nama_gelanggang'),
+            'title'                  => 'Timer Tanding',
+            'pertandingan'           => $pertandingan,
+            'data_waktu'             => $pertandingan->data_waktu ? json_decode($pertandingan->data_waktu) : null,
+            'atlet_merah'            => $this->pertandinganModel->getAtletPertandingan((int) $pertandingan->id_pertandingan, 'merah'),
+            'atlet_biru'             => $this->pertandinganModel->getAtletPertandingan((int) $pertandingan->id_pertandingan, 'biru'),
+            'data_format_penilaian'  => $this->getFormatListTanding(),
+            'daftar_partai'          => $daftarPartai,
+            'partai_next'            => $this->pertandinganModel->getPartaiTetangga((int) $pertandingan->id_jadwal_tanding, (int) $pertandingan->nomor_partai, 'next'),
+            'partai_prev'            => $this->pertandinganModel->getPartaiTetangga((int) $pertandingan->id_jadwal_tanding, (int) $pertandingan->nomor_partai, 'prev'),
+            'nama_gelanggang'        => session()->get('nama_gelanggang'),
         ]);
     }
 
@@ -504,29 +532,66 @@ class SekretarisPertandingan extends BaseController
      */
     private function getPenampilanSeniAktif(?int $idGelanggang = null): ?object
     {
+        $idG = $idGelanggang ?? $this->idGelanggang();
         $db = \Config\Database::connect();
-        return $db->table('detail_jadwal_seni djs')
-            ->select('ps.id_penampilan_seni, ps.status_penampilan, ps.waktu_tampil, ps.nilai_akhir,
-                ps.diskualifikasi, ps.babak as babak_pool, ps.id_kelompok_peserta_seni,
-                djs.nomor_partai, djs.id_jadwal_seni, djs.id_battle_seni,
+
+        // Step 1: Cari penampilan pool yang aktif (punya detail_jadwal_seni entry)
+        $pool = $db->table('detail_jadwal_seni djs')
+            ->select('ps.*, djs.nomor_partai, djs.id_jadwal_seni,
                 kps.id_kompetisi_seni, kps.id_kontingen,
                 k.nama_kontingen, ks.nomor_pool,
                 sks.jenis_seni, sks.nama_seni, sks.sistem_penampilan, sks.id_sub_kategori_seni,
                 sks.format_penilaian as format_penilaian_sks,
                 ku.nama_kategori_usia, ku.jenis_kelamin,
-                js.id_gelanggang')
+                js.id_gelanggang, g.nama_gelanggang')
             ->join('penampilan_seni ps', 'ps.id_penampilan_seni = djs.id_penampilan_seni')
             ->join('kelompok_peserta_seni kps', 'kps.id_kelompok_peserta_seni = ps.id_kelompok_peserta_seni')
-            ->join('kontingen k', 'k.id_kontingen = kps.id_kontingen')
+            ->join('kontingen k', 'k.id_kontingen = kps.id_kontingen', 'left')
             ->join('kompetisi_seni ks', 'ks.id_kompetisi_seni = kps.id_kompetisi_seni')
             ->join('sub_kategori_seni sks', 'sks.id_sub_kategori_seni = ks.id_sub_kategori_seni')
             ->join('kategori_lomba kl', 'kl.id_kategori_lomba = sks.id_kategori_lomba')
             ->join('kategori_usia ku', 'ku.id_kategori_usia = kl.id_kategori_usia')
             ->join('jadwal_seni js', 'js.id_jadwal_seni = djs.id_jadwal_seni')
-            ->where('js.id_gelanggang', $idGelanggang ?? $this->idGelanggang())
+            ->join('gelanggang g', 'g.id_gelanggang = js.id_gelanggang')
+            ->where('js.id_gelanggang', $idG)
             ->where('djs.id_penampilan_seni IS NOT NULL')
             ->whereNotIn('ps.status_penampilan', ['belum_tampil', 'sudah_tampil'])
             ->get()->getRow();
+
+        if ($pool !== null) {
+            $pool->id_battle_seni = null;
+            return $pool;
+        }
+
+        // Step 2: Cari penampilan battle yang aktif (via battle_seni)
+        $battle = $db->table('battle_seni bs')
+            ->select('ps.*, djs.nomor_partai, djs.id_jadwal_seni, bs.id_battle_seni,
+                kps.id_kompetisi_seni, kps.id_kontingen,
+                k.nama_kontingen, ks.nomor_pool,
+                sks.jenis_seni, sks.nama_seni, sks.sistem_penampilan, sks.id_sub_kategori_seni,
+                sks.format_penilaian as format_penilaian_sks,
+                ku.nama_kategori_usia, ku.jenis_kelamin,
+                js.id_gelanggang, g.nama_gelanggang')
+            ->join('detail_jadwal_seni djs', 'djs.id_battle_seni = bs.id_battle_seni')
+            ->join('jadwal_seni js', 'js.id_jadwal_seni = djs.id_jadwal_seni')
+            ->join('gelanggang g', 'g.id_gelanggang = js.id_gelanggang')
+            ->groupStart()
+                ->join('penampilan_seni ps', 'ps.id_penampilan_seni = bs.id_penampilan_seni_biru')
+                ->orGroupStart()
+                    ->join('penampilan_seni ps', 'ps.id_penampilan_seni = bs.id_penampilan_seni_merah')
+                ->groupEnd()
+            ->groupEnd()
+            ->join('kelompok_peserta_seni kps', 'kps.id_kelompok_peserta_seni = ps.id_kelompok_peserta_seni')
+            ->join('kontingen k', 'k.id_kontingen = kps.id_kontingen', 'left')
+            ->join('kompetisi_seni ks', 'ks.id_kompetisi_seni = kps.id_kompetisi_seni')
+            ->join('sub_kategori_seni sks', 'sks.id_sub_kategori_seni = ks.id_sub_kategori_seni')
+            ->join('kategori_lomba kl', 'kl.id_kategori_lomba = sks.id_kategori_lomba')
+            ->join('kategori_usia ku', 'ku.id_kategori_usia = kl.id_kategori_usia')
+            ->where('js.id_gelanggang', $idG)
+            ->whereNotIn('ps.status_penampilan', ['belum_tampil', 'sudah_tampil'])
+            ->get()->getRow();
+
+        return $battle;
     }
 
     /**
@@ -535,12 +600,15 @@ class SekretarisPertandingan extends BaseController
     private function getDaftarSeniGelanggang(): array
     {
         $db = \Config\Database::connect();
-        return $db->table('detail_jadwal_seni djs')
-            ->select('djs.id_detail_jadwal_seni, djs.nomor_partai, djs.id_penampilan_seni, djs.id_battle_seni,
-                ps.id_penampilan_seni as ps_id, ps.status_penampilan, ps.nilai_akhir, ps.diskualifikasi,
+        $idG = $this->idGelanggang();
+
+        // Pool entries (id_penampilan_seni IS NOT NULL)
+        $pool = $db->table('detail_jadwal_seni djs')
+            ->select('djs.nomor_partai, djs.id_detail_jadwal_seni, djs.id_penampilan_seni, djs.id_battle_seni,
+                ps.status_penampilan, ps.nilai_akhir, ps.diskualifikasi,
                 k.nama_kontingen, sks.jenis_seni, sks.nama_seni, sks.sistem_penampilan,
                 ku.nama_kategori_usia, ku.jenis_kelamin')
-            ->join('penampilan_seni ps', 'ps.id_penampilan_seni = djs.id_penampilan_seni', 'left')
+            ->join('penampilan_seni ps', 'ps.id_penampilan_seni = djs.id_penampilan_seni')
             ->join('kelompok_peserta_seni kps', 'kps.id_kelompok_peserta_seni = ps.id_kelompok_peserta_seni', 'left')
             ->join('kontingen k', 'k.id_kontingen = kps.id_kontingen', 'left')
             ->join('kompetisi_seni ks', 'ks.id_kompetisi_seni = kps.id_kompetisi_seni', 'left')
@@ -548,10 +616,56 @@ class SekretarisPertandingan extends BaseController
             ->join('kategori_lomba kl', 'kl.id_kategori_lomba = sks.id_kategori_lomba', 'left')
             ->join('kategori_usia ku', 'ku.id_kategori_usia = kl.id_kategori_usia', 'left')
             ->join('jadwal_seni js', 'js.id_jadwal_seni = djs.id_jadwal_seni')
-            ->where('js.id_gelanggang', $this->idGelanggang())
+            ->where('js.id_gelanggang', $idG)
             ->where('djs.id_penampilan_seni IS NOT NULL')
             ->orderBy('djs.nomor_partai * 1', 'ASC', false)
             ->get()->getResult();
+
+        // Battle entries — include both biru and merah penampilan as separate rows for jump-to-match
+        $battle = $db->table('detail_jadwal_seni djs')
+            ->select('djs.nomor_partai, djs.id_detail_jadwal_seni, djs.id_battle_seni,
+                bs.id_penampilan_seni_biru as id_penampilan_seni,
+                psb.status_penampilan, psb.nilai_akhir, psb.diskualifikasi,
+                kb.nama_kontingen, sks.jenis_seni, sks.nama_seni, sks.sistem_penampilan,
+                ku.nama_kategori_usia, ku.jenis_kelamin')
+            ->join('battle_seni bs', 'bs.id_battle_seni = djs.id_battle_seni')
+            ->join('penampilan_seni psb', 'psb.id_penampilan_seni = bs.id_penampilan_seni_biru', 'left')
+            ->join('kelompok_peserta_seni kpsb', 'kpsb.id_kelompok_peserta_seni = psb.id_kelompok_peserta_seni', 'left')
+            ->join('kontingen kb', 'kb.id_kontingen = kpsb.id_kontingen', 'left')
+            ->join('kompetisi_seni ks', 'ks.id_kompetisi_seni = kpsb.id_kompetisi_seni', 'left')
+            ->join('sub_kategori_seni sks', 'sks.id_sub_kategori_seni = ks.id_sub_kategori_seni', 'left')
+            ->join('kategori_lomba kl', 'kl.id_kategori_lomba = sks.id_kategori_lomba', 'left')
+            ->join('kategori_usia ku', 'ku.id_kategori_usia = kl.id_kategori_usia', 'left')
+            ->join('jadwal_seni js', 'js.id_jadwal_seni = djs.id_jadwal_seni')
+            ->where('js.id_gelanggang', $idG)
+            ->where('djs.id_battle_seni IS NOT NULL')
+            ->where('bs.id_penampilan_seni_biru IS NOT NULL')
+            ->orderBy('djs.nomor_partai * 1', 'ASC', false)
+            ->get()->getResult();
+
+        // Also get battle merah entries
+        $battleMerah = $db->table('detail_jadwal_seni djs')
+            ->select('djs.nomor_partai, djs.id_detail_jadwal_seni, djs.id_battle_seni,
+                bs.id_penampilan_seni_merah as id_penampilan_seni,
+                psm.status_penampilan, psm.nilai_akhir, psm.diskualifikasi,
+                km.nama_kontingen, sks.jenis_seni, sks.nama_seni, sks.sistem_penampilan,
+                ku.nama_kategori_usia, ku.jenis_kelamin')
+            ->join('battle_seni bs', 'bs.id_battle_seni = djs.id_battle_seni')
+            ->join('penampilan_seni psm', 'psm.id_penampilan_seni = bs.id_penampilan_seni_merah', 'left')
+            ->join('kelompok_peserta_seni kpsm', 'kpsm.id_kelompok_peserta_seni = psm.id_kelompok_peserta_seni', 'left')
+            ->join('kontingen km', 'km.id_kontingen = kpsm.id_kontingen', 'left')
+            ->join('kompetisi_seni ks', 'ks.id_kompetisi_seni = kpsm.id_kompetisi_seni', 'left')
+            ->join('sub_kategori_seni sks', 'sks.id_sub_kategori_seni = ks.id_sub_kategori_seni', 'left')
+            ->join('kategori_lomba kl', 'kl.id_kategori_lomba = sks.id_kategori_lomba', 'left')
+            ->join('kategori_usia ku', 'ku.id_kategori_usia = kl.id_kategori_usia', 'left')
+            ->join('jadwal_seni js', 'js.id_jadwal_seni = djs.id_jadwal_seni')
+            ->where('js.id_gelanggang', $idG)
+            ->where('djs.id_battle_seni IS NOT NULL')
+            ->where('bs.id_penampilan_seni_merah IS NOT NULL')
+            ->orderBy('djs.nomor_partai * 1', 'ASC', false)
+            ->get()->getResult();
+
+        return array_merge($pool, $battle, $battleMerah);
     }
 
     /**
@@ -562,8 +676,8 @@ class SekretarisPertandingan extends BaseController
         $db = \Config\Database::connect();
         return $db->table('peserta_seni')
             ->select('peserta_seni.id_peserta_seni, pendaftar.nama_pendaftar, kontingen.nama_kontingen')
-            ->join('pendaftar', 'pendaftar.id_pendaftar = peserta_seni.id_pendaftar')
-            ->join('kontingen', 'kontingen.id_kontingen = pendaftar.id_kontingen')
+            ->join('pendaftar', 'pendaftar.id_pendaftar = peserta_seni.id_pendaftar', 'left')
+            ->join('kontingen', 'kontingen.id_kontingen = pendaftar.id_kontingen', 'left')
             ->where('peserta_seni.id_kelompok_peserta_seni', $idKelompokPesertaSeni)
             ->get()->getResult();
     }
@@ -764,26 +878,38 @@ class SekretarisPertandingan extends BaseController
      */
     private function hitungNilaiAkhirSeni(int $idPenampilanSeni): string
     {
-        $db = \Config\Database::connect();
-        $penilaian = $db->table('penilaian_seni')
-            ->where('id_penampilan_seni', $idPenampilanSeni)
-            ->where('terpilih', 1)
-            ->get()->getResult();
+        $penilaianJuri = $this->penilaianSeniModel->getByPenampilan($idPenampilanSeni);
 
-        if (empty($penilaian)) {
+        if (empty($penilaianJuri)) {
             return '0';
         }
 
-        $total = 0;
-        $count = 0;
-        foreach ($penilaian as $row) {
-            if ($row->nilai_akhir_per_juri !== null && $row->nilai_akhir_per_juri !== '') {
-                $total += (float) $row->nilai_akhir_per_juri;
-                $count++;
-            }
+        $result = $this->seniService->hitungNilaiAkhir($penilaianJuri);
+
+        // Update terpilih flags di database
+        $db = \Config\Database::connect();
+        $db->table('penilaian_seni')
+            ->where('id_penampilan_seni', $idPenampilanSeni)
+            ->update(['terpilih' => 0]);
+
+        foreach ($result['terpilih_ids'] as $ppId) {
+            $db->table('penilaian_seni')
+                ->where('id_penampilan_seni', $idPenampilanSeni)
+                ->where('id_perangkat_pertandingan', $ppId)
+                ->update(['terpilih' => 1]);
         }
 
-        return $count > 0 ? number_format($total / $count, 3, '.', '') : '0';
+        // Save catatan_nilai_sama (median, hukuman, standar_deviasi)
+        $db->table('penampilan_seni')
+            ->where('id_penampilan_seni', $idPenampilanSeni)
+            ->update(['catatan_nilai_sama' => json_encode([
+                'median'           => $result['median'],
+                'hukuman'          => $result['hukuman'],
+                'standar_deviasi'  => $result['standar_deviasi'],
+                'nilai_akhir'      => $result['nilai_akhir'],
+            ])]);
+
+        return number_format($result['nilai_akhir'], 3, '.', '');
     }
 
     /**
@@ -795,7 +921,6 @@ class SekretarisPertandingan extends BaseController
         $idPemenang = (int) $this->request->getPost('id_penampilan_seni_pemenang');
         $jenisKemenangan = (string) ($this->request->getPost('jenis_kemenangan') ?: 'poin');
 
-        // Cari battle berdasarkan salah satu sisi
         $battle = $db->table('battle_seni')
             ->where('id_penampilan_seni_biru', $idPenampilanSeni)
             ->orWhere('id_penampilan_seni_merah', $idPenampilanSeni)
@@ -805,30 +930,7 @@ class SekretarisPertandingan extends BaseController
             return $this->response->setJSON(['status' => false, 'message' => 'Battle tidak ditemukan.']);
         }
 
-        // Update pemenang battle
-        $db->table('battle_seni')->where('id_battle_seni', (int) $battle->id_battle_seni)
-            ->update([
-                'id_penampilan_seni_pemenang' => $idPemenang,
-                'jenis_kemenangan'            => $jenisKemenangan,
-            ]);
-
-        // Advance bracket: isi slot di battle selanjutnya jika ada
-        if ($battle->nomor_battle_selanjutnya) {
-            $nextBattle = $db->table('battle_seni')
-                ->where('id_kompetisi_seni', (int) $battle->id_kompetisi_seni)
-                ->where('nomor_battle', (int) $battle->nomor_battle_selanjutnya)
-                ->get()->getRow();
-            if ($nextBattle) {
-                // Pemenang masuk ke slot yang kosong (biru dulu, lalu merah)
-                if ($nextBattle->id_penampilan_seni_biru === null) {
-                    $db->table('battle_seni')->where('id_battle_seni', (int) $nextBattle->id_battle_seni)
-                        ->update(['id_penampilan_seni_biru' => $idPemenang]);
-                } elseif ($nextBattle->id_penampilan_seni_merah === null) {
-                    $db->table('battle_seni')->where('id_battle_seni', (int) $nextBattle->id_battle_seni)
-                        ->update(['id_penampilan_seni_merah' => $idPemenang]);
-                }
-            }
-        }
+        $this->battleSeniModel->setPemenang((int) $battle->id_battle_seni, $idPemenang, $jenisKemenangan);
 
         return $this->response
             ->setHeader('X-CSRF-TOKEN', csrf_hash())
@@ -861,15 +963,10 @@ class SekretarisPertandingan extends BaseController
      */
     public function diskualifikasiPenampilanSeni(int $idPenampilanSeni)
     {
-        $db = \Config\Database::connect();
-        $db->table('penampilan_seni')->where('id_penampilan_seni', $idPenampilanSeni)
-            ->update([
-                'nilai_akhir'       => '0',
-                'diskualifikasi'    => 1,
-                'status_penampilan' => 'sudah_tampil',
-            ]);
+        $this->penampilanSeniModel->diskualifikasi($idPenampilanSeni);
 
-        // Cek apakah semua pool sudah selesai
+        $db = \Config\Database::connect();
+
         $penampilan = $db->table('penampilan_seni ps')
             ->select('kps.id_kompetisi_seni')
             ->join('kelompok_peserta_seni kps', 'kps.id_kelompok_peserta_seni = ps.id_kelompok_peserta_seni')
@@ -898,13 +995,8 @@ class SekretarisPertandingan extends BaseController
     {
         $nilaiAkhir = $this->hitungNilaiAkhirSeni($idPenampilanSeni);
 
-        $db = \Config\Database::connect();
-        $db->table('penampilan_seni')->where('id_penampilan_seni', $idPenampilanSeni)
-            ->update([
-                'nilai_akhir'       => $nilaiAkhir,
-                'diskualifikasi'    => 0,
-                'status_penampilan' => 'standby',
-            ]);
+        $this->penampilanSeniModel->batalkanDiskualifikasi($idPenampilanSeni);
+        $this->penampilanSeniModel->update($idPenampilanSeni, ['nilai_akhir' => $nilaiAkhir]);
 
         return $this->response
             ->setHeader('X-CSRF-TOKEN', csrf_hash())
@@ -1299,21 +1391,14 @@ class SekretarisPertandingan extends BaseController
 
         // Untuk setiap target: hapus penilaian lama, buat ulang
         foreach ($targetPenampilan as $targetId) {
-            $db->table('penilaian_seni')->where('id_penampilan_seni', $targetId)->delete();
+            $this->penilaianSeniModel->hapusByPenampilan($targetId);
 
             foreach ($daftarJuri as $idx => $juri) {
                 if ($idx >= $jumlahJuri) break;
-                $db->table('penilaian_seni')->insert([
-                    'id_penampilan_seni'       => $targetId,
-                    'id_perangkat_pertandingan' => (int) $juri->id_perangkat_pertandingan,
-                    'penilaian'                => $formatJson,
-                    'terpilih'                 => 1,
-                ]);
+                $this->penilaianSeniModel->buatPenilaian($targetId, (int) $juri->id_perangkat_pertandingan, $formatJson);
             }
 
-            // Reset nilai akhir
-            $db->table('penampilan_seni')->where('id_penampilan_seni', $targetId)
-                ->update(['nilai_akhir' => '0']);
+            $this->penampilanSeniModel->update($targetId, ['nilai_akhir' => '0']);
         }
 
         return $this->response
@@ -1326,25 +1411,21 @@ class SekretarisPertandingan extends BaseController
      */
     private function getFormatListSeni(): array
     {
-        $basePath = FCPATH . 'assets/penilaian/format-penilaian/seni/';
+        $basePath = FCPATH . 'assets/penilaian/format-penilaian/seni/persilat/';
         if (! is_dir($basePath)) return [];
 
         $list = [];
-        $systems = array_filter(glob($basePath . '*'), 'is_dir');
-        foreach ($systems as $systemPath) {
-            $system = basename($systemPath);
-            $jenisDirs = array_filter(glob($systemPath . '/*'), 'is_dir');
-            foreach ($jenisDirs as $jenisPath) {
-                $jenis = basename($jenisPath);
-                $files = glob($jenisPath . '/*.json');
-                foreach ($files as $file) {
-                    $filename = basename($file);
-                    $label = ucwords(str_replace('_', ' ', pathinfo($filename, PATHINFO_FILENAME)));
-                    $list[] = [
-                        'value' => $system . '/' . $jenis . '/' . $filename,
-                        'label' => $label . ' (' . ucwords(str_replace('_', ' ', $system)) . ' ' . ucwords(str_replace('_', ' ', $jenis)) . ')',
-                    ];
-                }
+        $jenisDirs = array_filter(glob($basePath . '*'), 'is_dir');
+        foreach ($jenisDirs as $jenisPath) {
+            $jenis = basename($jenisPath);
+            $files = glob($jenisPath . '/*.json');
+            foreach ($files as $file) {
+                $filename = basename($file);
+                $label = ucwords(str_replace('_', ' ', pathinfo($filename, PATHINFO_FILENAME)));
+                $list[] = [
+                    'value' => 'persilat/' . $jenis . '/' . $filename,
+                    'label' => $label . ' (PERSILAT ' . ucwords(str_replace('_', ' ', $jenis)) . ')',
+                ];
             }
         }
         return $list;
@@ -1493,5 +1574,19 @@ class SekretarisPertandingan extends BaseController
         }
 
         return compact('kebenaran', 'kemantapan', 'hukuman', 'total');
+    }
+
+    private function getFormatListTanding(): array
+    {
+        $basePath = FCPATH . 'assets/penilaian/format-penilaian/tanding/';
+        if (! is_dir($basePath)) return [];
+
+        $list = [];
+        $files = glob($basePath . '*.json');
+        foreach ($files as $file) {
+            $filename = basename($file);
+            $list[] = $filename;
+        }
+        return $list;
     }
 }

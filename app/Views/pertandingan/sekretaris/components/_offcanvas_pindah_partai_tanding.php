@@ -30,7 +30,7 @@
 						</tr>
 					</thead>
 					<tbody>
-						<?php foreach ($data_detail_jadwal_tanding ?? [] as $row) : ?>
+						<?php foreach ($daftar_partai ?? [] as $row) : ?>
 							<tr>
 								<td><?= esc($row->nomor_partai ?? '') ?></td>
 								<td><?= esc($row->nama_kelas ?? '') ?></td>
@@ -39,14 +39,14 @@
 								<td><?= esc($row->nama_atlet_merah ?? '-') ?></td>
 								<td>
 									<?php
-									$status = $row->status ?? 'belum_dimulai';
+									$status = $row->status_pertandingan ?? 'belum_dimulai';
 									$badgeClass = match ($status) {
-										'sedang_berlangsung' => 'bg-success',
+										'berlangsung', 'standby', 'berhenti' => 'bg-success',
 										'selesai' => 'bg-secondary',
 										default => 'bg-warning text-dark',
 									};
 									$statusLabel = match ($status) {
-										'sedang_berlangsung' => 'Berlangsung',
+										'berlangsung', 'standby', 'berhenti' => 'Berlangsung',
 										'selesai' => 'Selesai',
 										default => 'Belum Dimulai',
 									};

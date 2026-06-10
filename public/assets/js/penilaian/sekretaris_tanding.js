@@ -16,14 +16,14 @@ const sekretaris_pertandingan = {
 	 */
 	init: function(pertandingan, waktu_pertandingan) {
 		this.pertandingan = pertandingan;
-		this.waktu_pertandingan = waktu_pertandingan || (pertandingan.durasi_ronde || 120);
-		this.ronde_aktif = pertandingan.ronde || 1;
+		this.waktu_pertandingan = waktu_pertandingan || (pertandingan.waktu_per_ronde || 120);
+		this.ronde_aktif = pertandingan.ronde_pertandingan || 1;
 
 		// Init shared timer (countdown mode for tanding)
 		shared_timer.init({
 			countdown: true,
 			seconds: this.waktu_pertandingan,
-			max_seconds: pertandingan.durasi_ronde || 120,
+			max_seconds: pertandingan.waktu_per_ronde || 120,
 			on_tick: this._on_tick.bind(this),
 			on_finish: this._on_ronde_finish.bind(this),
 		});

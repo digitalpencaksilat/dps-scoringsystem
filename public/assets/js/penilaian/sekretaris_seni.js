@@ -17,7 +17,7 @@ const sekretaris_pertandingan = {
 	init: function(penampilan_seni, waktu_tampil) {
 		this.penampilan_seni = penampilan_seni;
 		this.waktu_tampil = waktu_tampil || 0;
-		this.mode = penampilan_seni.sistem_pertandingan === 'battle' ? 'battle' : 'pool';
+		this.mode = penampilan_seni.sistem_penampilan === 'battle' ? 'battle' : 'pool';
 
 		// Init shared timer (countup mode for seni)
 		shared_timer.init({

@@ -57,24 +57,24 @@
 	<div class="row mb-3 g-2 g-md-3 block-informasi justify-content-center">
 		<div class="col-auto opacity">
 			<div class="px-4 py-3 bg-navbar rounded text-white text-center shadow-sm h-100 d-flex align-items-center">
-				<span class="fs-4 fs-md-3 fw-bold"><?= esc($partai_seni_berlangsung->nama_gelanggang ?? '') ?></span>
+				<span class="fs-4 fs-md-3 fw-bold"><?= esc($penampilan->nama_gelanggang ?? '') ?></span>
 			</div>
 		</div>
 		<div class="col-auto opacity">
 			<div class="px-4 py-3 bg-navbar rounded text-white text-center shadow-sm h-100 d-flex align-items-center">
-				<span class="fs-4 fs-md-3 fw-bold">Partai <?= esc($partai_seni_berlangsung->nomor_partai ?? '') ?></span>
+				<span class="fs-4 fs-md-3 fw-bold">Partai <?= esc($penampilan->nomor_partai ?? '') ?></span>
 			</div>
 		</div>
 		<div class="col-auto opacity flex-fill">
 			<div class="px-4 py-3 bg-navbar rounded text-white text-center shadow-sm h-100 d-flex align-items-center justify-content-center">
 				<span class="fs-5 fw-bold text-wrap text-capitalize">
-					<?= esc(($penampilan_seni_berlangsung->nama_kategori_usia ?? '') . ' ' . ($penampilan_seni_berlangsung->jenis_kelamin ?? '') . ' ' . ucwords($penampilan_seni_berlangsung->jenis_seni ?? '') . ' ' . ($penampilan_seni_berlangsung->nama_seni ?? '') . ' Pool ' . ($penampilan_seni_berlangsung->nomor_pool ?? '')) ?>
+					<?= esc(($penampilan->nama_kategori_usia ?? '') . ' ' . ($penampilan->jenis_kelamin ?? '') . ' ' . ucwords($penampilan->jenis_seni ?? '') . ' ' . ($penampilan->nama_seni ?? '') . ' Pool ' . ($penampilan->nomor_pool ?? '')) ?>
 				</span>
 			</div>
 		</div>
 		<div class="col-auto opacity">
 			<div class="px-4 py-3 bg-navbar rounded text-white text-center shadow-sm h-100 d-flex align-items-center">
-				<span class="fs-4 fs-md-3 fw-bold"><?= esc(ucwords($penampilan_seni_berlangsung->babak ?? '')) ?></span>
+				<span class="fs-4 fs-md-3 fw-bold"><?= esc(ucwords($penampilan->babak ?? '')) ?></span>
 			</div>
 		</div>
 	</div>
@@ -83,11 +83,11 @@
 	<div class="row mb-3 block-atlet">
 		<div class="col-12 opacity">
 			<div class="bg-warning bg-gradient rounded shadow-sm py-4 text-white text-center overflow-hidden h-100 d-flex flex-column justify-content-center">
-				<?php if (!empty($peserta_seni)) : ?>
-					<?php foreach ($peserta_seni as $peserta) : ?>
+				<?php if (!empty($anggota)) : ?>
+					<?php foreach ($anggota as $peserta) : ?>
 						<span class="display-5 fw-bolder text-truncate"><?= esc($peserta->nama_pendaftar ?? '') ?></span>
 					<?php endforeach; ?>
-					<span class="fs-3 mt-1 text-truncate"><?= esc($peserta_seni[0]->nama_kontingen ?? '') ?></span>
+					<span class="fs-3 mt-1 text-truncate"><?= esc($anggota[0]->nama_kontingen ?? '') ?></span>
 				<?php endif; ?>
 			</div>
 		</div>
@@ -132,8 +132,8 @@
 						<button class="btn w-100 h-100 btn-lg bg-white text-dark btn_selesai fw-bold fs-4 py-3 shadow-sm text-uppercase" onclick="sekretaris_pertandingan.selesai_penampilan()">End Turn</button>
 					</div>
 					<div class="col-4">
-						<button <?= (($penampilan_seni_berlangsung->diskualifikasi ?? 0) == 1) ? '' : 'style="display:none;"' ?> class="btn btn-info text-white w-100 h-100 btn-lg fw-bold fs-5 py-3 shadow-sm text-uppercase btn-batal-diskualifikasi" onclick="sekretaris_pertandingan.batalkan_diskualifikasi_peserta()">Cancel Disq.</button>
-						<button <?= (($penampilan_seni_berlangsung->diskualifikasi ?? 0) == 0) ? '' : 'style="display:none;"' ?> class="btn btn-danger text-white w-100 h-100 btn-lg fw-bold fs-5 py-3 shadow-sm text-uppercase btn-diskualifikasi" onclick="sekretaris_pertandingan.diskualifikasi_peserta()">Disqualify</button>
+						<button <?= (($penampilan->diskualifikasi ?? 0) == 1) ? '' : 'style="display:none;"' ?> class="btn btn-info text-white w-100 h-100 btn-lg fw-bold fs-5 py-3 shadow-sm text-uppercase btn-batal-diskualifikasi" onclick="sekretaris_pertandingan.batalkan_diskualifikasi_peserta()">Cancel Disq.</button>
+						<button <?= (($penampilan->diskualifikasi ?? 0) == 0) ? '' : 'style="display:none;"' ?> class="btn btn-danger text-white w-100 h-100 btn-lg fw-bold fs-5 py-3 shadow-sm text-uppercase btn-diskualifikasi" onclick="sekretaris_pertandingan.diskualifikasi_peserta()">Disqualify</button>
 					</div>
 				</div>
 			</div>
@@ -155,12 +155,12 @@
 			</div>
 			<div class="row">
 				<div class="col-12 col-md-6">
-					<button class="btn bg-light bg-gradient h4 w-100 py-3" onclick="sekretaris_pertandingan.pindah_partai(<?= ($partai_seni_berlangsung->nomor_partai ?? 1) - 1 ?>)">
+					<button class="btn bg-light bg-gradient h4 w-100 py-3" onclick="sekretaris_pertandingan.pindah_partai(<?= ($penampilan->nomor_partai ?? 1) - 1 ?>)">
 						Previous Match
 					</button>
 				</div>
 				<div class="col-12 col-md-6">
-					<button class="btn bg-light bg-gradient h4 w-100 py-3" onclick="sekretaris_pertandingan.pindah_partai(<?= ($partai_seni_berlangsung->nomor_partai ?? 1) + 1 ?>)">
+					<button class="btn bg-light bg-gradient h4 w-100 py-3" onclick="sekretaris_pertandingan.pindah_partai(<?= ($penampilan->nomor_partai ?? 1) + 1 ?>)">
 						Next Match
 					</button>
 				</div>
@@ -289,7 +289,7 @@
 			</div>
 			<div class="modal-body">
 				<form action="<?= base_url('sekretaris-pertandingan/input-manual-juara-seni') ?>" method="post" id="formJenisMedali">
-					<input type="hidden" name="id_penampilan_seni" value="<?= esc($penampilan_seni_berlangsung->id_penampilan_seni ?? '') ?>">
+					<input type="hidden" name="id_penampilan_seni" value="<?= esc($penampilan->id_penampilan_seni ?? '') ?>">
 					<table class="table table-striped" id="tabelInputJuara">
 						<thead>
 							<tr>
@@ -364,7 +364,7 @@
 <div class="modal fade" id="modal_ganti_format_penilaian" tabindex="-1">
 	<div class="modal-dialog modal-lg">
 		<div class="modal-content">
-			<form id="formGantiFormatPenilaian" method="POST" action="<?= base_url('sekretaris-pertandingan/ganti-format-penilaian-seni/' . ($penampilan_seni_berlangsung->id_penampilan_seni ?? '')) ?>">
+			<form id="formGantiFormatPenilaian" method="POST" action="<?= base_url('sekretaris-pertandingan/ganti-format-penilaian-seni/' . ($penampilan->id_penampilan_seni ?? '')) ?>">
 				<div class="modal-header">
 					<h4 class="modal-title">Ganti Format Penilaian</h4>
 					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -401,7 +401,7 @@
 							<input class="form-check-input" type="radio" name="mode" value="sub_kategori_seni_ini" id="mode_pool_subkategori">
 							<label class="form-check-label" for="mode_pool_subkategori">
 								Change for this whole category
-								(<?= esc(($penampilan_seni_berlangsung->jenis_seni ?? '') . ' ' . ($penampilan_seni_berlangsung->jenis_kelamin ?? '') . ' ' . ($penampilan_seni_berlangsung->nama_seni ?? '') . ' - ' . ($penampilan_seni_berlangsung->nama_kategori_usia ?? '')) ?>)
+								(<?= esc(($penampilan->jenis_seni ?? '') . ' ' . ($penampilan->jenis_kelamin ?? '') . ' ' . ($penampilan->nama_seni ?? '') . ' - ' . ($penampilan->nama_kategori_usia ?? '')) ?>)
 							</label>
 						</div>
 					</div>
@@ -421,8 +421,8 @@
 <script src="<?= base_url('assets/js/penilaian/sekretaris_seni.js') ?>"></script>
 <script>
 $(document).ready(function() {
-	const penampilan_seni_berlangsung = <?= json_encode($penampilan_seni_berlangsung ?? new stdClass()) ?>;
-	const waktu_tampil = <?= json_encode($waktu_tampil ?? 0) ?>;
+	const penampilan_seni_berlangsung = <?= json_encode($penampilan ?? new stdClass()) ?>;
+	const waktu_tampil = <?= json_encode($penampilan->waktu_tampil ?? 0) ?>;
 	sekretaris_pertandingan.init(penampilan_seni_berlangsung, waktu_tampil);
 
 	ui.animateIn();

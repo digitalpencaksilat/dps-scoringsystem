@@ -22,11 +22,23 @@
 /* ==========================================================================
    Athlete Cards
    ========================================================================== */
-.block-atlet .bg-blue {
+.card-atlet {
+	border-radius: 1rem;
+	transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-atlet:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.block-atlet .bg-blue,
+.card-atlet.bg-blue {
 	background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%) !important;
 }
 
-.block-atlet .bg-red {
+.block-atlet .bg-red,
+.card-atlet.bg-red {
 	background: linear-gradient(135deg, #c62828 0%, #b71c1c 100%) !important;
 }
 
@@ -43,7 +55,26 @@
 .skor-biru,
 .skor-merah {
 	font-family: 'Oswald', monospace;
+	font-size: clamp(2.5rem, 6vw, 4.5rem);
 	text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* ==========================================================================
+   Timer Display
+   ========================================================================== */
+.timer-tanding,
+.timer-seni {
+	font-family: 'Oswald', monospace;
+	text-shadow: 0 0 20px rgba(255, 255, 255, 0.15);
+}
+
+.timer-separator {
+	animation: blink-separator 1s step-end infinite;
+}
+
+@keyframes blink-separator {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0.3; }
 }
 
 /* ==========================================================================
@@ -184,6 +215,31 @@
 	.block-informasi .fs-4,
 	.block-informasi .fs-5 {
 		font-size: 0.85rem !important;
+	}
+
+	.card-atlet .fs-2 {
+		font-size: 1.2rem !important;
+	}
+
+	.card-atlet .fs-5 {
+		font-size: 0.8rem !important;
+	}
+
+	.skor-biru,
+	.skor-merah {
+		font-size: 2rem !important;
+	}
+
+	.timer-tanding,
+	.timer-seni {
+		font-size: clamp(3rem, 12vw, 6rem) !important;
+		margin-top: 0.5rem !important;
+		margin-bottom: 0.5rem !important;
+	}
+
+	.block-kendali-waktu .btn {
+		padding: 0.5rem !important;
+		font-size: 0.8rem !important;
 	}
 }
 

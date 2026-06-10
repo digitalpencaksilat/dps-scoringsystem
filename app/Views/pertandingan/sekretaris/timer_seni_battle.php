@@ -52,7 +52,7 @@
 
 <?= $this->section('content') ?>
 <?php
-	$is_biru_active = (($partai_seni_berlangsung->id_penampilan_seni_biru ?? '') == ($penampilan_seni_berlangsung->id_penampilan_seni ?? ''));
+	$is_biru_active = (($battle->id_penampilan_seni_biru ?? '') == ($penampilan->id_penampilan_seni ?? ''));
 	$is_merah_active = !$is_biru_active;
 ?>
 <div class="container-fluid min-vh-100 pt-2 pt-lg-2 bg-super-dark bg-gradient overflow-hidden">
@@ -61,24 +61,24 @@
 	<div class="row mb-3 g-2 g-md-3 block-informasi justify-content-center">
 		<div class="col-auto opacity">
 			<div class="px-4 py-3 bg-navbar rounded text-white text-center shadow-sm h-100 d-flex align-items-center">
-				<span class="fs-4 fs-md-3 fw-bold"><?= esc($partai_seni_berlangsung->nama_gelanggang ?? '') ?></span>
+				<span class="fs-4 fs-md-3 fw-bold"><?= esc($penampilan->nama_gelanggang ?? '') ?></span>
 			</div>
 		</div>
 		<div class="col-auto opacity">
 			<div class="px-4 py-3 bg-navbar rounded text-white text-center shadow-sm h-100 d-flex align-items-center">
-				<span class="fs-4 fs-md-3 fw-bold">Partai <?= esc($partai_seni_berlangsung->nomor_partai ?? '') ?></span>
+				<span class="fs-4 fs-md-3 fw-bold">Partai <?= esc($penampilan->nomor_partai ?? '') ?></span>
 			</div>
 		</div>
 		<div class="col-auto opacity flex-fill">
 			<div class="px-4 py-3 bg-navbar rounded text-white text-center shadow-sm h-100 d-flex align-items-center justify-content-center">
 				<span class="fs-5 fw-bold text-wrap text-capitalize">
-					<?= esc(($penampilan_seni_berlangsung->nama_kategori_usia ?? '') . ' ' . ($penampilan_seni_berlangsung->jenis_kelamin ?? '') . ' ' . ucwords($penampilan_seni_berlangsung->jenis_seni ?? '') . ' ' . ($penampilan_seni_berlangsung->nama_seni ?? '')) ?>
+					<?= esc(($penampilan->nama_kategori_usia ?? '') . ' ' . ($penampilan->jenis_kelamin ?? '') . ' ' . ucwords($penampilan->jenis_seni ?? '') . ' ' . ($penampilan->nama_seni ?? '')) ?>
 				</span>
 			</div>
 		</div>
 		<div class="col-auto opacity">
 			<div class="px-4 py-3 bg-navbar rounded text-white text-center shadow-sm h-100 d-flex align-items-center">
-				<span class="fs-4 fs-md-3 fw-bold"><?= esc(ucwords($partai_seni_berlangsung->babak_battle ?? '')) ?></span>
+				<span class="fs-4 fs-md-3 fw-bold"><?= esc(ucwords($battle->babak ?? '')) ?></span>
 			</div>
 		</div>
 	</div>
@@ -88,11 +88,11 @@
 		<div class="col-6 opacity atlet-biru">
 			<div class="d-flex bg-blue bg-gradient rounded shadow-sm text-white overflow-hidden h-100 <?= $is_biru_active ? 'border border-4 border-warning' : '' ?>">
 				<div class="flex-grow-1 p-3 d-flex flex-column justify-content-center">
-					<?php foreach ($peserta_seni_biru ?? [] as $peserta) : ?>
+					<?php foreach ($anggota_biru ?? [] as $peserta) : ?>
 						<span class="fs-4 fw-bolder text-truncate"><?= esc($peserta->nama_pendaftar ?? '') ?></span>
 					<?php endforeach; ?>
-					<?php if (!empty($peserta_seni_biru)) : ?>
-						<span class="fs-5 mt-1 text-truncate"><?= esc($peserta_seni_biru[0]->nama_kontingen ?? '') ?></span>
+					<?php if (!empty($anggota_biru)) : ?>
+						<span class="fs-5 mt-1 text-truncate"><?= esc($anggota_biru[0]->nama_kontingen ?? '') ?></span>
 					<?php endif; ?>
 				</div>
 			</div>
@@ -100,11 +100,11 @@
 		<div class="col-6 opacity atlet-merah">
 			<div class="d-flex bg-red bg-gradient rounded shadow-sm text-white overflow-hidden h-100 <?= $is_merah_active ? 'border border-4 border-warning' : '' ?>">
 				<div class="flex-grow-1 p-3 d-flex flex-column justify-content-center text-end">
-					<?php foreach ($peserta_seni_merah ?? [] as $peserta) : ?>
+					<?php foreach ($anggota_merah ?? [] as $peserta) : ?>
 						<span class="fs-4 fw-bolder text-truncate"><?= esc($peserta->nama_pendaftar ?? '') ?></span>
 					<?php endforeach; ?>
-					<?php if (!empty($peserta_seni_merah)) : ?>
-						<span class="fs-5 mt-1 text-truncate"><?= esc($peserta_seni_merah[0]->nama_kontingen ?? '') ?></span>
+					<?php if (!empty($anggota_merah)) : ?>
+						<span class="fs-5 mt-1 text-truncate"><?= esc($anggota_merah[0]->nama_kontingen ?? '') ?></span>
 					<?php endif; ?>
 				</div>
 			</div>
@@ -158,8 +158,8 @@
 						<button class="btn w-100 h-100 btn-lg bg-white text-dark btn_selesai fw-bold fs-4 py-3 shadow-sm text-uppercase" onclick="sekretaris_pertandingan.selesai_penampilan()">End Turn</button>
 					</div>
 					<div class="col-4">
-						<button <?= (($penampilan_seni_berlangsung->diskualifikasi ?? 0) == 1) ? '' : 'style="display:none;"' ?> class="btn btn-info text-white w-100 h-100 btn-lg fw-bold fs-5 py-3 shadow-sm text-uppercase btn-batal-diskualifikasi" onclick="sekretaris_pertandingan.batalkan_diskualifikasi_peserta()">Cancel Disq.</button>
-						<button <?= (($penampilan_seni_berlangsung->diskualifikasi ?? 0) == 0) ? '' : 'style="display:none;"' ?> class="btn btn-danger text-white w-100 h-100 btn-lg fw-bold fs-5 py-3 shadow-sm text-uppercase btn-diskualifikasi" onclick="sekretaris_pertandingan.diskualifikasi_peserta()">Disqualify</button>
+						<button <?= (($penampilan->diskualifikasi ?? 0) == 1) ? '' : 'style="display:none;"' ?> class="btn btn-info text-white w-100 h-100 btn-lg fw-bold fs-5 py-3 shadow-sm text-uppercase btn-batal-diskualifikasi" onclick="sekretaris_pertandingan.batalkan_diskualifikasi_peserta()">Cancel Disq.</button>
+						<button <?= (($penampilan->diskualifikasi ?? 0) == 0) ? '' : 'style="display:none;"' ?> class="btn btn-danger text-white w-100 h-100 btn-lg fw-bold fs-5 py-3 shadow-sm text-uppercase btn-diskualifikasi" onclick="sekretaris_pertandingan.diskualifikasi_peserta()">Disqualify</button>
 					</div>
 				</div>
 			</div>
@@ -183,20 +183,20 @@
 			<div class="row mb-3">
 				<div class="col-12">
 					<?php if ($is_biru_active) : ?>
-						<button type="button" class="btn w-100 text-white h4 bg-red py-4" onclick="sekretaris_pertandingan.mulai_penampilan_seni('<?= esc($partai_seni_berlangsung->id_penampilan_seni_merah ?? '') ?>')">Start Red Turn</button>
+						<button type="button" class="btn w-100 text-white h4 bg-red py-4" onclick="sekretaris_pertandingan.mulai_penampilan_seni('<?= esc($battle->id_penampilan_seni_merah ?? '') ?>')">Start Red Turn</button>
 					<?php else : ?>
-						<button type="button" class="btn w-100 text-white h4 bg-blue py-4" onclick="sekretaris_pertandingan.mulai_penampilan_seni('<?= esc($partai_seni_berlangsung->id_penampilan_seni_biru ?? '') ?>')">Start Blue Turn</button>
+						<button type="button" class="btn w-100 text-white h4 bg-blue py-4" onclick="sekretaris_pertandingan.mulai_penampilan_seni('<?= esc($battle->id_penampilan_seni_biru ?? '') ?>')">Start Blue Turn</button>
 					<?php endif; ?>
 				</div>
 			</div>
 			<div class="row">
 				<div class="col-12 col-md-6">
-					<button class="btn bg-light bg-gradient h4 w-100 py-3" onclick="sekretaris_pertandingan.pindah_partai(<?= ($partai_seni_berlangsung->nomor_partai ?? 1) - 1 ?>)">
+					<button class="btn bg-light bg-gradient h4 w-100 py-3" onclick="sekretaris_pertandingan.pindah_partai(<?= ($penampilan->nomor_partai ?? 1) - 1 ?>)">
 						Previous Match
 					</button>
 				</div>
 				<div class="col-12 col-md-6">
-					<button class="btn bg-light bg-gradient h4 w-100 py-3" onclick="sekretaris_pertandingan.pindah_partai(<?= ($partai_seni_berlangsung->nomor_partai ?? 1) + 1 ?>)">
+					<button class="btn bg-light bg-gradient h4 w-100 py-3" onclick="sekretaris_pertandingan.pindah_partai(<?= ($penampilan->nomor_partai ?? 1) + 1 ?>)">
 						Next Match
 					</button>
 				</div>
@@ -327,11 +327,11 @@
 						<p class="text-center h5 mb-3">The Winner Is:</p>
 						<div class="row justify-content-center">
 							<div class="col-4">
-								<input type="radio" class="btn-check radio_pemenang_atlet_biru" name="id_penampilan_seni_pemenang" id="penampilan_seni_biru" autocomplete="off" value="<?= esc($partai_seni_berlangsung->id_penampilan_seni_biru ?? '') ?>" required>
+								<input type="radio" class="btn-check radio_pemenang_atlet_biru" name="id_penampilan_seni_pemenang" id="penampilan_seni_biru" autocomplete="off" value="<?= esc($battle->id_penampilan_seni_biru ?? '') ?>" required>
 								<label class="btn btn-lg btn-outline-info w-100 h5 btn-winner-blue" for="penampilan_seni_biru">Blue Corner</label>
 							</div>
 							<div class="col-4">
-								<input type="radio" class="btn-check radio_pemenang_atlet_merah" name="id_penampilan_seni_pemenang" id="penampilan_seni_merah" autocomplete="off" value="<?= esc($partai_seni_berlangsung->id_penampilan_seni_merah ?? '') ?>" required>
+								<input type="radio" class="btn-check radio_pemenang_atlet_merah" name="id_penampilan_seni_pemenang" id="penampilan_seni_merah" autocomplete="off" value="<?= esc($battle->id_penampilan_seni_merah ?? '') ?>" required>
 								<label class="btn btn-lg btn-outline-primary w-100 h5 btn-winner-red" for="penampilan_seni_merah">Red Corner</label>
 							</div>
 						</div>
@@ -356,7 +356,7 @@
 <div class="modal fade" id="modal_ganti_format_penilaian" tabindex="-1">
 	<div class="modal-dialog modal-lg">
 		<div class="modal-content">
-			<form id="formGantiFormatPenilaian" method="POST" action="<?= base_url('sekretaris-pertandingan/ganti-format-penilaian-seni/' . ($penampilan_seni_berlangsung->id_penampilan_seni ?? '')) ?>">
+			<form id="formGantiFormatPenilaian" method="POST" action="<?= base_url('sekretaris-pertandingan/ganti-format-penilaian-seni/' . ($penampilan->id_penampilan_seni ?? '')) ?>">
 				<div class="modal-header">
 					<h4 class="modal-title">Ganti Format Penilaian</h4>
 					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -393,7 +393,7 @@
 							<input class="form-check-input" type="radio" name="mode" value="sub_kategori_seni_ini" id="mode_battle_subkategori">
 							<label class="form-check-label" for="mode_battle_subkategori">
 								Change for this whole category
-								(<?= esc(($penampilan_seni_berlangsung->jenis_seni ?? '') . ' ' . ($penampilan_seni_berlangsung->jenis_kelamin ?? '') . ' ' . ($penampilan_seni_berlangsung->nama_seni ?? '') . ' - ' . ($penampilan_seni_berlangsung->nama_kategori_usia ?? '')) ?>)
+								(<?= esc(($penampilan->jenis_seni ?? '') . ' ' . ($penampilan->jenis_kelamin ?? '') . ' ' . ($penampilan->nama_seni ?? '') . ' - ' . ($penampilan->nama_kategori_usia ?? '')) ?>)
 							</label>
 						</div>
 					</div>
@@ -413,8 +413,8 @@
 <script src="<?= base_url('assets/js/penilaian/sekretaris_seni.js') ?>"></script>
 <script>
 $(document).ready(function() {
-	const penampilan_seni_berlangsung = <?= json_encode($penampilan_seni_berlangsung ?? new stdClass()) ?>;
-	const waktu_tampil = <?= json_encode($waktu_tampil ?? 0) ?>;
+	const penampilan_seni_berlangsung = <?= json_encode($penampilan ?? new stdClass()) ?>;
+	const waktu_tampil = <?= json_encode($penampilan->waktu_tampil ?? 0) ?>;
 	sekretaris_pertandingan.init(penampilan_seni_berlangsung, waktu_tampil);
 
 	ui.animateIn();
