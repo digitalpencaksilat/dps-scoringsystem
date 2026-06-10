@@ -27,14 +27,24 @@ $routes->group('perangkat-pertandingan', ['filter' => 'perangkat'], static funct
  * Slug per posisi. Controller asli diaktifkan per fase.
  */
 
-// --- JURI (Fase 3, PERSILAT tanding) ---
+// --- JURI (PERSILAT tanding + seni) ---
 $routes->group('juri', ['filter' => 'perangkat:juri'], static function ($routes) {
-    $routes->get('', 'Pertandingan\Juri::tanding');
-    $routes->get('tanding', 'Pertandingan\Juri::tanding');
-    $routes->get('tanding/(:segment)', 'Pertandingan\Juri::tanding/$1');
-    $routes->post('edit-penilaian-tanding/(:num)', 'Pertandingan\Juri::editPenilaianTanding/$1');
-    $routes->post('refresh-status-pertandingan/(:num)', 'Pertandingan\Juri::refreshStatusPertandingan/$1');
-    $routes->post('refresh-status-pertandingan', 'Pertandingan\Juri::refreshStatusPertandingan');
+    // Tanding
+    $routes->get('', 'Pertandingan\\Juri::tanding');
+    $routes->get('tanding', 'Pertandingan\\Juri::tanding');
+    $routes->get('tanding/(:segment)', 'Pertandingan\\Juri::tanding/$1');
+    $routes->post('edit-penilaian-tanding/(:num)', 'Pertandingan\\Juri::editPenilaianTanding/$1');
+    $routes->post('refresh-status-pertandingan/(:num)', 'Pertandingan\\Juri::refreshStatusPertandingan/$1');
+    $routes->post('refresh-status-pertandingan', 'Pertandingan\\Juri::refreshStatusPertandingan');
+    $routes->post('submit-jawaban-verifikasi/(:num)', 'Pertandingan\\Juri::submitJawabanVerifikasi/$1');
+
+    // Seni
+    $routes->get('seni', 'Pertandingan\\Juri::seni');
+    $routes->get('seni/(:segment)', 'Pertandingan\\Juri::seni/$1');
+    $routes->post('edit-penilaian-seni/(:num)', 'Pertandingan\\Juri::editPenilaianSeni/$1');
+    $routes->post('refresh-status-seni/(:num)', 'Pertandingan\\Juri::refreshStatusSeni/$1');
+    $routes->post('refresh-status-seni', 'Pertandingan\\Juri::refreshStatusSeni');
+    $routes->post('toggle-ready-seni/(:num)', 'Pertandingan\\Juri::toggleReadySeni/$1');
 });
 
 $routes->get('ketua-pertandingan', 'Pertandingan\PerangkatPertandingan::standby', ['filter' => 'perangkat:ketua_pertandingan']);

@@ -1,5 +1,16 @@
 <?= $this->extend('layouts/penilaian') ?>
 
+<?= $this->section('styles') ?>
+<link rel="stylesheet" href="<?= base_url('assets/css/penilaian/juri-tanding.css') ?>">
+<?php if (($theme ?? 'light') === 'dark') : ?>
+<style>
+body.penilaian-body { background: #0f1115; }
+.juri-topbar { background: #1a1d24; color: #fff; }
+.juri-corners { background: #1a1d24; }
+</style>
+<?php endif; ?>
+<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <?php
     $idP   = (int) $pertandingan->id_pertandingan;
@@ -9,7 +20,15 @@
     $kontMerah = $atlet_merah->nama_kontingen ?? '-';
     $kontBiru  = $atlet_biru->nama_kontingen ?? '-';
 ?>
-<div class="juri-wrapper" data-id-pertandingan="<?= $idP ?>" data-ronde="<?= esc($ronde, 'attr') ?>">
+<div class="juri-wrapper" id="juri-wrapper"
+     data-id-pertandingan="<?= $idP ?>"
+     data-ronde="<?= esc($ronde, 'attr') ?>"
+     data-endpoint-edit="<?= base_url('juri/edit-penilaian-tanding/' . $idP) ?>"
+     data-endpoint-refresh="<?= base_url('juri/refresh-status-pertandingan/' . $idP) ?>"
+     data-endpoint-verifikasi="<?= base_url('juri/submit-jawaban-verifikasi/' . $idP) ?>"
+     data-csrf-name="<?= csrf_token() ?>"
+     data-csrf-hash="<?= csrf_hash() ?>">
+
     <header class="juri-topbar">
         <span class="juri-ronde-badge penilaian-display-font">Ronde <?= esc($ronde) ?></span>
         <span class="juri-format">PERSILAT &middot; Juri</span>
@@ -70,100 +89,55 @@
         </section>
     </div>
 </div>
-<?= $this->endSection() ?>
 
-<?= $this->section('styles') ?>
-<link rel="stylesheet" href="<?= base_url('assets/css/penilaian/juri-tanding.css') ?>">
-<?php if (($theme ?? 'light') === 'dark') : ?>
-<style>body.penilaian-body{background:#0f1115;}.juri-topbar{background:#1a1d24;color:#fff;}</style>
-<?php endif; ?>
+<!-- Modal Verifikasi Jatuhan -->
+<div class="modal fade" id="modalVerifikasiJatuhan" data-bs-backdrop="static" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-white border-warning">
+            <div class="modal-header border-warning">
+                <h5 class="modal-title"><i class="fas fa-gavel me-2"></i>Verifikasi Jatuhan</h5>
+            </div>
+            <div class="modal-body text-center py-4">
+                <p class="fs-5 mb-3">Apakah terjadi <strong>jatuhan</strong> pada sudut <span id="verifikasi-jatuhan-sudut" class="fw-bold text-uppercase"></span>?</p>
+            </div>
+            <div class="modal-footer border-warning justify-content-center gap-3">
+                <button type="button" class="btn btn-success btn-lg px-5" data-jawaban="ya">
+                    <i class="fas fa-check me-2"></i>Ya
+                </button>
+                <button type="button" class="btn btn-danger btn-lg px-5" data-jawaban="tidak">
+                    <i class="fas fa-xmark me-2"></i>Tidak
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Verifikasi Pelanggaran -->
+<div class="modal fade" id="modalVerifikasiPelanggaran" data-bs-backdrop="static" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-white border-warning">
+            <div class="modal-header border-warning">
+                <h5 class="modal-title"><i class="fas fa-triangle-exclamation me-2"></i>Verifikasi Pelanggaran</h5>
+            </div>
+            <div class="modal-body text-center py-4">
+                <p class="fs-5 mb-3">Apakah terjadi <strong>pelanggaran</strong> pada sudut <span id="verifikasi-pelanggaran-sudut" class="fw-bold text-uppercase"></span>?</p>
+            </div>
+            <div class="modal-footer border-warning justify-content-center gap-3">
+                <button type="button" class="btn btn-success btn-lg px-5" data-jawaban="ya">
+                    <i class="fas fa-check me-2"></i>Ya
+                </button>
+                <button type="button" class="btn btn-danger btn-lg px-5" data-jawaban="tidak">
+                    <i class="fas fa-xmark me-2"></i>Tidak
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
 <script>
-(function () {
-    const wrapper = document.querySelector('.juri-wrapper');
-    const idPertandingan = wrapper.dataset.idPertandingan;
-    const endpoint = '<?= base_url('juri/edit-penilaian-tanding') ?>/' + idPertandingan;
-    let csrfName  = '<?= csrf_token() ?>';
-    let csrfHash  = '<?= csrf_hash() ?>';
-    let locked = false; // anti double-submit
-
-    function kirim(sudut, entryObj, btn) {
-        if (locked) return;
-        locked = true;
-        if (btn) btn.classList.add('is-loading');
-
-        const body = new URLSearchParams();
-        body.append(csrfName, csrfHash);
-        body.append('sudut', sudut);
-        body.append('entry', JSON.stringify(entryObj));
-
-        fetch(endpoint, {
-            method: 'POST',
-            headers: { 'X-Requested-With': 'XMLHttpRequest' },
-            body: body
-        })
-        .then(r => r.json())
-        .then(data => {
-            // Rotasi CSRF token (regenerate aktif).
-            const newHash = data.csrf_hash || null;
-            if (newHash) csrfHash = newHash;
-            if (data && data.status === true) {
-                renderSkor(data.response);
-            } else {
-                Swal.fire({ icon: 'error', title: 'Gagal', text: (data && data.message) || 'Input ditolak.', timer: 1800, showConfirmButton: false });
-            }
-        })
-        .catch(() => {
-            Swal.fire({ icon: 'warning', title: 'Koneksi', text: 'Gagal mengirim nilai.', timer: 1500, showConfirmButton: false });
-        })
-        .finally(() => {
-            locked = false;
-            if (btn) btn.classList.remove('is-loading');
-        });
-    }
-
-    function hitungSkorSudut(sudutData) {
-        // sudutData = decoded penilaian_(merah|biru)
-        if (!sudutData || !sudutData.ringkasan) return 0;
-        return sudutData.ringkasan.nilai_akhir || 0;
-    }
-
-    function renderSkor(response) {
-        if (!response) return;
-        document.getElementById('skor-merah').textContent = hitungSkorSudut(response.merah);
-        document.getElementById('skor-biru').textContent  = hitungSkorSudut(response.biru);
-    }
-
-    document.querySelectorAll('.btn-nilai').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            kirim(btn.dataset.sudut, { nilai: parseInt(btn.dataset.nilai, 10) }, btn);
-        });
-    });
-    document.querySelectorAll('.btn-hapus').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            kirim(btn.dataset.sudut, { action: 'remove' }, btn);
-        });
-    });
-
-    // Render skor awal dari data server.
-    renderSkor(<?= json_encode($data_nilai) ?>);
-
-    // Polling status partai (placeholder; diganti Socket.IO di Fase 8).
-    setInterval(function () {
-        const body = new URLSearchParams();
-        body.append(csrfName, csrfHash);
-        fetch('<?= base_url('juri/refresh-status-pertandingan') ?>/' + idPertandingan, {
-            method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: body
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data && data.reload === true) { window.location.reload(); }
-            else if (data && data.status === false && data.data_nilai) { renderSkor(data.data_nilai); }
-        })
-        .catch(() => {});
-    }, 4000);
-})();
+    const JURI_TANDING_INIT = <?= json_encode($data_nilai) ?>;
 </script>
+<script src="<?= base_url('assets/js/penilaian/juri_tanding_persilat.js') ?>"></script>
 <?= $this->endSection() ?>

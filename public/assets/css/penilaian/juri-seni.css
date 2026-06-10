@@ -1,0 +1,400 @@
+/* Juri Seni PERSILAT — scoring interface */
+
+.juri-seni-wrapper {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-color, #f4f6f9);
+}
+
+.juri-seni-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: var(--brand-dark, #212529);
+    color: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.topbar-kategori {
+    font-size: 0.82rem;
+    opacity: 0.85;
+    letter-spacing: 0.5px;
+}
+
+.bg-brand-primary {
+    background-color: var(--brand-primary, #c60000) !important;
+}
+
+.juri-logout {
+    color: #fff;
+    opacity: 0.8;
+    text-decoration: none;
+    font-size: 1.1rem;
+}
+.juri-logout:hover { opacity: 1; color: #fff; }
+
+/* ─── Peserta Info ─────────────────────────────────────────────────── */
+
+.peserta-info-bar {
+    background: #fff;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e9ecef;
+    text-align: center;
+}
+
+.peserta-nama {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--brand-dark);
+}
+
+.peserta-kontingen {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+/* ─── Scoring Body ─────────────────────────────────────────────────── */
+
+.seni-scoring-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    padding-bottom: 100px; /* space for bottom bar */
+}
+
+.seni-scoring-body.is-locked {
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+/* ─── Scoring Sections ─────────────────────────────────────────────── */
+
+.scoring-section {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.section-header {
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--brand-dark);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+}
+
+.section-subheader {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+/* ─── Kebenaran Grid (gerakan cells) ───────────────────────────────── */
+
+.kebenaran-jurus-group {
+    margin-bottom: 12px;
+}
+
+.jurus-label {
+    font-weight: 600;
+    font-size: 0.82rem;
+    color: #495057;
+    margin-bottom: 6px;
+    text-transform: capitalize;
+}
+
+.kebenaran-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.nilai-cell {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.1s ease, background 0.15s ease;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    border: 1px solid transparent;
+}
+
+.nilai-cell:active {
+    transform: scale(0.92);
+}
+
+.nilai-cell.perfect {
+    background: #d4edda;
+    color: #155724;
+    border-color: #c3e6cb;
+}
+
+.nilai-cell.reduced {
+    background: #fff3cd;
+    color: #856404;
+    border-color: #ffeeba;
+}
+
+.nilai-cell.zero {
+    background: #f8d7da;
+    color: #721c24;
+    border-color: #f5c6cb;
+}
+
+.nilai-cell.active-pointer {
+    box-shadow: 0 0 0 3px var(--brand-primary, #c60000);
+    transform: scale(1.1);
+}
+
+/* Terperinci mode: larger cells */
+.terperinci-grid .nilai-cell {
+    width: 44px;
+    height: 44px;
+    font-size: 0.85rem;
+}
+
+/* ─── Subjective Unsur (kemantapan, kekompakan, etc) ───────────────── */
+
+.unsur-input-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.unsur-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #495057;
+    min-width: 130px;
+}
+
+.unsur-input {
+    flex: 1;
+    max-width: 120px;
+}
+
+.unsur-input input[type="number"] {
+    width: 100%;
+    padding: 8px 12px;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: center;
+    transition: border-color 0.2s;
+}
+
+.unsur-input input[type="number"]:focus {
+    border-color: var(--brand-primary, #c60000);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(198, 0, 0, 0.1);
+}
+
+.unsur-range {
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+
+.unsur-subtotal {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--brand-dark);
+    min-width: 60px;
+    text-align: right;
+}
+
+/* ─── Hukuman (read-only) ──────────────────────────────────────────── */
+
+.hukuman-section {
+    border-left: 4px solid #ffc107;
+}
+
+.hukuman-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.hukuman-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: #fffdf5;
+    border-radius: 8px;
+    border: 1px solid #fff3cd;
+}
+
+.hukuman-label {
+    font-size: 0.85rem;
+    color: #495057;
+}
+
+.hukuman-value {
+    font-weight: 700;
+    color: #dc3545;
+    font-size: 0.95rem;
+}
+
+.hukuman-value.zero {
+    color: #28a745;
+}
+
+/* ─── Bottom Bar ───────────────────────────────────────────────────── */
+
+.seni-bottom-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--brand-dark, #212529);
+    color: #fff;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 200;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
+}
+
+.total-section {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+}
+
+.total-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.8;
+}
+
+.total-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-ready {
+    background: #28a745;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: background 0.15s;
+}
+
+.btn-ready:hover { background: #218838; color: #fff; }
+.btn-ready.is-ready {
+    background: #ffc107;
+    color: #212529;
+}
+
+.btn-simpan {
+    background: var(--brand-primary, #c60000);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: background 0.15s;
+}
+
+.btn-simpan:hover { background: #a50000; color: #fff; }
+.btn-simpan.saving {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* ─── Locked Overlay ───────────────────────────────────────────────── */
+
+.locked-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+}
+
+.locked-message {
+    text-align: center;
+    color: #fff;
+    font-size: 1.2rem;
+}
+
+/* ─── Responsive ───────────────────────────────────────────────────── */
+
+@media (max-width: 575.98px) {
+    .nilai-cell {
+        width: 32px;
+        height: 32px;
+        font-size: 0.7rem;
+    }
+
+    .unsur-input-row {
+        flex-wrap: wrap;
+    }
+
+    .unsur-label {
+        min-width: 100%;
+    }
+
+    .seni-bottom-bar {
+        flex-direction: column;
+        gap: 8px;
+        padding: 10px;
+    }
+
+    .action-buttons {
+        width: 100%;
+    }
+
+    .btn-ready, .btn-simpan {
+        flex: 1;
+    }
+}
+
+@media (min-width: 768px) and (orientation: landscape) {
+    .seni-scoring-body {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .nilai-cell {
+        width: 40px;
+        height: 40px;
+        font-size: 0.8rem;
+    }
+}
