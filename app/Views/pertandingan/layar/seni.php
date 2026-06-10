@@ -101,26 +101,37 @@
     const elTimer = document.getElementById('timer-seni');
     const elJuriGrid = document.getElementById('juri-grid');
 
-    // Count-up timer (seni uses elapsed time, not countdown)
-    let startTime = null, timerRunning = false, elapsedMs = 0;
+    // Count-up timer — synced from sekretaris via socket
+    let timerRunning = false, lastTs = null, elapsedMs = 0;
 
     function fmtUp(ms) {
-        const s = Math.floor(ms / 1000);
+        const s = Math.floor(Math.max(0, ms) / 1000);
         return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
     }
 
     function timerLoop(ts) {
         if (!timerRunning) return;
-        if (startTime === null) startTime = ts;
-        elapsedMs = ts - startTime;
+        if (lastTs !== null) { elapsedMs += (ts - lastTs); }
+        lastTs = ts;
         elTimer.textContent = fmtUp(elapsedMs);
         requestAnimationFrame(timerLoop);
     }
 
     function startTimer() {
-        if (!timerRunning) { timerRunning = true; startTime = null; requestAnimationFrame(timerLoop); }
+        if (!timerRunning) { timerRunning = true; lastTs = null; requestAnimationFrame(timerLoop); }
     }
-    function stopTimer() { timerRunning = false; }
+    function stopTimer() {
+        timerRunning = false; lastTs = null;
+        elTimer.textContent = fmtUp(elapsedMs);
+    }
+    function setTimer(seconds) {
+        elapsedMs = (typeof seconds === 'number') ? seconds * 1000 : 0;
+        elTimer.textContent = fmtUp(elapsedMs);
+    }
+    function resetTimer() {
+        elapsedMs = 0; timerRunning = false; lastTs = null;
+        elTimer.textContent = fmtUp(0);
+    }
 
     // Update juri scores
     function updateJuriGrid(juriData) {
@@ -150,6 +161,10 @@
         if (d.nilai_akhir && d.nilai_akhir > 0) {
             elNilaiAkhir.textContent = parseFloat(d.nilai_akhir).toFixed(3);
         }
+        // Sync timer from polling response
+        if (typeof d.waktu_tampil === 'number') {
+            setTimer(d.waktu_tampil);
+        }
         if (d.akses_penilaian === 'dibuka') {
             elStatusLabel.innerHTML = '<span class="badge bg-success pulse-badge">Penilaian Berlangsung</span>';
             startTimer();
@@ -176,6 +191,57 @@
             if (d.juri_data) updateJuriGrid(d.juri_data);
             if (d.nilai_akhir && d.nilai_akhir > 0) {
                 elNilaiAkhir.textContent = parseFloat(d.nilai_akhir).toFixed(3);
+            }
+        });
+
+        // Timer sync from sekretaris_seni.js socket emit
+        // Server transforms KONTROL_WAKTU → UPDATE_WAKTU broadcast
+        // Payload: { id_penampilan_seni, action, waktu }
+        socket.on('UPDATE_WAKTU', (d) => {
+            if (!d) return;
+            const action = d.action || d.aksi;
+            const waktu = d.waktu;
+
+            if (action === 'TOGGLE') {
+                // Toggle play/pause
+                if (timerRunning) {
+                    stopTimer();
+                } else {
+                    if (typeof waktu === 'number') setTimer(waktu);
+                    startTimer();
+                }
+            } else if (action === 'TICK') {
+                // Periodic sync from sekretaris
+                if (typeof waktu === 'number') setTimer(waktu);
+                if (!timerRunning) startTimer();
+            } else if (action === 'RESET' || action === 'reset') {
+                resetTimer();
+            } else if (action === 'SET') {
+                if (typeof waktu === 'number') setTimer(waktu);
+            } else if (action === 'start') {
+                if (typeof waktu === 'number') setTimer(waktu);
+                startTimer();
+            } else if (action === 'stop' || action === 'pause' || action === 'STOP') {
+                if (typeof waktu === 'number') setTimer(waktu);
+                stopTimer();
+            }
+        });
+
+        // Timer control from PHP controller (HTTP /emit → relay)
+        // Payload: { id_penampilan_seni, status_penampilan, waktu_tampil }
+        socket.on('KONTROL_WAKTU_SENI', (d) => {
+            if (!d) return;
+            if (d.status_penampilan === 'berlangsung' || d.status_penampilan === 'dibuka') {
+                if (typeof d.waktu_tampil === 'number') setTimer(d.waktu_tampil);
+                startTimer();
+                elStatusLabel.innerHTML = '<span class="badge bg-success pulse-badge">Penilaian Berlangsung</span>';
+            } else if (d.status_penampilan === 'standby' || d.status_penampilan === 'ditutup') {
+                if (typeof d.waktu_tampil === 'number') setTimer(d.waktu_tampil);
+                stopTimer();
+                if (d.status_penampilan === 'ditutup') {
+                    elStatusLabel.innerHTML = '<span class="badge bg-danger">Penilaian Selesai</span>';
+                    poll(); // get final scores
+                }
             }
         });
 

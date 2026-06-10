@@ -195,17 +195,70 @@
                 showStinger('RONDE ' + d.ronde, 2500);
                 currentRonde = d.ronde;
                 elRonde.textContent = d.ronde;
+                sisaMs = durasiMs; // reset timer for new round
+                stopTimer();
             }
         });
 
-        // Timer/waktu real-time
+        // Timer/waktu real-time — handles 2 payload formats:
+        // Format A (from PHP controller via HTTP /emit): { status_pertandingan, data_waktu: {waktu_per_ronde, sisa_waktu} }
+        // Format B (from sekretaris_tanding.js via socket): { id_pertandingan, action, waktu, ronde }
         socket.on('UPDATE_WAKTU', (d) => {
             if (!d) return;
+
+            // Format B: direct from sekretaris JS socket emit (action + waktu fields)
+            const action = d.action || d.aksi;
+            if (action) {
+                const waktu = d.waktu;
+                if (action === 'TOGGLE' || action === 'start') {
+                    if (action === 'TOGGLE' && ticking) {
+                        // Toggle: stop if running
+                        if (typeof waktu === 'number') sisaMs = waktu * 1000;
+                        stopTimer();
+                        elStatus.textContent = 'BERHENTI';
+                    } else {
+                        // Start
+                        if (typeof waktu === 'number') sisaMs = waktu * 1000;
+                        startTimer(); hideVerifikasi();
+                        elStatus.textContent = 'BERLANGSUNG';
+                    }
+                } else if (action === 'TICK') {
+                    // Sync timer value from sekretaris tick
+                    if (typeof waktu === 'number') { sisaMs = waktu * 1000; }
+                    if (!ticking) startTimer();
+                } else if (action === 'stop' || action === 'pause' || action === 'STOP') {
+                    if (typeof waktu === 'number') sisaMs = waktu * 1000;
+                    stopTimer();
+                    elStatus.textContent = 'BERHENTI';
+                } else if (action === 'RESET' || action === 'reset') {
+                    sisaMs = durasiMs; stopTimer();
+                    elStatus.textContent = 'STANDBY';
+                } else if (action === 'SET') {
+                    if (typeof waktu === 'number') { sisaMs = waktu * 1000; }
+                    elTimer.textContent = fmt(sisaMs);
+                } else if (action === 'PINDAH_RONDE' || action === 'RONDE_SELESAI') {
+                    if (d.ronde && d.ronde !== currentRonde) {
+                        showStinger('RONDE ' + d.ronde, 2500);
+                        currentRonde = d.ronde;
+                        elRonde.textContent = d.ronde;
+                    }
+                    sisaMs = durasiMs; stopTimer();
+                }
+                // Update ronde if present
+                if (d.ronde && d.ronde !== currentRonde) {
+                    currentRonde = d.ronde;
+                    elRonde.textContent = d.ronde;
+                }
+                return;
+            }
+
+            // Format A: from PHP controller (data_waktu wrapper)
             if (d.data_waktu) {
                 const dw = d.data_waktu;
                 if (dw.waktu_per_ronde) durasiMs = parseInt(dw.waktu_per_ronde) * 1000;
                 if (typeof dw.sisa_waktu === 'number') sisaMs = dw.sisa_waktu * 1000;
                 else if (typeof dw.sisa_ms === 'number') sisaMs = dw.sisa_ms;
+                elTimer.textContent = fmt(sisaMs);
             }
             if (d.status_pertandingan) {
                 elStatus.textContent = d.status_pertandingan.replace(/_/g, ' ').toUpperCase();
@@ -221,12 +274,14 @@
             }
         });
 
-        // Kontrol waktu (start/stop/reset)
-        socket.on('KONTROL_WAKTU', (d) => {
-            if (!d) return;
-            if (d.aksi === 'start') startTimer();
-            else if (d.aksi === 'stop' || d.aksi === 'pause') stopTimer();
-            else if (d.aksi === 'reset') { sisaMs = durasiMs; stopTimer(); }
+        // Match status change (from controller emit)
+        socket.on('MATCH_STATUS_CHANGE', (d) => {
+            if (!d || !d.status_pertandingan) return;
+            elStatus.textContent = d.status_pertandingan.replace(/_/g, ' ').toUpperCase();
+            if (d.status_pertandingan === 'berlangsung') { startTimer(); hideVerifikasi(); }
+            else if (d.status_pertandingan === 'verifikasi_jatuhan') { stopTimer(); showVerifikasi('VERIFIKASI JATUHAN', ''); }
+            else if (d.status_pertandingan === 'verifikasi_pelanggaran') { stopTimer(); showVerifikasi('VERIFIKASI PELANGGARAN', ''); }
+            else { stopTimer(); hideVerifikasi(); }
         });
 
         // Match over → reload standby
