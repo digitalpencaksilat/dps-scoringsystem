@@ -51,6 +51,10 @@
 </style>
 <?= $this->endSection() ?>
 
+<?= $this->section('navbar') ?>
+<?= view('pertandingan/components/navbar', ['nav_role' => 'ketua_pertandingan', 'nav_active' => 'home']) ?>
+<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <div class="container-fluid min-vh-100 d-flex align-items-center" style="background: var(--bg-color, #f4f6f9);">
     <div class="custom-container w-100 py-4">

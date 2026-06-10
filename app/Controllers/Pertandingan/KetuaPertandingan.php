@@ -152,6 +152,13 @@ class KetuaPertandingan extends BaseController
             (int) $fresh->skor_biru,
             (string) $fresh->ronde_pertandingan
         );
+        realtime_emit_nilai_update($idPertandingan, [
+            'skor_merah' => (int) $fresh->skor_merah,
+            'skor_biru'  => (int) $fresh->skor_biru,
+            'ronde'      => (string) $fresh->ronde_pertandingan,
+            'mode'       => $mode,
+            'sudut'      => $sudut,
+        ]);
 
         return $this->jsonResponse([
             'status'     => true,
@@ -260,6 +267,10 @@ class KetuaPertandingan extends BaseController
             return $this->jsonResponse(['status' => false, 'message' => 'Gagal menyimpan hukuman.']);
         }
 
+        // Broadcast hukuman update ke Juri (agar display hukuman ter-update realtime)
+        helper('realtime');
+        realtime_emit_hukuman_update($idPenampilanSeni, $hukumanData);
+
         return $this->jsonResponse([
             'status'  => true,
             'message' => 'Hukuman berhasil diterapkan.',
@@ -287,8 +298,9 @@ class KetuaPertandingan extends BaseController
 
         // Emit socket event for all juri to lock/unlock
         helper('realtime');
-        if (function_exists('realtime_emit_akses_penilaian')) {
-            realtime_emit_akses_penilaian($idPenampilanSeni, $newAkses);
+        realtime_emit_akses_penilaian($idPenampilanSeni, $newAkses);
+        if ($newAkses === 'ditutup') {
+            realtime_emit_seni_akses_ditutup($idPenampilanSeni);
         }
 
         return $this->jsonResponse([

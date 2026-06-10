@@ -171,6 +171,12 @@ class Juri extends BaseController
                 (int) $terkini->skor_biru,
                 (string) $terkini->ronde_pertandingan
             );
+            realtime_emit_nilai_update($idPertandingan, [
+                'skor_merah' => (int) $terkini->skor_merah,
+                'skor_biru'  => (int) $terkini->skor_biru,
+                'ronde'      => (string) $terkini->ronde_pertandingan,
+                'sudut'      => $sudut,
+            ]);
         }
 
         return $this->jsonResponse(['status' => true, 'response' => $response]);
@@ -331,6 +337,13 @@ class Juri extends BaseController
             'nilai_akhir_per_juri' => (string) round((float) $nilaiAkhirPerJuri, 4),
         ]);
 
+        // Broadcast nilai seni ke Layar (live juri score display)
+        helper('realtime');
+        realtime_emit_update_nilai_seni($idPenampilanSeni, [
+            'id_perangkat_pertandingan' => $this->idPerangkat(),
+            'nilai_akhir_per_juri'      => (string) round((float) $nilaiAkhirPerJuri, 4),
+        ]);
+
         return $this->jsonResponse(['status' => true, 'new_nilai' => $jsonNilai]);
     }
 
@@ -389,6 +402,13 @@ class Juri extends BaseController
         $newReady = ((int) $penilaian->status_ready === 0) ? 1 : 0;
         $this->penilaianSeniModel->update($penilaian->id_penilaian_seni, [
             'status_ready' => $newReady,
+        ]);
+
+        // Broadcast juri ready status ke KP
+        helper('realtime');
+        realtime_emit_juri_ready_update($idPenampilanSeni, [
+            'id_perangkat_pertandingan' => $this->idPerangkat(),
+            'status_ready'              => (bool) $newReady,
         ]);
 
         return $this->jsonResponse(['status' => true, 'ready' => (bool) $newReady]);

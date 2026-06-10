@@ -167,7 +167,7 @@
 
         socket.on('connect', () => {
             rtConnected = true;
-            socket.emit('JOIN_ROOM', idPenampilan);
+            socket.emit('JOIN_ROOM', { id_penampilan_seni: idPenampilan });
         });
         socket.on('disconnect', () => { rtConnected = false; });
 

@@ -5,6 +5,10 @@
 <style>.kp-wrapper-light { background: var(--bg-color, #f4f6f9) !important; }</style>
 <?= $this->endSection() ?>
 
+<?= $this->section('navbar') ?>
+<?= view('pertandingan/components/navbar', ['nav_role' => 'ketua_pertandingan', 'nav_active' => 'tanding']) ?>
+<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <?php
     $idP   = (int) $pertandingan->id_pertandingan;

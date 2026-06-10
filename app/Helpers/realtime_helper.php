@@ -96,3 +96,201 @@ if (! function_exists('realtime_reset_room')) {
         ]);
     }
 }
+
+// ==========================================================================
+// Event relay functions (non-stateful, fire-and-forget broadcast ke room)
+// ==========================================================================
+
+if (! function_exists('realtime_emit_nilai_update')) {
+    /**
+     * Broadcast perubahan nilai tanding ke Juri/KP/Layar.
+     * Dipanggil setelah Juri/KP edit penilaian tanding.
+     */
+    function realtime_emit_nilai_update(int $idPertandingan, array $data = []): bool
+    {
+        return realtime_emit('NILAI_UPDATE', array_merge([
+            'id_pertandingan' => $idPertandingan,
+        ], $data));
+    }
+}
+
+if (! function_exists('realtime_emit_verifikasi_jatuhan')) {
+    /**
+     * Broadcast permintaan verifikasi jatuhan ke semua Juri.
+     */
+    function realtime_emit_verifikasi_jatuhan(int $idPertandingan, array $data = []): bool
+    {
+        return realtime_emit('VERIFIKASI_JATUHAN', array_merge([
+            'id_pertandingan' => $idPertandingan,
+        ], $data));
+    }
+}
+
+if (! function_exists('realtime_emit_verifikasi_pelanggaran')) {
+    /**
+     * Broadcast permintaan verifikasi pelanggaran ke semua Juri.
+     */
+    function realtime_emit_verifikasi_pelanggaran(int $idPertandingan, array $data = []): bool
+    {
+        return realtime_emit('VERIFIKASI_PELANGGARAN', array_merge([
+            'id_pertandingan' => $idPertandingan,
+        ], $data));
+    }
+}
+
+if (! function_exists('realtime_emit_match_status_change')) {
+    /**
+     * Broadcast perubahan status pertandingan (berlangsung, selesai, verifikasi, dll).
+     */
+    function realtime_emit_match_status_change(int $idPertandingan, string $status, array $data = []): bool
+    {
+        return realtime_emit('MATCH_STATUS_CHANGE', array_merge([
+            'id_pertandingan'     => $idPertandingan,
+            'status_pertandingan' => $status,
+        ], $data));
+    }
+}
+
+if (! function_exists('realtime_emit_pertandingan_selesai')) {
+    /**
+     * Broadcast pertandingan selesai ke Layar (trigger redirect ke hasil).
+     */
+    function realtime_emit_pertandingan_selesai(int $idPertandingan, array $data = []): bool
+    {
+        return realtime_emit('PERTANDINGAN_SELESAI', array_merge([
+            'id_pertandingan' => $idPertandingan,
+        ], $data));
+    }
+}
+
+if (! function_exists('realtime_emit_tanding_berlangsung')) {
+    /**
+     * Broadcast ke gelanggang bahwa pertandingan tanding sedang berlangsung.
+     * Layar home/standby akan redirect ke layar/tanding.
+     */
+    function realtime_emit_tanding_berlangsung(int $idGelanggang, int $idPertandingan): bool
+    {
+        return realtime_emit('TANDING_BERLANGSUNG', [
+            'id_gelanggang'   => $idGelanggang,
+            'id_pertandingan' => $idPertandingan,
+        ]);
+    }
+}
+
+if (! function_exists('realtime_emit_seni_berlangsung')) {
+    /**
+     * Broadcast ke gelanggang bahwa penampilan seni sedang berlangsung.
+     * Layar home/standby akan redirect ke layar/seni.
+     */
+    function realtime_emit_seni_berlangsung(int $idGelanggang, int $idPenampilanSeni): bool
+    {
+        return realtime_emit('SENI_BERLANGSUNG', [
+            'id_gelanggang'      => $idGelanggang,
+            'id_penampilan_seni' => $idPenampilanSeni,
+        ]);
+    }
+}
+
+// ==========================================================================
+// Seni-specific relay events
+// ==========================================================================
+
+if (! function_exists('realtime_emit_akses_penilaian')) {
+    /**
+     * Broadcast toggle akses penilaian seni ke Juri/Layar.
+     * Dipanggil oleh KP saat buka/tutup akses.
+     */
+    function realtime_emit_akses_penilaian(int $idPenampilanSeni, string $akses): bool
+    {
+        return realtime_emit('AKSES_PENILAIAN', [
+            'id_penampilan_seni' => $idPenampilanSeni,
+            'akses_penilaian'    => $akses,
+        ]);
+    }
+}
+
+if (! function_exists('realtime_emit_seni_akses_ditutup')) {
+    /**
+     * Broadcast bahwa akses penilaian seni ditutup (specific event for Layar).
+     */
+    function realtime_emit_seni_akses_ditutup(int $idPenampilanSeni): bool
+    {
+        return realtime_emit('SENI_AKSES_DITUTUP', [
+            'id_penampilan_seni' => $idPenampilanSeni,
+        ]);
+    }
+}
+
+if (! function_exists('realtime_emit_hukuman_update')) {
+    /**
+     * Broadcast perubahan hukuman seni ke Juri (agar display hukuman ter-update).
+     */
+    function realtime_emit_hukuman_update(int $idPenampilanSeni, array $data = []): bool
+    {
+        return realtime_emit('HUKUMAN_UPDATE', array_merge([
+            'id_penampilan_seni' => $idPenampilanSeni,
+        ], $data));
+    }
+}
+
+if (! function_exists('realtime_emit_juri_ready_update')) {
+    /**
+     * Broadcast juri ready status ke KP.
+     */
+    function realtime_emit_juri_ready_update(int $idPenampilanSeni, array $data = []): bool
+    {
+        return realtime_emit('JURI_READY_UPDATE', array_merge([
+            'id_penampilan_seni' => $idPenampilanSeni,
+        ], $data));
+    }
+}
+
+if (! function_exists('realtime_emit_update_nilai_seni')) {
+    /**
+     * Broadcast perubahan nilai seni ke Layar (live score display).
+     */
+    function realtime_emit_update_nilai_seni(int $idPenampilanSeni, array $data = []): bool
+    {
+        return realtime_emit('UPDATE_NILAI_SENI', array_merge([
+            'id_penampilan_seni' => $idPenampilanSeni,
+        ], $data));
+    }
+}
+
+if (! function_exists('realtime_emit_penampilan_selesai')) {
+    /**
+     * Broadcast penampilan seni selesai ke Juri/KP/Layar.
+     */
+    function realtime_emit_penampilan_selesai(int $idPenampilanSeni, array $data = []): bool
+    {
+        return realtime_emit('PENAMPILAN_SELESAI', array_merge([
+            'id_penampilan_seni' => $idPenampilanSeni,
+        ], $data));
+    }
+}
+
+if (! function_exists('realtime_emit_seni_selesai')) {
+    /**
+     * Broadcast seni selesai ke Layar (trigger redirect ke hasil).
+     */
+    function realtime_emit_seni_selesai(int $idPenampilanSeni, array $data = []): bool
+    {
+        return realtime_emit('SENI_SELESAI', array_merge([
+            'id_penampilan_seni' => $idPenampilanSeni,
+        ], $data));
+    }
+}
+
+if (! function_exists('realtime_emit_kontrol_waktu_seni')) {
+    /**
+     * Broadcast kontrol waktu seni (timer start/stop/reset).
+     */
+    function realtime_emit_kontrol_waktu_seni(int $idPenampilanSeni, string $statusPenampilan, $waktuTampil = null): bool
+    {
+        return realtime_emit('KONTROL_WAKTU_SENI', [
+            'id_penampilan_seni' => $idPenampilanSeni,
+            'status_penampilan'  => $statusPenampilan,
+            'waktu_tampil'       => $waktuTampil,
+        ]);
+    }
+}

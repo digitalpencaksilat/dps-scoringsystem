@@ -288,6 +288,10 @@ class SekretarisPertandingan extends BaseController
             ->where('id_penampilan_seni', $idPenampilanSeni)
             ->update(['status_penampilan' => 'standby']);
 
+        // Broadcast ke Layar home/standby bahwa seni berlangsung.
+        helper('realtime');
+        realtime_emit_seni_berlangsung($this->idGelanggang(), $idPenampilanSeni);
+
         return redirect()->to($back)
             ->with('message', 'Penampilan di-set standby. Layar Timer Seni masih dalam tahap migrasi.');
     }
@@ -347,6 +351,10 @@ class SekretarisPertandingan extends BaseController
         }
 
         $this->pertandinganModel->update($idPertandingan, ['status_pertandingan' => 'standby']);
+
+        // Broadcast ke Layar home/standby bahwa tanding berlangsung.
+        helper('realtime');
+        realtime_emit_tanding_berlangsung($this->idGelanggang(), $idPertandingan);
 
         return redirect()->to('/sekretaris-pertandingan/timer-tanding');
     }
@@ -430,6 +438,7 @@ class SekretarisPertandingan extends BaseController
         // Push real-time timer ke room (Layar/Juri/KP).
         helper('realtime');
         realtime_emit_waktu($idPertandingan, $status, $dataWaktu !== null ? json_decode((string) $dataWaktu) : null);
+        realtime_emit_match_status_change($idPertandingan, $status);
 
         return $this->response
             ->setHeader('X-CSRF-TOKEN', csrf_hash())
@@ -493,6 +502,10 @@ class SekretarisPertandingan extends BaseController
 
         // Reset room real-time (bersihkan snapshot; klien akan reload via polling).
         helper('realtime');
+        realtime_emit_pertandingan_selesai($idPertandingan, [
+            'sudut_pemenang'    => $sudut,
+            'jenis_kemenangan'  => $jenis,
+        ]);
         realtime_reset_room($idPertandingan);
 
         return $this->response
@@ -865,7 +878,8 @@ class SekretarisPertandingan extends BaseController
         }
 
         helper('realtime');
-        realtime_emit('SELESAI_PENAMPILAN_SENI', ['id_penampilan_seni' => $idPenampilanSeni]);
+        realtime_emit_penampilan_selesai($idPenampilanSeni, ['nilai_akhir' => $nilaiAkhir]);
+        realtime_emit_seni_selesai($idPenampilanSeni, ['nilai_akhir' => $nilaiAkhir]);
 
         return $this->response
             ->setHeader('X-CSRF-TOKEN', csrf_hash())

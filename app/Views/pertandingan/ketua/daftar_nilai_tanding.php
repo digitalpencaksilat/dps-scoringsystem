@@ -6,6 +6,10 @@
 </style>
 <?= $this->endSection() ?>
 
+<?= $this->section('navbar') ?>
+<?= view('pertandingan/components/navbar', ['nav_role' => 'ketua_pertandingan', 'nav_active' => 'daftar_nilai_tanding']) ?>
+<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <div class="daftar-container">
     <!-- Header -->

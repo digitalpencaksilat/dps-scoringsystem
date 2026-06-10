@@ -90,19 +90,34 @@ class Layar extends BaseController
     /**
      * Polling state authoritative tanding.
      * Parity legacy: refresh_status_pertandingan($id_pertandingan)
+     *
+     * Dua use-case:
+     *  1. Dari home.php (null id) → cek ada pertandingan aktif? Return status:false = ada.
+     *  2. Dari tanding.php (specific id) → kirim live data; reload jika id berubah.
      */
     public function refreshStatusPertandingan(?int $idPertandingan = null)
     {
         $pertandingan = $this->pertandinganModel->getPertandinganBerlangsung($this->idGelanggang());
 
         if ($pertandingan === null) {
-            return $this->jsonResponse(['status' => true, 'reload' => $idPertandingan !== null]);
+            // Tidak ada pertandingan aktif
+            return $this->jsonResponse(['status' => true, 'reload' => false]);
         }
 
-        if ((int) $pertandingan->id_pertandingan !== (int) $idPertandingan) {
+        // Case 1: Dipanggil dari home/standby (null id) → ada pertandingan aktif, suruh redirect
+        if ($idPertandingan === null || $idPertandingan === 0) {
+            return $this->jsonResponse([
+                'status'          => false,
+                'id_pertandingan' => (int) $pertandingan->id_pertandingan,
+            ]);
+        }
+
+        // Case 2: ID berubah → reload
+        if ((int) $pertandingan->id_pertandingan !== $idPertandingan) {
             return $this->jsonResponse(['status' => true, 'reload' => true]);
         }
 
+        // Case 3: Sama → kirim live data
         return $this->jsonResponse([
             'status'              => false,
             'id_pertandingan'     => (int) $pertandingan->id_pertandingan,
@@ -161,16 +176,30 @@ class Layar extends BaseController
      * Polling state authoritative seni.
      * Returns juri scores, ready status, akses penilaian.
      * Parity legacy: refresh_status_seni($id_penampilan_seni)
+     *
+     * Dua use-case:
+     *  1. Dari home.php (null id) → cek ada penampilan aktif? Return status:false = ada.
+     *  2. Dari seni.php (specific id) → kirim live data; reload jika id berubah.
      */
     public function refreshStatusSeni(?int $idPenampilanSeni = null)
     {
         $penampilan = $this->penampilanSeniModel->getAktif($this->idGelanggang());
 
         if ($penampilan === null) {
-            return $this->jsonResponse(['status' => true, 'reload' => $idPenampilanSeni !== null]);
+            // Tidak ada penampilan aktif
+            return $this->jsonResponse(['status' => true, 'reload' => false]);
         }
 
-        if ((int) $penampilan->id_penampilan_seni !== (int) $idPenampilanSeni) {
+        // Case 1: Dipanggil dari home/standby (null id) → ada penampilan aktif, suruh redirect
+        if ($idPenampilanSeni === null || $idPenampilanSeni === 0) {
+            return $this->jsonResponse([
+                'status'             => false,
+                'id_penampilan_seni' => (int) $penampilan->id_penampilan_seni,
+            ]);
+        }
+
+        // Case 2: ID berubah → reload
+        if ((int) $penampilan->id_penampilan_seni !== $idPenampilanSeni) {
             return $this->jsonResponse(['status' => true, 'reload' => true]);
         }
 

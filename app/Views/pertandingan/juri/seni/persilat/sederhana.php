@@ -4,6 +4,10 @@
 <link rel="stylesheet" href="<?= base_url('assets/css/penilaian/juri-seni.css') ?>">
 <?= $this->endSection() ?>
 
+<?= $this->section('navbar') ?>
+<?= view('pertandingan/components/navbar', ['nav_role' => 'juri', 'nav_active' => 'seni']) ?>
+<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <?php
     $idPenampilan = (int) $penampilan->id_penampilan_seni;

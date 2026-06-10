@@ -4,6 +4,10 @@
 <link rel="stylesheet" href="<?= base_url('assets/css/penilaian/juri-tanding.css') ?>">
 <?= $this->endSection() ?>
 
+<?= $this->section('navbar') ?>
+<?= view('pertandingan/components/navbar', ['nav_role' => 'juri', 'nav_active' => 'tanding']) ?>
+<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <?php
     $idP   = (int) $pertandingan->id_pertandingan;

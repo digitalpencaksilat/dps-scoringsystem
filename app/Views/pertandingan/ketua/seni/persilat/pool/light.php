@@ -5,6 +5,10 @@
 <style>.kp-light-mode { background: var(--bg-color, #f4f6f9) !important; }</style>
 <?= $this->endSection() ?>
 
+<?= $this->section('navbar') ?>
+<?= view('pertandingan/components/navbar', ['nav_role' => 'ketua_pertandingan', 'nav_active' => 'seni']) ?>
+<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <?php
     $idPenampilan  = (int) $penampilan->id_penampilan_seni;
