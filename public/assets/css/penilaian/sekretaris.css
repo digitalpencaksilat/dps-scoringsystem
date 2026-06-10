@@ -1,0 +1,215 @@
+/* ==========================================================================
+   DPS Scoring System - Sekretaris Specific CSS
+   Additional styles for sekretaris timer pages
+   ========================================================================== */
+
+/* ==========================================================================
+   Sekretaris Home / Dashboard
+   ========================================================================== */
+.sekretaris-home .tab-content {
+	margin-top: 1rem;
+}
+
+/* ==========================================================================
+   Timer Pages - Dark Theme Overrides
+   ========================================================================== */
+.bg-super-dark .card {
+	background: rgba(255, 255, 255, 0.05);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	color: #fff;
+}
+
+/* ==========================================================================
+   Athlete Cards
+   ========================================================================== */
+.block-atlet .bg-blue {
+	background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%) !important;
+}
+
+.block-atlet .bg-red {
+	background: linear-gradient(135deg, #c62828 0%, #b71c1c 100%) !important;
+}
+
+.block-atlet .bg-warning {
+	background: linear-gradient(135deg, #f9a825 0%, #f57f17 100%) !important;
+}
+
+.block-atlet .border-warning {
+	border-color: #ffd600 !important;
+	box-shadow: 0 0 15px rgba(255, 214, 0, 0.4);
+}
+
+/* Score display on athlete cards */
+.skor-biru,
+.skor-merah {
+	font-family: 'Oswald', monospace;
+	text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* ==========================================================================
+   Timer Controls
+   ========================================================================== */
+.block-kendali-waktu .btn {
+	border-radius: 0.5rem;
+	transition: all 0.15s ease;
+}
+
+.block-kendali-waktu .btn:active {
+	transform: scale(0.96);
+}
+
+.button-play-state.is-playing {
+	animation: pulse-play 1.5s infinite;
+}
+
+@keyframes pulse-play {
+	0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); }
+	50% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
+}
+
+/* ==========================================================================
+   Ronde Navigation
+   ========================================================================== */
+.block-navigasi-ronde .btn-ronde {
+	border-radius: 2rem;
+	font-size: 0.9rem;
+	transition: all 0.2s ease;
+}
+
+.block-navigasi-ronde .btn-ronde:hover {
+	transform: translateY(-2px);
+}
+
+/* ==========================================================================
+   Manual Clock Setter (digit +/- modal)
+   ========================================================================== */
+#formManualAturWaktu .h1 {
+	font-family: 'Oswald', monospace;
+	font-size: 3rem;
+}
+
+#formManualAturWaktu .btn {
+	font-size: 1.5rem;
+	line-height: 1;
+	padding: 0.5rem;
+}
+
+/* ==========================================================================
+   End Match / End Turn Button
+   ========================================================================== */
+.btn_selesai {
+	border-radius: 0.75rem;
+	transition: all 0.2s ease;
+}
+
+.btn_selesai:hover {
+	background-color: #e9ecef !important;
+	transform: translateY(-2px);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ==========================================================================
+   Winner Decision Modal
+   ========================================================================== */
+.btn-winner-blue.bg-blue,
+.btn-winner-red.bg-red {
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+	transform: scale(1.05);
+}
+
+/* ==========================================================================
+   Offcanvas (Jump to Match)
+   ========================================================================== */
+.offcanvas-bottom.min-vh-75 {
+	height: 75vh !important;
+}
+
+.offcanvas .table {
+	color: inherit;
+}
+
+/* ==========================================================================
+   Status Badges in Tables
+   ========================================================================== */
+.badge {
+	font-weight: 500;
+	font-size: 0.75rem;
+	padding: 0.35em 0.65em;
+}
+
+/* ==========================================================================
+   Standby Page
+   ========================================================================== */
+.min-vh-75 {
+	min-height: 75vh;
+}
+
+/* ==========================================================================
+   DataTables overrides for dark backgrounds
+   ========================================================================== */
+.bg-super-dark .dataTables_wrapper .dataTables_info,
+.bg-super-dark .dataTables_wrapper .dataTables_length label,
+.bg-super-dark .dataTables_wrapper .dataTables_filter label {
+	color: rgba(255, 255, 255, 0.7);
+}
+
+.bg-super-dark .dataTables_wrapper .page-link {
+	background-color: #333;
+	border-color: #555;
+	color: #fff;
+}
+
+.bg-super-dark .dataTables_wrapper .page-item.active .page-link {
+	background-color: var(--brand-primary);
+	border-color: var(--brand-primary);
+}
+
+/* ==========================================================================
+   Responsive landscape (tablet/scoring device optimization)
+   ========================================================================== */
+@media (orientation: landscape) and (max-height: 600px) {
+	.navbar-custom {
+		padding-top: 0.25rem !important;
+		padding-bottom: 0.25rem !important;
+	}
+
+	.navbar-custom .navbar-brand-img {
+		max-height: 25px;
+	}
+
+	.block-informasi .px-4.py-3 {
+		padding: 0.4rem 1rem !important;
+	}
+
+	.block-informasi .fs-4,
+	.block-informasi .fs-5 {
+		font-size: 0.85rem !important;
+	}
+}
+
+/* ==========================================================================
+   Mobile optimizations (scoring on phones)
+   ========================================================================== */
+@media (max-width: 576px) {
+	.block-kendali-waktu .btn {
+		font-size: 0.85rem !important;
+		padding: 0.75rem 0.5rem !important;
+	}
+
+	.block-end-match .btn_selesai {
+		font-size: 1.1rem !important;
+		padding: 1rem !important;
+	}
+
+	.display-5 {
+		font-size: 1.25rem !important;
+	}
+
+	.fs-4 {
+		font-size: 1rem !important;
+	}
+
+	.offcanvas-bottom.min-vh-75 {
+		height: 85vh !important;
+	}
+}

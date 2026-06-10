@@ -1,0 +1,139 @@
+/* Juri input tanding PERSILAT — baseline tema dps-ci4 + token sudut */
+.juri-wrapper {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.juri-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 18px;
+    background: var(--brand-dark);
+    color: #fff;
+}
+
+.juri-ronde-badge {
+    background: var(--brand-primary);
+    padding: 4px 14px;
+    border-radius: 999px;
+    font-size: 1rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.juri-format {
+    font-size: 0.85rem;
+    opacity: 0.8;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.juri-logout {
+    color: #fff;
+    opacity: 0.8;
+    text-decoration: none;
+    font-size: 1.1rem;
+}
+.juri-logout:hover { opacity: 1; color: #fff; }
+
+.juri-corners {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    background: #d9dee5;
+}
+
+.juri-corner {
+    display: flex;
+    flex-direction: column;
+    padding: 18px;
+    color: #fff;
+}
+
+.corner-biru  { background: var(--corner-blue); }
+.corner-merah { background: var(--corner-red); }
+
+.corner-head {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.corner-skor {
+    font-size: clamp(3rem, 9vw, 6rem);
+    line-height: 1;
+    font-weight: 700;
+    min-width: 1.6em;
+    text-align: center;
+}
+
+.corner-nama {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+.corner-kontingen {
+    font-size: 0.85rem;
+    opacity: 0.85;
+}
+
+.corner-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    flex: 1;
+}
+
+.btn-nilai,
+.btn-hapus {
+    border: none;
+    border-radius: 16px;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.16);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 22px;
+    cursor: pointer;
+    flex: 1;
+    transition: transform 0.06s ease, background 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+.btn-nilai:active,
+.btn-hapus:active { transform: scale(0.97); }
+
+.btn-nilai:hover,
+.btn-hapus:hover { background: rgba(255, 255, 255, 0.26); }
+
+.btn-nilai .nilai-angka {
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 700;
+}
+
+.nilai-label {
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn-hapus {
+    flex: 0 0 auto;
+    background: rgba(0, 0, 0, 0.22);
+    font-size: 1.1rem;
+}
+
+.is-loading {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+@media (max-width: 575.98px) {
+    .juri-corners { grid-template-columns: 1fr; }
+    .corner-skor { font-size: 3.4rem; }
+}

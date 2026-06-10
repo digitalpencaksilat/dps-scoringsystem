@@ -1,0 +1,36 @@
+/* Broadcast operator panel — baseline tema dps-ci4 (gelap, kontrol scene) */
+body.penilaian-body { background: #11141a; }
+.bo-wrapper { min-height: 100vh; display: flex; flex-direction: column; color: #fff; }
+
+.bo-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 18px; background: #000;
+}
+.bo-brand { background: var(--brand-primary); padding: 4px 14px; border-radius: 999px; text-transform: uppercase; letter-spacing: 1px; }
+.bo-gelanggang { font-size: 0.9rem; opacity: 0.85; }
+.bo-logout { color: #fff; opacity: 0.85; text-decoration: none; font-size: 1.1rem; }
+.bo-logout:hover { opacity: 1; }
+
+.bo-body { flex: 1; max-width: 1000px; width: 100%; margin: 0 auto; padding: 26px 20px; }
+
+.bo-overlay-link {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    background: #1c212b; border-radius: 12px; padding: 12px 16px; margin-bottom: 24px;
+}
+.bo-overlay-link code { background: #0b0d12; padding: 6px 12px; border-radius: 8px; color: var(--brand-secondary); }
+
+.bo-section-title { font-size: 1.2rem; margin-bottom: 14px; }
+
+.bo-scene-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; }
+.bo-scene-btn {
+    border: 2px solid #2a313d; background: #1c212b; color: #fff; border-radius: 14px;
+    padding: 22px 14px; cursor: pointer; display: flex; flex-direction: column; align-items: center;
+    gap: 10px; font-size: 0.95rem; text-transform: capitalize; transition: all .15s ease;
+}
+.bo-scene-btn i { font-size: 1.6rem; opacity: 0.8; }
+.bo-scene-btn:hover { border-color: var(--brand-secondary); }
+.bo-scene-btn.active {
+    background: var(--brand-primary); border-color: var(--brand-primary);
+    box-shadow: 0 8px 24px rgba(198,0,0,0.4);
+}
+.bo-scene-btn.active i { opacity: 1; }

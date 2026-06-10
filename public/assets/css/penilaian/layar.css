@@ -1,0 +1,58 @@
+/* Layar / scoreboard tanding PERSILAT — display besar, kontras tinggi */
+body.penilaian-body { background: #0b0d12; }
+
+.layar-wrapper {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: stretch;
+    color: #fff;
+}
+
+.layar-corner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3vh 2vw;
+    position: relative;
+}
+.layar-corner.corner-biru  { background: linear-gradient(160deg, #1565c0, #0d47a1); }
+.layar-corner.corner-merah { background: linear-gradient(160deg, #c62828, #8e0000); }
+
+.layar-kontingen { font-size: 2.2vw; opacity: 0.9; text-transform: uppercase; letter-spacing: 1px; }
+.layar-nama { font-size: 3.2vw; font-weight: 700; margin: 0.4vh 0 1vh; text-align: center; }
+.layar-skor { font-size: 22vh; line-height: 1; font-weight: 700; }
+.layar-sudut-label {
+    position: absolute; bottom: 2vh; font-size: 1.6vw; letter-spacing: 4px;
+    opacity: 0.7; font-weight: 600;
+}
+
+.layar-center {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: #0b0d12; padding: 0 3vw; min-width: 26vw;
+}
+.layar-ronde { font-size: 3vw; color: var(--brand-secondary); letter-spacing: 3px; }
+.layar-timer { font-size: 12vw; font-weight: 700; line-height: 1.1; }
+.layar-status {
+    font-size: 1.8vw; text-transform: uppercase; letter-spacing: 3px;
+    color: #9aa4b2; margin-top: 1vh;
+}
+
+/* Standby */
+.layar-standby {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(circle at center, #16202e, #0b0d12);
+    color: #fff; text-align: center;
+}
+.layar-standby-brand { font-size: 3vw; color: var(--brand-secondary); letter-spacing: 2px; }
+.layar-standby-title { font-size: 5vw; font-weight: 700; margin: 2vh 0; }
+.layar-standby-gelanggang { font-size: 2vw; opacity: 0.8; }
+
+@media (max-width: 767.98px) {
+    .layar-wrapper { grid-template-columns: 1fr; }
+    .layar-skor { font-size: 16vh; }
+    .layar-nama { font-size: 6vw; }
+    .layar-timer { font-size: 18vw; }
+    .layar-center { padding: 4vh 0; }
+}

@@ -1,0 +1,57 @@
+/* Ketua Pertandingan tanding PERSILAT — baseline tema dps-ci4 */
+.kp-wrapper { min-height: 100vh; display: flex; flex-direction: column; }
+
+.kp-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 18px; background: var(--brand-dark); color: #fff;
+}
+.kp-ronde {
+    background: var(--brand-primary); padding: 4px 14px; border-radius: 999px;
+    text-transform: uppercase; letter-spacing: 1px;
+}
+.kp-title { font-size: 0.85rem; opacity: 0.85; text-transform: uppercase; letter-spacing: 1px; }
+.kp-logout { color: #fff; opacity: 0.85; text-decoration: none; font-size: 1.1rem; }
+.kp-logout:hover { opacity: 1; color: #fff; }
+
+.kp-scoreboard {
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+    gap: 16px; padding: 18px; background: #fff;
+}
+.kp-score { text-align: center; border-radius: 16px; padding: 14px; color: #fff; }
+.kp-score.corner-biru  { background: var(--corner-blue); }
+.kp-score.corner-merah { background: var(--corner-red); }
+.kp-score-nama { font-size: 1rem; font-weight: 600; opacity: 0.95; }
+.kp-score-angka { font-size: clamp(2.6rem, 8vw, 5rem); font-weight: 700; line-height: 1; }
+.kp-score-vs { font-size: 1.4rem; color: #98a2b3; font-weight: 700; }
+
+.kp-controls { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 2px; background: #d9dee5; }
+.kp-panel { padding: 16px; color: #fff; display: flex; flex-direction: column; }
+.kp-panel.corner-biru  { background: var(--corner-blue); }
+.kp-panel.corner-merah { background: var(--corner-red); }
+.kp-panel-title { font-size: 1.05rem; font-weight: 600; margin: 0 0 12px; text-align: center; }
+
+.kp-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.kp-btn {
+    border: none; border-radius: 12px; padding: 16px 10px; font-weight: 600;
+    font-size: 0.95rem; cursor: pointer; color: #fff;
+    background: rgba(255,255,255,0.16); transition: transform .06s ease, background .15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.kp-btn:hover { background: rgba(255,255,255,0.28); }
+.kp-btn:active { transform: scale(0.97); }
+.kp-warn   { background: rgba(245,158,11,0.85); }
+.kp-danger { background: rgba(0,0,0,0.30); }
+.kp-ok     { background: rgba(15,159,110,0.85); }
+.kp-muted  { background: rgba(255,255,255,0.22); }
+.kp-btn.is-loading { opacity: 0.5; pointer-events: none; }
+
+.kp-rekap {
+    margin-top: 14px; display: flex; flex-wrap: wrap; gap: 12px;
+    font-size: 0.85rem; background: rgba(0,0,0,0.18); padding: 10px 12px; border-radius: 10px;
+}
+.kp-rekap b { font-size: 1rem; }
+
+@media (max-width: 575.98px) {
+    .kp-controls { grid-template-columns: 1fr; }
+    .kp-scoreboard { gap: 8px; }
+}
