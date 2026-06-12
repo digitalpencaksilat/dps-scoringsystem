@@ -2,38 +2,69 @@
 
 <?= $this->section('content') ?>
 <div class="standby-wrapper">
-    <span class="standby-badge">
-        <i class="fas fa-hourglass-half"></i> Standby
-    </span>
-    <div class="standby-title">Menunggu Pertandingan</div>
-    <p class="text-muted mb-1">
-        <?= esc(ucwords(str_replace('_', ' ', (string) ($posisi ?? '')))) ?>
-        <?php if (! empty($nama)) : ?> &middot; <?= esc($nama) ?><?php endif; ?>
-    </p>
+    <!-- Icon -->
+    <div class="standby-icon">
+        <?php
+            $icon = 'fa-solid fa-gavel';
+            if (($posisi ?? '') === 'juri') $icon = 'fa-solid fa-scale-balanced';
+            elseif (($posisi ?? '') === 'ketua_pertandingan') $icon = 'fa-solid fa-shield-halved';
+            elseif (($posisi ?? '') === 'layar') $icon = 'fa-solid fa-tv';
+        ?>
+        <i class="<?= $icon ?>"></i>
+    </div>
 
-    <?php if (! empty($pertandingan)) : ?>
-        <p class="text-success mt-2">
-            <i class="fas fa-circle-play me-1"></i>
-            Ada pertandingan berlangsung (No. <?= esc($pertandingan->nomor_pertandingan ?? '-') ?>).
-        </p>
-    <?php else : ?>
-        <p class="text-muted small mt-2 mb-0">Belum ada partai aktif di gelanggang ini.</p>
+    <!-- Badge posisi -->
+    <span class="standby-badge">
+        <i class="fas fa-circle-dot fa-xs" style="color: var(--brand-primary);"></i>
+        <?= esc(ucwords(str_replace('_', ' ', (string) ($posisi ?? 'Perangkat')))) ?>
+    </span>
+
+    <!-- Title -->
+    <div class="standby-title">Menunggu Pertandingan</div>
+
+    <!-- Subtitle: nama perangkat -->
+    <?php if (!empty($nama)) : ?>
+        <p class="standby-subtitle"><?= esc($nama) ?></p>
     <?php endif; ?>
 
+    <!-- Gelanggang info -->
+    <?php if (!empty($nama_gelanggang)) : ?>
+        <div class="standby-gelanggang">
+            <div class="standby-gelanggang-label">Gelanggang</div>
+            <div class="standby-gelanggang-name"><?= esc($nama_gelanggang) ?></div>
+        </div>
+    <?php endif; ?>
+
+    <!-- Status -->
+    <?php if (!empty($pertandingan)) : ?>
+        <div class="standby-status standby-status-active">
+            <i class="fas fa-circle-play"></i>
+            Ada pertandingan berlangsung (No. <?= esc($pertandingan->nomor_pertandingan ?? '-') ?>)
+        </div>
+    <?php else : ?>
+        <div class="standby-status standby-status-waiting">
+            <i class="fas fa-clock"></i>
+            Belum ada partai aktif di gelanggang ini
+        </div>
+    <?php endif; ?>
+
+    <!-- Spinner -->
     <div class="standby-spinner">
         <div class="spinner-border" role="status" aria-hidden="true"></div>
     </div>
 
-    <a href="<?= base_url('perangkat-pertandingan/logout') ?>" class="btn btn-sm btn-outline-secondary rounded-pill mt-4">
-        <i class="fas fa-right-from-bracket me-1"></i>Keluar
-    </a>
+    <!-- Logout -->
+    <div class="standby-logout">
+        <a href="<?= base_url('perangkat-pertandingan/logout') ?>" class="btn btn-outline-secondary rounded-pill">
+            <i class="fas fa-right-from-bracket me-1"></i>Keluar
+        </a>
+    </div>
 </div>
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
 <script>
-    // Polling ringan status pertandingan (placeholder Fase 1).
-    // Akan diganti push event Socket.IO di Fase 8.
+    // Polling status pertandingan
     setInterval(function () {
         fetch('<?= base_url('perangkat-pertandingan/refresh-status') ?>', {
             method: 'POST',
@@ -45,7 +76,7 @@
                 window.location.reload();
             }
         })
-        .catch(function () { /* abaikan error transient */ });
+        .catch(function () {});
     }, 5000);
 </script>
 <?= $this->endSection() ?>

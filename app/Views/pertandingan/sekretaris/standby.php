@@ -52,28 +52,53 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
-<div class="container">
-	<div class="row min-vh-75 justify-content-center align-content-center">
-		<?php if (($tipe_standby ?? '') == 'tanding') : ?>
-			<div class="col-12">
-				<p class="text-center h1 mb-3">
-					Stand By - No Match Playing
-				</p>
-			</div>
-			<div class="col-12">
-				<?= $this->include('pertandingan/sekretaris/components/_offcanvas_pindah_partai_tanding') ?>
-			</div>
-		<?php else : ?>
-			<div class="col-12">
-				<p class="text-center h3 mb-3">
-					No Artistic Performance Playing
-				</p>
-			</div>
-			<div class="col-12">
-				<?= $this->include('pertandingan/sekretaris/components/_offcanvas_pindah_partai_seni') ?>
-			</div>
-		<?php endif; ?>
-	</div>
+<div class="standby-wrapper" style="min-height: calc(100vh - 70px);">
+    <!-- Icon -->
+    <div class="standby-icon">
+        <?php if (($tipe_standby ?? '') === 'tanding'): ?>
+            <i class="fa-solid fa-hand-fist"></i>
+        <?php else: ?>
+            <i class="fa-solid fa-masks-theater"></i>
+        <?php endif; ?>
+    </div>
+
+    <!-- Badge -->
+    <span class="standby-badge">
+        <i class="fas fa-circle-dot fa-xs" style="color: var(--brand-primary);"></i>
+        Sekretaris Pertandingan
+    </span>
+
+    <!-- Title -->
+    <div class="standby-title">
+        <?php if (($tipe_standby ?? '') === 'tanding'): ?>
+            Standby — No Match Playing
+        <?php else: ?>
+            Standby — No Performance Playing
+        <?php endif; ?>
+    </div>
+
+    <!-- Subtitle -->
+    <p class="standby-subtitle">
+        <?php if (($tipe_standby ?? '') === 'tanding'): ?>
+            Pilih partai tanding untuk memulai pertandingan
+        <?php else: ?>
+            Pilih penampilan seni untuk memulai penilaian
+        <?php endif; ?>
+    </p>
+
+    <!-- Action: pindah partai -->
+    <div class="mt-3 position-relative" style="z-index: 1;">
+        <?php if (($tipe_standby ?? '') === 'tanding'): ?>
+            <?= $this->include('pertandingan/sekretaris/components/_offcanvas_pindah_partai_tanding') ?>
+        <?php else: ?>
+            <?= $this->include('pertandingan/sekretaris/components/_offcanvas_pindah_partai_seni') ?>
+        <?php endif; ?>
+    </div>
+
+    <!-- Spinner -->
+    <div class="standby-spinner">
+        <div class="spinner-border" role="status" aria-hidden="true"></div>
+    </div>
 </div>
 
 <script>

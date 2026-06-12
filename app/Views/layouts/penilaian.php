@@ -59,7 +59,12 @@
 	<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 
 	<!-- Realtime config -->
-	<script>const SOCKET_URL = "<?= env('REALTIME_SERVER_URL', 'http://localhost:3000') ?>";</script>
+	<script>
+		const SOCKET_URL = "<?= env('REALTIME_SERVER_URL', 'http://localhost:3000') ?>";
+		const BASE_URL = "<?= base_url() ?>";
+		var CSRF_NAME = "<?= csrf_token() ?>";
+		var CSRF_HASH = "<?= csrf_hash() ?>";
+	</script>
 
 	<?= $this->renderSection('scripts') ?>
 </body>

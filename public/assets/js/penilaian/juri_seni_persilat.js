@@ -1,486 +1,542 @@
 /**
- * Juri Seni PERSILAT — modular JS
- * Parity legacy: juri/seni/persilat.js (v72)
- * Handles: unsur nilai rendering, kebenaran pointer, ready toggle, wrong move,
- *          auto-save (debounced), offline localStorage fallback, socket.io
+ * Juri Seni PERSILAT — Full Parity Legacy
+ * Parity: /dps/assets/penilaian/js/application/juri/seni/persilat.js
+ * Handles: kebenaran pointer, unsur_nilai +/- , hukuman (read-only from KP),
+ *          offline localStorage fallback, auto-sync, ready toggle, akses lock
  */
-(function () {
-    'use strict';
+const juri = {
+  penampilan_seni: null,
+  id_penampilan_seni: null,
+  data_nilai: null,
+  mode: null,
+  is_offline: false,
+  button_audio: new Audio(BASE_URL + "assets/sound/button.mp3"),
 
-    const wrapper = document.getElementById('juri-seni-wrapper');
-    if (!wrapper) return;
+  set_offline_data: function(clean_data) {
+    juri.is_offline = true;
+    localStorage.setItem('offline_seni_' + juri.id_penampilan_seni, JSON.stringify(clean_data));
+    juri.update_offline_ui(true);
+  },
+  set_online_status: function(status) {
+    juri.is_offline = !status;
+    juri.update_offline_ui(!status);
+  },
+  update_offline_ui: function(is_offline) {
+    let $indicator = $('#offline-indicator');
+    if ($indicator.length > 0) {
+      if (is_offline) {
+        $indicator.removeClass('bg-success').addClass('bg-danger blink-indicator')
+          .html('<small><i class="fas fa-exclamation-triangle me-1"></i> Lokal</small>').show();
+      } else {
+        $indicator.removeClass('bg-danger').addClass('bg-success blink-indicator')
+          .html('<small><i class="fas fa-wifi me-1"></i> Online</small>').show();
+      }
+    }
+  },
+  sync_offline_data: function() {
+    let offline_data = localStorage.getItem('offline_seni_' + juri.id_penampilan_seni);
+    if (offline_data) {
+      console.log("Mencoba sync data offline...");
+      $.post(
+        BASE_URL + "juri/edit-penilaian-seni/" + juri.id_penampilan_seni,
+        { data_nilai: offline_data, [CSRF_NAME]: CSRF_HASH },
+        function (data) {
+          if (data && data.status == true) {
+            console.log("Sync data offline berhasil");
+            localStorage.removeItem('offline_seni_' + juri.id_penampilan_seni);
+            juri.set_online_status(true);
+          }
+          if (data && data.csrf_hash) CSRF_HASH = data.csrf_hash;
+        },
+        "json"
+      ).fail(function() {
+        console.log("Sync data offline gagal: masih belum ada koneksi");
+      });
+    }
+  },
 
-    const config = {
-        idPenampilan: wrapper.dataset.idPenampilan,
-        endpointEdit: wrapper.dataset.endpointEdit,
-        endpointRefresh: wrapper.dataset.endpointRefresh,
-        endpointToggleReady: wrapper.dataset.endpointToggleReady,
-        csrfName: wrapper.dataset.csrfName,
-        csrfHash: wrapper.dataset.csrfHash,
-        akses: wrapper.dataset.akses,
-        jenisSeni: wrapper.dataset.jenisSeni || 'tunggal',
-        rangeMin: parseFloat(wrapper.dataset.rangeMin || '0.00'),
-        rangeMax: parseFloat(wrapper.dataset.rangeMax || '0.10'),
+  init_penilaian_seni: function($penampilan_seni, $data_nilai, $mode, $kelas_aksen_warna) {
+    $mode = $mode || "juri";
+    $kelas_aksen_warna = $kelas_aksen_warna || "bg-gradient-180-warning";
+    juri.set_variable($penampilan_seni, $data_nilai, $mode, $kelas_aksen_warna);
+    juri.update_tampilan_nilai();
+    juri.refresh_status_seni();
+    var $data_pointer = juri.pointer.get_data_pointer();
+    juri.pointer.update_tampilan_pointer($data_pointer);
+  },
+
+  set_variable: function($penampilan_seni, $data_nilai, $mode, $kelas_aksen_warna) {
+    juri.mode = $mode || "juri";
+    juri.penampilan_seni = $penampilan_seni;
+    juri.id_penampilan_seni = $penampilan_seni.id_penampilan_seni;
+    juri.data_nilai = $data_nilai;
+    juri.kelas_aksen_warna = $kelas_aksen_warna || "bg-gradient-180-warning";
+  },
+
+  set_hukuman_ringkasan: function($penampilan_seni, $data_nilai) {
+    juri.data_nilai.penilaian.hukuman = $data_nilai.penilaian.hukuman;
+    juri.data_nilai.penilaian.ringkasan = $data_nilai.penilaian.ringkasan;
+  },
+
+  update_data_nilai: function($element) {
+    juri.hitung_total_nilai();
+    if (juri.data_nilai.penilaian.ringkasan.total_hukuman === undefined) {
+      juri.hitung_total_hukuman();
+    }
+    juri.hitung_nilai_akhir();
+
+    // Clean data: only unsur_nilai + total_nilai (no penalties)
+    var clean_data = {
+      penilaian: {
+        unsur_nilai: juri.data_nilai.penilaian.unsur_nilai,
+        ringkasan: {
+          total_nilai: juri.data_nilai.penilaian.ringkasan.total_nilai,
+          nilai_minimal: juri.data_nilai.penilaian.ringkasan.nilai_minimal,
+        },
+      },
     };
 
-    const format = (typeof SENI_FORMAT !== 'undefined') ? SENI_FORMAT : null;
-    const mode = (typeof SENI_MODE !== 'undefined') ? SENI_MODE : 'sederhana';
-    let dataNilai = (typeof SENI_DATA !== 'undefined') ? SENI_DATA : {};
-    let isReady = (typeof SENI_READY !== 'undefined') ? !!SENI_READY : false;
-    let saveTimer = null;
-    let locked = false;
-    let pollInterval = null;
-
-    // ─── CSRF ─────────────────────────────────────────────────────────────
-
-    function rotateCsrf(newHash) {
-        if (newHash) config.csrfHash = newHash;
-    }
-
-    function buildBody(extra) {
-        const body = new URLSearchParams();
-        body.append(config.csrfName, config.csrfHash);
-        if (extra) Object.entries(extra).forEach(([k, v]) => body.append(k, v));
-        return body;
-    }
-
-    function postJSON(url, params) {
-        return fetch(url, {
-            method: 'POST',
-            headers: { 'X-Requested-With': 'XMLHttpRequest' },
-            body: buildBody(params),
-        }).then(r => {
-            if (!r.ok) throw new Error('HTTP ' + r.status);
-            return r.json();
-        }).then(data => {
-            rotateCsrf(data.csrf_hash || (data.response && data.response.csrf_hash));
-            setOnline(true);
-            return data;
-        }).catch(err => {
-            setOnline(false);
-            throw err;
-        });
-    }
-
-    // ─── Online/Offline Indicator ─────────────────────────────────────────
-
-    function setOnline(online) {
-        const el = document.getElementById('online-indicator');
-        if (!el) return;
-        if (online) {
-            el.classList.remove('offline');
+    $.post(
+      BASE_URL + "juri/edit-penilaian-seni/" + juri.id_penampilan_seni,
+      {
+        data_nilai: JSON.stringify(clean_data),
+        [CSRF_NAME]: CSRF_HASH,
+      },
+      function (data, textStatus, jqXHR) {
+        if (data && data.status == true) {
+          console.log("Technical scoring updated successfully");
+          if (juri.is_offline) juri.set_online_status(true);
         } else {
-            el.classList.add('offline');
-            el.querySelector('.online-text').textContent = 'Offline';
+          console.log("gagal update nilai");
+          juri.set_offline_data(clean_data);
         }
+        if (data && data.csrf_hash) CSRF_HASH = data.csrf_hash;
+      },
+      "json"
+    ).fail(function() {
+      console.log("Koneksi terputus saat update nilai");
+      juri.set_offline_data(clean_data);
+    });
+
+    juri.update_tampilan_nilai();
+    var $data_pointer = juri.pointer.get_data_pointer();
+    juri.pointer.update_tampilan_pointer($data_pointer);
+  },
+
+  edit_nilai_kebenaran_jurus: function($jurus, $nomor_rangkaian_gerak, $perubahan, $element) {
+    var $nilai_maksimal = parseFloat(
+      juri.data_nilai.penilaian.unsur_nilai.kebenaran.jurus[$jurus]
+        .rangkaian_gerak[$nomor_rangkaian_gerak].nilai_maksimal
+    );
+    var $nilai_diperoleh =
+      juri.data_nilai.penilaian.unsur_nilai.kebenaran.jurus[$jurus]
+        .rangkaian_gerak[$nomor_rangkaian_gerak].nilai_diperoleh;
+    var $nilai_diperoleh_selanjutnya = Number($nilai_diperoleh + $perubahan).toFixed(2);
+    $nilai_diperoleh_selanjutnya = Number($nilai_diperoleh_selanjutnya);
+
+    if ($nilai_diperoleh_selanjutnya <= $nilai_maksimal && $nilai_diperoleh_selanjutnya >= 0) {
+      juri.data_nilai.penilaian.unsur_nilai.kebenaran.jurus[$jurus]
+        .rangkaian_gerak[$nomor_rangkaian_gerak].nilai_diperoleh = $nilai_diperoleh_selanjutnya;
+
+      var $total_nilai_diperoleh = juri.data_nilai.penilaian.unsur_nilai.kebenaran.nilai_diperoleh;
+      $total_nilai_diperoleh = Number($total_nilai_diperoleh + $perubahan).toFixed(2);
+      juri.data_nilai.penilaian.unsur_nilai.kebenaran.nilai_diperoleh = Number($total_nilai_diperoleh);
+
+      if ($perubahan > 0) {
+        juri.data_nilai.penilaian.unsur_nilai.kebenaran.jurus[$jurus]
+          .rangkaian_gerak[$nomor_rangkaian_gerak].jumlah_kesalahan -= 1;
+        juri.data_nilai.penilaian.unsur_nilai.kebenaran.total_kesalahan_gerak -= 1;
+      } else {
+        juri.data_nilai.penilaian.unsur_nilai.kebenaran.jurus[$jurus]
+          .rangkaian_gerak[$nomor_rangkaian_gerak].jumlah_kesalahan += 1;
+        juri.data_nilai.penilaian.unsur_nilai.kebenaran.total_kesalahan_gerak += 1;
+      }
+    } else {
+      console.log("macet");
     }
 
-    // ─── Score Calculation ────────────────────────────────────────────────
+    juri.update_data_nilai($element);
+    try { juri.button_audio.play(); } catch(e) {}
+  },
 
-    function hitungTotal() {
-        if (!dataNilai || !dataNilai.unsur_nilai) return 0;
-        let total = 0;
-        Object.values(dataNilai.unsur_nilai).forEach(v => {
-            total += parseFloat(v) || 0;
-        });
-        // Subtract kebenaran potongan
-        if (dataNilai.kebenaran_potongan) {
-            total -= parseFloat(dataNilai.kebenaran_potongan) || 0;
+  pointer: {
+    pindah_gerakan: function($arah_gerakan, $perubahan_nilai, $element) {
+      var $data_pointer = juri.pointer.get_data_pointer();
+      if ($data_pointer === null) return;
+      juri.edit_nilai_kebenaran_jurus(
+        $data_pointer.pointer_jurus,
+        $data_pointer.pointer_rangkaian_gerak,
+        $perubahan_nilai,
+        $element
+      );
+      juri.pointer.move_pointer($data_pointer, $arah_gerakan);
+    },
+    pindah_pointer_rangkaian_gerak: function($arah_gerakan) {
+      var $data_pointer = juri.pointer.get_data_pointer();
+      if ($data_pointer === null) return;
+      var $nomor_selanjutnya = $data_pointer.pointer_rangkaian_gerak + $arah_gerakan;
+      if (juri.data_nilai.penilaian.unsur_nilai.kebenaran.jurus[$data_pointer.pointer_jurus]
+          .rangkaian_gerak[$nomor_selanjutnya] !== undefined) {
+        $data_pointer.pointer_rangkaian_gerak += $arah_gerakan;
+        $data_pointer.pointer_gerakan = 1;
+        try { juri.button_audio.play(); } catch(e) {}
+      } else {
+        var $daftar_jurus = Object.keys(juri.data_nilai.penilaian.unsur_nilai.kebenaran.jurus);
+        var $idx = $daftar_jurus.indexOf($data_pointer.pointer_jurus);
+        var $jurus_next = $daftar_jurus[$idx + $arah_gerakan];
+        if ($jurus_next != undefined) {
+          $data_pointer.pointer_jurus = $jurus_next;
+          $data_pointer.pointer_rangkaian_gerak += $arah_gerakan;
+          $data_pointer.pointer_gerakan = 1;
         }
-        // Subtract hukuman
-        if (dataNilai.total_hukuman) {
-            total -= parseFloat(dataNilai.total_hukuman) || 0;
-        }
-        return Math.max(0, total);
-    }
-
-    function hitungKebenaranTotal() {
-        const max = parseFloat(dataNilai.kebenaran_max || 10);
-        const pot = parseFloat(dataNilai.kebenaran_potongan || 0);
-        return Math.max(0, max - pot);
-    }
-
-    function renderTotalNilai() {
-        const el = document.getElementById('total-nilai');
-        if (el) el.textContent = hitungTotal().toFixed(2);
-    }
-
-    function renderKebenaran() {
-        const elMax = document.getElementById('kebenaran-max');
-        const elPot = document.getElementById('kebenaran-potongan');
-        const elTotal = document.getElementById('kebenaran-total');
-        if (elMax) elMax.textContent = parseFloat(dataNilai.kebenaran_max || 10).toFixed(2);
-        if (elPot) elPot.textContent = parseFloat(dataNilai.kebenaran_potongan || 0).toFixed(2);
-        if (elTotal) elTotal.textContent = hitungKebenaranTotal().toFixed(2);
-    }
-
-    // ─── Render Unsur Nilai (Sederhana Mode) ──────────────────────────────
-
-    function renderUnsurNilai() {
-        const container = document.getElementById('unsur-nilai-container');
-        if (!container || !format || !format.unsur_nilai) return;
-
-        container.innerHTML = '';
-        format.unsur_nilai.forEach((unsur, idx) => {
-            const key = unsur.key || unsur.id || ('unsur_' + idx);
-            const currentVal = (dataNilai.unsur_nilai && dataNilai.unsur_nilai[key]) || 0;
-
-            const row = document.createElement('div');
-            row.className = 'unsur-row';
-            row.innerHTML = `
-                <span class="unsur-label">${escHtml(unsur.nama || unsur.label || key)}</span>
-                <span class="unsur-value-display" id="unsur-val-${key}">${parseFloat(currentVal).toFixed(2)}</span>
-                <div class="unsur-btn-group">
-                    <button type="button" class="unsur-btn unsur-btn-minus" data-key="${key}" data-dir="-1">−</button>
-                    <button type="button" class="unsur-btn unsur-btn-plus" data-key="${key}" data-dir="1">+</button>
-                </div>
-            `;
-            container.appendChild(row);
-        });
-
-        // Bind events
-        container.querySelectorAll('.unsur-btn').forEach(btn => {
-            btn.addEventListener('click', function () {
-                const key = this.dataset.key;
-                const dir = parseInt(this.dataset.dir, 10);
-                adjustUnsur(key, dir);
-            });
-        });
-    }
-
-    function adjustUnsur(key, direction) {
-        if (!dataNilai.unsur_nilai) dataNilai.unsur_nilai = {};
-        let val = parseFloat(dataNilai.unsur_nilai[key] || 0);
-        const step = 0.01;
-
-        val += direction * step;
-        // Clamp
-        if (val < config.rangeMin) val = config.rangeMin;
-        if (val > config.rangeMax) val = config.rangeMax;
-
-        dataNilai.unsur_nilai[key] = val.toFixed(2);
-
-        // Update display
-        const el = document.getElementById('unsur-val-' + key);
-        if (el) el.textContent = val.toFixed(2);
-
-        renderTotalNilai();
-        debouncedSave();
-    }
-
-    // ─── Render Gerakan (Terperinci Mode) ─────────────────────────────────
-
-    function renderGerakan() {
-        const container = document.getElementById('gerakan-container');
-        if (!container || !format || !format.gerakan) return;
-
-        container.innerHTML = '';
-        format.gerakan.forEach((ger, idx) => {
-            const key = ger.key || ger.id || ('ger_' + idx);
-            const isWrong = dataNilai.gerakan_salah && dataNilai.gerakan_salah[key];
-            const deduction = isWrong ? (parseFloat(ger.deduction || config.rangeMax) || 0) : 0;
-
-            const row = document.createElement('div');
-            row.className = 'gerakan-row' + (isWrong ? ' is-wrong' : '');
-            row.dataset.key = key;
-            row.innerHTML = `
-                <span class="gerakan-num">${idx + 1}</span>
-                <span class="gerakan-label">${escHtml(ger.nama || ger.label || ('Gerakan ' + (idx + 1)))}</span>
-                <span class="gerakan-value">${isWrong ? '-' + deduction.toFixed(2) : '✓'}</span>
-                <div class="gerakan-actions">
-                    <button type="button" class="gerakan-btn ${isWrong ? 'gerakan-btn-correct' : 'gerakan-btn-wrong'}"
-                            data-key="${key}" data-deduction="${ger.deduction || config.rangeMax}">
-                        <i class="fas ${isWrong ? 'fa-undo' : 'fa-xmark'}"></i>
-                    </button>
-                </div>
-            `;
-            container.appendChild(row);
-        });
-
-        // Bind events
-        container.querySelectorAll('.gerakan-btn').forEach(btn => {
-            btn.addEventListener('click', function () {
-                toggleGerakan(this.dataset.key, parseFloat(this.dataset.deduction));
-            });
-        });
-    }
-
-    function toggleGerakan(key, deduction) {
-        if (!dataNilai.gerakan_salah) dataNilai.gerakan_salah = {};
-
-        if (dataNilai.gerakan_salah[key]) {
-            delete dataNilai.gerakan_salah[key];
+      }
+      juri.pointer.set_data_pointer($data_pointer);
+      juri.pointer.update_tampilan_pointer($data_pointer);
+    },
+    move_pointer: function($data_pointer, $arah_gerakan) {
+      juri.pointer.unlock_tombol();
+      var $new_ptr = $data_pointer.pointer_gerakan + $arah_gerakan;
+      if ($new_ptr > 0 && $new_ptr <= $data_pointer.jumlah_gerakan) {
+        $data_pointer.pointer_gerakan += $arah_gerakan;
+      } else {
+        var $nomor_selanjutnya = $data_pointer.pointer_rangkaian_gerak + 1;
+        if (juri.data_nilai.penilaian.unsur_nilai.kebenaran.jurus[$data_pointer.pointer_jurus]
+            .rangkaian_gerak[$nomor_selanjutnya] !== undefined) {
+          $data_pointer.pointer_rangkaian_gerak += $arah_gerakan;
+          $data_pointer.pointer_gerakan = 1;
         } else {
-            dataNilai.gerakan_salah[key] = deduction;
+          var $daftar_jurus = Object.keys(juri.data_nilai.penilaian.unsur_nilai.kebenaran.jurus);
+          var $idx = $daftar_jurus.indexOf($data_pointer.pointer_jurus);
+          var $jurus_next = $daftar_jurus[$idx + 1];
+          if ($jurus_next != undefined) {
+            $data_pointer.pointer_jurus = $jurus_next;
+            $data_pointer.pointer_rangkaian_gerak += $arah_gerakan;
+            $data_pointer.pointer_gerakan = 1;
+          }
         }
+      }
+      juri.pointer.set_data_pointer($data_pointer);
+      juri.pointer.update_tampilan_pointer($data_pointer);
+    },
+    reset_pointer: function($button) {
+      var $daftar_jurus = Object.keys(juri.data_nilai.penilaian.unsur_nilai.kebenaran.jurus);
+      juri.pointer.set_pointer_jurus($daftar_jurus[0]);
+      juri.pointer.set_pointer_rangkaian_gerak(1);
+      juri.pointer.set_pointer_gerakan(1);
+      juri.update_data_nilai($button);
+      juri.pointer.unlock_tombol();
+    },
+    get_data_pointer: function() {
+      if (juri.data_nilai.penilaian.unsur_nilai.kebenaran == undefined) return null;
+      var $ptr_jurus = juri.pointer.get_pointer_jurus();
+      var $ptr_rg = juri.pointer.get_pointer_rangkaian_gerak();
+      return {
+        pointer_jurus: $ptr_jurus,
+        pointer_rangkaian_gerak: $ptr_rg,
+        pointer_gerakan: juri.pointer.get_pointer_gerakan(),
+        jumlah_kesalahan_rangkaian_gerak: juri.pointer.get_jumlah_kesalahan($ptr_jurus, $ptr_rg),
+        jumlah_kebenaran_rangkaian_gerak: juri.pointer.get_jumlah_kebenaran($ptr_jurus, $ptr_rg),
+        jumlah_gerakan: juri.pointer.get_jumlah_gerakan($ptr_jurus, $ptr_rg),
+        nilai_diperoleh_rangkaian_gerak: juri.pointer.get_nilai_diperoleh($ptr_jurus, $ptr_rg),
+        nilai_maksimal_rangkaian_gerak: juri.pointer.get_nilai_maksimal($ptr_jurus, $ptr_rg),
+      };
+    },
+    set_data_pointer: function($dp) {
+      juri.pointer.set_pointer_jurus($dp.pointer_jurus);
+      juri.pointer.set_pointer_rangkaian_gerak($dp.pointer_rangkaian_gerak);
+      juri.pointer.set_pointer_gerakan($dp.pointer_gerakan);
+    },
+    update_tampilan_pointer: function($dp) {
+      if ($dp === null) return;
+      $(".pointer_jurus").html(($dp.pointer_jurus || '').replace("_", " "));
+      $(".pointer_rangkaian_gerak").html($dp.pointer_rangkaian_gerak);
+      $(".pointer_gerakan").html($dp.pointer_gerakan);
+      $(".jumlah_kesalahan_rangkaian_gerak").html($dp.jumlah_kesalahan_rangkaian_gerak);
+      $(".jumlah_kebenaran_rangkaian_gerak").html($dp.jumlah_kebenaran_rangkaian_gerak);
 
-        // Recalculate kebenaran_potongan
-        let totalPotongan = 0;
-        Object.values(dataNilai.gerakan_salah).forEach(d => {
-            totalPotongan += parseFloat(d) || 0;
+      $(".container_rangkaian_gerak").removeClass("bg-gradient-180-blue bg-gradient-180-red bg-gradient-180-warning text-white");
+      $(".container_" + $dp.pointer_jurus + "_" + $dp.pointer_rangkaian_gerak)
+        .addClass(juri.kelas_aksen_warna + " text-white");
+    },
+    // Getters
+    get_pointer_jurus: function() {
+      return juri.data_nilai.penilaian.unsur_nilai.kebenaran.metadata.pointer_jurus;
+    },
+    get_pointer_rangkaian_gerak: function() {
+      return juri.data_nilai.penilaian.unsur_nilai.kebenaran.metadata.pointer_rangkaian_gerak;
+    },
+    get_pointer_gerakan: function() {
+      return juri.data_nilai.penilaian.unsur_nilai.kebenaran.metadata.pointer_gerakan;
+    },
+    get_jumlah_gerakan: function($j, $rg) {
+      return juri.data_nilai.penilaian.unsur_nilai.kebenaran.jurus[$j].rangkaian_gerak[$rg].jumlah_gerakan;
+    },
+    get_jumlah_kesalahan: function($j, $rg) {
+      return juri.data_nilai.penilaian.unsur_nilai.kebenaran.jurus[$j].rangkaian_gerak[$rg].jumlah_kesalahan;
+    },
+    get_jumlah_kebenaran: function($j, $rg) {
+      var kesalahan = juri.data_nilai.penilaian.unsur_nilai.kebenaran.jurus[$j].rangkaian_gerak[$rg].jumlah_kesalahan;
+      var gerakan = juri.data_nilai.penilaian.unsur_nilai.kebenaran.jurus[$j].rangkaian_gerak[$rg].jumlah_gerakan;
+      return gerakan - kesalahan;
+    },
+    get_nilai_diperoleh: function($j, $rg) {
+      return juri.data_nilai.penilaian.unsur_nilai.kebenaran.jurus[$j].rangkaian_gerak[$rg].nilai_diperoleh;
+    },
+    get_nilai_maksimal: function($j, $rg) {
+      return juri.data_nilai.penilaian.unsur_nilai.kebenaran.jurus[$j].rangkaian_gerak[$rg].nilai_maksimal;
+    },
+    // Setters
+    set_pointer_jurus: function(v) {
+      juri.data_nilai.penilaian.unsur_nilai.kebenaran.metadata.pointer_jurus = v;
+    },
+    set_pointer_rangkaian_gerak: function(v) {
+      juri.data_nilai.penilaian.unsur_nilai.kebenaran.metadata.pointer_rangkaian_gerak = v;
+    },
+    set_pointer_gerakan: function(v) {
+      juri.data_nilai.penilaian.unsur_nilai.kebenaran.metadata.pointer_gerakan = v;
+    },
+    lock_tombol: function() {
+      $(".button_gerakan_benar, .button_gerakan_salah").prop("disabled", true).addClass("btn-disabled");
+    },
+    unlock_tombol: function() {
+      $(".button_gerakan_benar, .button_gerakan_salah").removeAttr("disabled").removeClass("btn-disabled");
+    },
+  },
+
+  edit_unsur_nilai: function($jenis_unsur_nilai, $perubahan, $element) {
+    var $input = $($element).parents(".container_" + $jenis_unsur_nilai).find("input");
+    var $nilai_maksimal = parseFloat(juri.data_nilai.penilaian.unsur_nilai[$jenis_unsur_nilai].nilai_maksimal);
+    var $nilai_minimal = parseFloat(juri.data_nilai.penilaian.unsur_nilai[$jenis_unsur_nilai].nilai_minimal || 0);
+    var $next = Number(parseFloat($input.val()) + parseFloat($perubahan)).toFixed(2);
+
+    if ($next <= $nilai_maksimal && $next >= $nilai_minimal) {
+      juri.data_nilai.penilaian.unsur_nilai[$jenis_unsur_nilai].nilai_diperoleh += $perubahan;
+      juri.update_data_nilai($element);
+    }
+    try { juri.button_audio.play(); } catch(e) {}
+  },
+
+  edit_hukuman: function($jenis_hukuman, $data, $element) {
+    // Juri cannot edit penalties — KP only
+    if (typeof Swal !== "undefined") {
+      Swal.fire({
+        title: "Akses Ditolak",
+        text: "Hanya Ketua Pertandingan yang dapat mengubah nilai hukuman.",
+        icon: "info",
+        confirmButtonText: "OK",
+      });
+    } else {
+      alert("Hanya Ketua Pertandingan yang dapat mengubah nilai hukuman.");
+    }
+    return false;
+  },
+
+  hitung_total_nilai: function() {
+    juri.data_nilai.penilaian.ringkasan.total_nilai = 0;
+    $.each(juri.data_nilai.penilaian.unsur_nilai, function(i, unsur_nilai) {
+      var $bobot = Number(unsur_nilai.nilai_diperoleh).toFixed(2);
+      $bobot = Number($bobot);
+      juri.data_nilai.penilaian.ringkasan.total_nilai += $bobot;
+    });
+    var $nilai_minimal = juri.data_nilai.penilaian.ringkasan.nilai_minimal || 0;
+    var $total = $nilai_minimal + juri.data_nilai.penilaian.ringkasan.total_nilai;
+    $total = Number($total).toFixed(2);
+    juri.data_nilai.penilaian.ringkasan.total_nilai = Number($total);
+  },
+
+  hitung_total_hukuman: function() {
+    juri.data_nilai.penilaian.ringkasan.total_hukuman = 0;
+    if (juri.data_nilai.penilaian.hukuman) {
+      $.each(juri.data_nilai.penilaian.hukuman, function(i, hukuman) {
+        if (hukuman && hukuman.detail_hukuman) {
+          juri.data_nilai.penilaian.ringkasan.total_hukuman += hukuman.detail_hukuman.nilai_hukuman;
+        }
+      });
+    }
+  },
+
+  hitung_nilai_akhir: function() {
+    juri.data_nilai.penilaian.ringkasan.nilai_akhir =
+      juri.data_nilai.penilaian.ringkasan.total_nilai -
+      (juri.data_nilai.penilaian.ringkasan.total_hukuman || 0);
+  },
+
+  update_tampilan_nilai: function() {
+    $.each(juri.data_nilai.penilaian, function(jenis, value_jenis) {
+      if (jenis == "unsur_nilai") {
+        $.each(value_jenis, function(key_unsur, val_unsur) {
+          if (key_unsur == "kebenaran") {
+            if (val_unsur.jurus) {
+              $.each(val_unsur.jurus, function(jurus, val_jurus) {
+                $.each(val_jurus.rangkaian_gerak, function(nomor_rg, val_rg) {
+                  $(".kebenaran_" + jurus + "_" + nomor_rg).val(val_rg.jumlah_kesalahan);
+                  $(".kebenaran_" + jurus + "_" + nomor_rg).attr("max", val_rg.nilai_maksimal);
+                });
+              });
+            }
+            var $total_potongan = (val_unsur.nilai_maksimal - val_unsur.nilai_diperoleh).toFixed(2);
+            $(".total_pengurangan_kebenaran_gerak").html($total_potongan);
+            $(".total_nilai_kebenaran").val(val_unsur.nilai_diperoleh.toFixed(2));
+          } else {
+            $(".nilai_" + key_unsur).val(val_unsur.nilai_diperoleh.toFixed(2));
+          }
         });
-        dataNilai.kebenaran_potongan = totalPotongan.toFixed(2);
-
-        renderGerakan();
-        renderKebenaran();
-        renderTotalNilai();
-        debouncedSave();
-    }
-
-    // ─── Auto-Save (Debounced 800ms) ──────────────────────────────────────
-
-    function debouncedSave() {
-        clearTimeout(saveTimer);
-        saveTimer = setTimeout(doSave, 800);
-    }
-
-    function doSave() {
-        if (locked) return;
-        locked = true;
-
-        const payload = JSON.stringify(dataNilai);
-
-        // Save to localStorage as fallback
-        try {
-            localStorage.setItem('seni_backup_' + config.idPenampilan, payload);
-        } catch (e) { /* ignore */ }
-
-        postJSON(config.endpointEdit, { data_nilai: payload })
-            .then(data => {
-                if (data && data.status === true) {
-                    // Success — clear backup
-                    try { localStorage.removeItem('seni_backup_' + config.idPenampilan); } catch (e) {}
-                }
-            })
-            .catch(() => {
-                // Offline — data in localStorage
-            })
-            .finally(() => { locked = false; });
-    }
-
-    // ─── Ready Toggle ─────────────────────────────────────────────────────
-
-    function setupReadyBtn() {
-        const btn = document.getElementById('btn-ready');
-        if (!btn) return;
-
-        updateReadyUI();
-        btn.addEventListener('click', () => {
-            postJSON(config.endpointToggleReady, { ready: isReady ? '0' : '1' })
-                .then(data => {
-                    if (data && data.status === true) {
-                        isReady = !isReady;
-                        updateReadyUI();
-                    }
-                })
-                .catch(() => {});
+      } else if (jenis == "hukuman") {
+        $.each(value_jenis, function(jenis_hukuman, hukuman) {
+          if (!hukuman || !hukuman.detail_hukuman) return;
+          var detail = hukuman.detail_hukuman;
+          if (hukuman.tipe == "pilihan ganda" || hukuman.tipe == "satu kali") {
+            $(".nilai_hukuman_" + jenis_hukuman).val(detail.nilai_hukuman);
+          } else if (hukuman.tipe == "repetisi") {
+            $(".jumlah_repetisi_" + jenis_hukuman).val(detail.jumlah_repetisi);
+            $(".nilai_hukuman_" + jenis_hukuman).val(detail.nilai_hukuman);
+          }
         });
-    }
-
-    function updateReadyUI() {
-        const btn = document.getElementById('btn-ready');
-        const text = document.getElementById('ready-text');
-        if (!btn) return;
-        if (isReady) {
-            btn.classList.add('is-ready');
-            if (text) text.textContent = 'NOT READY';
+      } else if (jenis == "ringkasan") {
+        $(".total_nilai").val(value_jenis.total_nilai);
+        $(".total_hukuman").val(value_jenis.total_hukuman);
+        if (juri.mode == "juri") {
+          $(".nilai_akhir").val(value_jenis.nilai_akhir);
         } else {
-            btn.classList.remove('is-ready');
-            if (text) text.textContent = 'READY';
+          $(".nilai_akhir").html(value_jenis.nilai_akhir);
         }
-    }
+      }
+    });
+  },
 
-    // ─── Wrong Move Button (global — adds to current pointer) ─────────────
-
-    function setupWrongMove() {
-        const btn = document.getElementById('btn-wrong-move');
-        if (!btn) return;
-
-        btn.addEventListener('click', () => {
-            if (mode === 'terperinci') {
-                // In terperinci, wrong move marks the next unmarked gerakan
-                if (!format || !format.gerakan) return;
-                for (let i = 0; i < format.gerakan.length; i++) {
-                    const key = format.gerakan[i].key || format.gerakan[i].id || ('ger_' + i);
-                    if (!dataNilai.gerakan_salah || !dataNilai.gerakan_salah[key]) {
-                        toggleGerakan(key, parseFloat(format.gerakan[i].deduction || config.rangeMax));
-                        break;
-                    }
-                }
-            } else {
-                // In sederhana, increment kebenaran_potongan by step
-                let pot = parseFloat(dataNilai.kebenaran_potongan || 0);
-                pot += parseFloat(config.rangeMax) || 0.10;
-                dataNilai.kebenaran_potongan = pot.toFixed(2);
-                renderKebenaran();
-                renderTotalNilai();
-                debouncedSave();
-            }
-        });
-    }
-
-    // ─── Next Move Set (terperinci only) ──────────────────────────────────
-
-    function setupNextMove() {
-        const btn = document.getElementById('btn-next-move');
-        if (!btn) return;
-
-        btn.addEventListener('click', () => {
-            // Scroll to next unscored gerakan
-            const container = document.getElementById('gerakan-container');
-            if (!container) return;
-            const rows = container.querySelectorAll('.gerakan-row:not(.is-wrong)');
-            if (rows.length > 0) {
-                rows[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-                rows[0].style.boxShadow = '0 0 0 2px #ffc107';
-                setTimeout(() => { rows[0].style.boxShadow = ''; }, 1500);
-            }
-        });
-    }
-
-    // ─── Hukuman Rendering (from KP, read-only) ───────────────────────────
-
-    function renderHukuman() {
-        const container = document.getElementById('hukuman-container');
-        if (!container || !dataNilai.hukuman) {
-            if (container) container.style.display = 'none';
-            return;
-        }
-
-        container.style.display = 'block';
-        let html = '<div class="d-flex align-items-center gap-2 mb-1"><i class="fas fa-triangle-exclamation text-warning"></i><small class="text-white fw-bold">Hukuman (dari KP)</small></div>';
-
-        if (Array.isArray(dataNilai.hukuman)) {
-            dataNilai.hukuman.forEach(h => {
-                html += `<div class="hukuman-row"><span class="hukuman-label">${escHtml(h.nama || h.label || 'Hukuman')}</span><span class="hukuman-value">-${parseFloat(h.nilai || 0).toFixed(2)}</span></div>`;
-            });
-        }
-
-        const totalH = parseFloat(dataNilai.total_hukuman || 0);
-        if (totalH > 0) {
-            html += `<div class="hukuman-row border-top border-secondary pt-1 mt-1"><span class="hukuman-label fw-bold">Total Hukuman</span><span class="hukuman-value">-${totalH.toFixed(2)}</span></div>`;
-        }
-
-        container.innerHTML = html;
-    }
-
-    // ─── Polling ──────────────────────────────────────────────────────────
-
-    function startPolling() {
-        pollInterval = setInterval(() => {
-            postJSON(config.endpointRefresh, {})
-                .then(data => {
-                    if (data && data.reload === true) {
-                        window.location.reload();
-                    }
-                    if (data && data.hukuman) {
-                        dataNilai.hukuman = data.hukuman;
-                        dataNilai.total_hukuman = data.total_hukuman || 0;
-                        renderHukuman();
-                        renderTotalNilai();
-                    }
-                    if (data && data.akses) {
-                        config.akses = data.akses;
-                        handleAksesChange(data.akses);
-                    }
-                })
-                .catch(() => {});
-        }, 5000);
-    }
-
-    function handleAksesChange(akses) {
-        const actionBar = document.querySelector('.seni-action-bar');
-        const overlay = document.querySelector('.locked-overlay');
-        if (akses === 'ditutup') {
-            if (actionBar) actionBar.classList.add('is-locked');
-            if (!overlay) {
-                const ov = document.createElement('div');
-                ov.className = 'locked-overlay';
-                ov.innerHTML = '<div class="locked-message"><i class="fas fa-lock fa-3x mb-3"></i><p class="fs-5">Penilaian Ditutup</p></div>';
-                wrapper.appendChild(ov);
-            }
+  update_tampilan_nilai_akhir: function() {
+    $.each(juri.data_nilai.penilaian, function(jenis, value_jenis) {
+      if (jenis == "ringkasan") {
+        $(".total_nilai").val(value_jenis.total_nilai);
+        $(".total_hukuman").val(value_jenis.total_hukuman);
+        if (juri.mode == "juri") {
+          $(".nilai_akhir").val(value_jenis.nilai_akhir);
         } else {
-            if (actionBar) actionBar.classList.remove('is-locked');
-            if (overlay) overlay.remove();
+          $(".nilai_akhir").html(value_jenis.nilai_akhir);
         }
+      }
+    });
+  },
+
+  update_akses_penilaian: function($akses) {
+    if ($akses == "dibuka") {
+      var overlay = document.getElementById("overlay");
+      if (overlay) {
+        overlay.classList.remove("slideInDown");
+        overlay.classList.add("slideOutUp");
+        setTimeout(function() { overlay.remove(); }, 1000);
+      }
+    } else {
+      var overlay = document.getElementById("overlay");
+      if (!overlay) {
+        overlay = document.createElement("div");
+        overlay.id = "overlay";
+        overlay.className = "position-fixed top-0 start-0 w-100 h-100 bg-dark d-flex justify-content-center align-items-center animated slideInDown";
+        overlay.style.zIndex = "9999";
+        overlay.style.opacity = "0.95";
+        var text = document.createElement("div");
+        text.className = "text-white h1";
+        text.innerText = "Scoring Access Locked";
+        overlay.appendChild(text);
+        document.body.appendChild(overlay);
+      }
+    }
+  },
+
+  diskualifikasi_peserta: function() {
+    Swal.fire("info", "Diskualifikasi peserta akan dilakukan oleh sekretaris pertandingan", "info");
+  },
+
+  refresh_status_seni: function() {
+    // Sync offline data if exists
+    if (localStorage.getItem('offline_seni_' + juri.id_penampilan_seni)) {
+      juri.sync_offline_data();
     }
 
-    // ─── Socket.IO Integration ────────────────────────────────────────────
+    $.post(
+      BASE_URL + "juri/refresh-status-seni/" + juri.id_penampilan_seni,
+      { [CSRF_NAME]: CSRF_HASH },
+      function(data) {
+        if (data && data.csrf_hash) CSRF_HASH = data.csrf_hash;
 
-    function initSocket() {
-        if (typeof io === 'undefined') return;
-        const url = window.SOCKET_URL || 'http://localhost:3000';
-        const socket = io(url);
-
-        socket.emit('JOIN_ROOM', { id_penampilan_seni: config.idPenampilan });
-
-        socket.on('HUKUMAN_UPDATE', data => {
-            if (data && String(data.id_penampilan_seni) === config.idPenampilan) {
-                dataNilai.hukuman = data.hukuman;
-                dataNilai.total_hukuman = data.total_hukuman || 0;
-                renderHukuman();
-                renderTotalNilai();
-            }
-        });
-
-        socket.on('AKSES_PENILAIAN', data => {
-            if (data && String(data.id_penampilan_seni) === config.idPenampilan) {
-                handleAksesChange(data.akses);
-            }
-        });
-
-        socket.on('PENAMPILAN_SELESAI', data => {
-            if (data && String(data.id_penampilan_seni) === config.idPenampilan) {
-                window.location.reload();
-            }
-        });
-    }
-
-    // ─── Offline Recovery ─────────────────────────────────────────────────
-
-    function checkOfflineBackup() {
-        try {
-            const backup = localStorage.getItem('seni_backup_' + config.idPenampilan);
-            if (backup) {
-                const parsed = JSON.parse(backup);
-                // If server data is empty but we have local, restore
-                if ((!dataNilai.unsur_nilai || Object.keys(dataNilai.unsur_nilai).length === 0) && parsed.unsur_nilai) {
-                    dataNilai = parsed;
-                    doSave(); // Try to sync back
-                }
-            }
-        } catch (e) { /* ignore */ }
-    }
-
-    // ─── Utility ──────────────────────────────────────────────────────────
-
-    function escHtml(str) {
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
-    }
-
-    // ─── Init ─────────────────────────────────────────────────────────────
-
-    function init() {
-        checkOfflineBackup();
-
-        if (mode === 'sederhana') {
-            renderUnsurNilai();
-        } else if (mode === 'terperinci') {
-            renderGerakan();
-            renderKebenaran();
-            setupNextMove();
+        if ((data.status === true && data.reload === true) || data.data_nilai === null) {
+          window.location.reload();
+          return;
         }
 
-        renderHukuman();
-        renderTotalNilai();
-        setupReadyBtn();
-        setupWrongMove();
-        startPolling();
-        initSocket();
-    }
+        if (data.penampilan_seni && juri.penampilan_seni.format_penilaian !== data.penampilan_seni.format_penilaian) {
+          window.location.reload();
+          return;
+        }
 
-    init();
+        if (data.data_nilai) {
+          try {
+            // Preserve local technical scoring
+            var technicalScoring = juri.data_nilai.penilaian.unsur_nilai;
 
-})();
+            // Take server-authoritative penalties and ringkasan
+            var serverPenalties = data.data_nilai.penilaian.hukuman;
+            var serverRingkasan = data.data_nilai.penilaian.ringkasan;
+
+            juri.data_nilai.penilaian.hukuman = serverPenalties;
+            juri.data_nilai.penilaian.ringkasan.total_hukuman = serverRingkasan.total_hukuman;
+            juri.data_nilai.penilaian.ringkasan.nilai_akhir = serverRingkasan.nilai_akhir;
+
+            // Restore local technical
+            juri.data_nilai.penilaian.unsur_nilai = technicalScoring;
+            juri.hitung_total_nilai();
+
+            // Update UI
+            juri.update_tampilan_nilai_akhir();
+
+            if (data.penampilan_seni) {
+              juri.update_akses_penilaian(data.penampilan_seni.akses_penilaian);
+            }
+          } catch(e) {
+            console.error("Sync error:", e);
+            window.location.reload();
+          }
+        }
+      },
+      "json"
+    ).fail(function() {
+      console.error("Failed to refresh jury status");
+      juri.set_online_status(false);
+    }).always(function() {
+      setTimeout(function() {
+        juri.refresh_status_seni();
+      }, 2000);
+    });
+  },
+
+  toggle_ready: function($btn) {
+    var currentStatus = parseInt($($btn).attr('data-status') || '0');
+    var newStatus = currentStatus === 1 ? 0 : 1;
+    $($btn).prop('disabled', true);
+
+    $.post(
+      BASE_URL + 'juri/toggle-ready-seni/' + juri.id_penampilan_seni,
+      { status_ready: newStatus, [CSRF_NAME]: CSRF_HASH },
+      function(data) {
+        if (data && data.csrf_hash) CSRF_HASH = data.csrf_hash;
+        if (data && data.status === true) {
+          $($btn).attr('data-status', newStatus);
+          if (newStatus === 1) {
+            $($btn).removeClass('btn-primary').addClass('btn-success')
+              .find('.ready-icon').html('✅').end()
+              .find('.ready-text').html('READY');
+          } else {
+            $($btn).removeClass('btn-success').addClass('btn-primary')
+              .find('.ready-icon').html('🔵').end()
+              .find('.ready-text').html('READY');
+          }
+        }
+      },
+      'json'
+    ).fail(function() {
+      console.error('Koneksi gagal saat toggle ready');
+    }).always(function() {
+      $($btn).prop('disabled', false);
+    });
+  },
+};

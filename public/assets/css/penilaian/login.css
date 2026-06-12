@@ -1,0 +1,137 @@
+/* ==========================================================================
+   DPS Scoring System - Login Page Styles
+   Adapted from dps-ci4 admin/auth.css
+   ========================================================================== */
+
+body.login-body {
+    min-height: 100vh;
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background-color: #f4f6f9;
+    color: #20161a;
+    overflow-x: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-wrap {
+    width: 100%;
+    max-width: 420px;
+    padding: 1.5rem;
+}
+
+.login-card {
+    width: 100%;
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    background: #fff;
+}
+
+.login-card-body {
+    padding: 30px 40px 50px;
+}
+
+.login-logo {
+    height: 80px;
+    width: auto;
+    margin-bottom: 15px;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+}
+
+.login-title {
+    color: #c60000;
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    line-height: 1.2;
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.login-subtitle {
+    color: #6c757d;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-top: 5px;
+}
+
+.login-body .form-control {
+    border-radius: 10px;
+    border: 1px solid #e0e0e0;
+    padding: 12px 15px;
+    font-size: 0.95rem;
+}
+
+.login-body .form-control:focus {
+    border-color: #c60000;
+    box-shadow: 0 0 0 0.2rem rgba(198, 0, 0, 0.15);
+}
+
+.login-body .input-group-text {
+    border-radius: 10px;
+    background-color: transparent;
+    border: 1px solid #e0e0e0;
+    border-right: none;
+    color: #c60000;
+}
+
+.login-body .input-group .form-control {
+    border-left: none;
+}
+
+.login-body .input-group .form-control:focus {
+    border-color: #e0e0e0;
+    box-shadow: none;
+}
+
+.login-body .input-group:focus-within .input-group-text,
+.login-body .input-group:focus-within .form-control {
+    border-color: #c60000;
+}
+
+.btn-login {
+    width: 100%;
+    margin-top: 10px;
+    padding: 12px;
+    border-radius: 50px;
+    border: 2px solid #c60000;
+    background-color: #c60000;
+    color: #fff;
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: all 0.3s;
+}
+
+.btn-login:hover,
+.btn-login:focus {
+    background-color: #a00000;
+    border-color: #a00000;
+    color: #fff;
+    box-shadow: 0 5px 15px rgba(198, 0, 0, 0.3);
+}
+
+.login-footer {
+    color: #6c757d;
+    font-size: 0.8rem;
+}
+
+.login-footer .brand-text {
+    color: #c60000;
+    font-weight: 700;
+}
+
+@media (max-width: 575.98px) {
+    .login-wrap {
+        padding: 1rem;
+    }
+
+    .login-card-body {
+        padding: 24px 26px 36px;
+    }
+}

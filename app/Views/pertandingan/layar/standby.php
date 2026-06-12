@@ -6,30 +6,44 @@
 
 <?= $this->section('content') ?>
 <?php $mode = $mode ?? 'tanding'; ?>
-<div class="layar-standby" id="standby-wrapper" data-mode="<?= esc($mode) ?>">
-    <div class="layar-standby-content">
-        <div class="layar-standby-icon">
-            <?php if ($mode === 'seni'): ?>
-                <i class="fa-solid fa-masks-theater"></i>
-            <?php else: ?>
-                <i class="fa-solid fa-hand-fist"></i>
-            <?php endif; ?>
-        </div>
-        <h2 class="layar-standby-title penilaian-display-font">
-            <?= esc($nama_gelanggang ?? 'Gelanggang') ?>
-        </h2>
-        <p class="layar-standby-text">
-            <?= $mode === 'seni' ? 'Menunggu penampilan seni berikutnya...' : 'Menunggu pertandingan berikutnya...' ?>
-        </p>
-        <div class="layar-standby-pulse">
-            <div class="layar-pulse"></div>
-        </div>
+<div class="standby-wrapper" id="standby-wrapper" data-mode="<?= esc($mode) ?>">
+    <!-- Icon -->
+    <div class="standby-icon">
+        <?php if ($mode === 'seni'): ?>
+            <i class="fa-solid fa-masks-theater"></i>
+        <?php else: ?>
+            <i class="fa-solid fa-hand-fist"></i>
+        <?php endif; ?>
+    </div>
+
+    <!-- Badge -->
+    <span class="standby-badge">
+        <i class="fas fa-tv fa-xs" style="color: var(--brand-primary);"></i>
+        Scoreboard
+    </span>
+
+    <!-- Title -->
+    <div class="standby-title"><?= esc($nama_gelanggang ?? 'Gelanggang') ?></div>
+
+    <!-- Subtitle -->
+    <p class="standby-subtitle">
+        <?= $mode === 'seni' ? 'Menunggu penampilan seni berikutnya...' : 'Menunggu pertandingan berikutnya...' ?>
+    </p>
+
+    <!-- Status -->
+    <div class="standby-status standby-status-waiting">
+        <i class="fas fa-clock"></i>
+        Standby
+    </div>
+
+    <!-- Spinner -->
+    <div class="standby-spinner">
+        <div class="spinner-border" role="status" aria-hidden="true"></div>
     </div>
 </div>
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
 <script>
 (function () {
     'use strict';
@@ -51,7 +65,6 @@
         .then(r => r.json())
         .then(d => {
             if (d && d.csrf_hash) csrfHash = d.csrf_hash;
-            // When status is false → active match/penampilan found, reload
             if (d && d.status === false) {
                 window.location.reload();
             }
@@ -59,7 +72,6 @@
         .catch(() => {});
     }
 
-    // Poll every 3s
     setInterval(checkReload, 3000);
     checkReload();
 

@@ -188,9 +188,11 @@ class PenilaianTandingModel extends Model
 
             $rows = $service->prosesPenilaianKp($rows, $sudut, $ronde, $mode, $jumlah);
 
+            // Validasi hanya struktur minimal (ronde_pertandingan + rincian) SEBELUM simpan.
+            // kategori_nilai & ringkasan baru ada setelah hitungDanSimpanSkor — jangan cek dulu.
             foreach ($rows as $row) {
                 $kolom = $sudut === 'merah' ? 'penilaian_merah' : 'penilaian_biru';
-                if (! $service->validasiFormatJson($row->$kolom)) {
+                if (! $service->validasiStrukturMinimal($row->$kolom)) {
                     $db->transRollback();
                     return false;
                 }

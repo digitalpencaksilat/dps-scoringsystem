@@ -19,11 +19,10 @@
     $kontBiru  = $atlet_biru->nama_kontingen ?? '-';
     $skorMerah = (int) ($pertandingan->skor_merah ?? 0);
     $skorBiru  = (int) ($pertandingan->skor_biru ?? 0);
-    // Force dark theme
-    $isDark = true;
+    $babak     = $pertandingan->babak ?? '';
 ?>
 
-<div class="container-fluid bg-black min-vh-100 d-flex flex-column p-0"
+<div class="container-fluid bg-black min-vh-100 d-flex flex-column pb-2"
      id="juri-wrapper"
      data-id-pertandingan="<?= $idP ?>"
      data-ronde="<?= esc($ronde, 'attr') ?>"
@@ -34,149 +33,191 @@
      data-csrf-hash="<?= csrf_hash() ?>">
 
     <!-- ═══ Header: Atlet + Skor ═══ -->
-    <div class="card bg-dark card-container-juri border-0 rounded-0 m-0">
-        <div class="card-body p-3">
-            <div class="d-flex align-items-center justify-content-between">
-                <!-- Atlet Biru -->
-                <div class="text-center flex-grow-1" style="max-width: 30%;">
-                    <div class="fw-bolder text-white text-truncate" style="font-size: 0.95rem;">
+    <div class="row py-2 px-3 opacity fast" id="header-tanding">
+        <div class="col-lg-4 py-2">
+            <div class="row h-100">
+                <div class="col-12 bg-gradient-180-blue py-3 px-3 text-white d-flex justify-content-center flex-column">
+                    <h1 class="h4 text-white m-0 fw-bolder text-truncate">
                         <?= esc($namaBiru) ?>
-                    </div>
-                    <small class="text-muted"><?= esc($kontBiru) ?></small>
+                    </h1>
+                    <h2 class="h5 text-white m-0 text-truncate">
+                        <?= esc($kontBiru) ?>
+                    </h2>
                 </div>
-
-                <!-- Skor Center -->
-                <div class="text-center">
-                    <div class="d-flex align-items-center gap-3">
-                        <span class="fw-bolder text-primary" style="font-size: 2.2rem;" id="skor-biru"><?= $skorBiru ?></span>
-                        <div class="text-center">
-                            <div class="badge bg-danger rounded-pill px-3 py-1 mb-1" style="font-size: 0.75rem;">
-                                Ronde <?= esc($ronde) ?>
-                            </div>
-                            <div class="text-white" style="font-size: 0.7rem; letter-spacing: 1px;">PERSILAT</div>
-                        </div>
-                        <span class="fw-bolder text-danger" style="font-size: 2.2rem;" id="skor-merah"><?= $skorMerah ?></span>
+            </div>
+        </div>
+        <div class="col-lg-4 py-2">
+            <div class="row h-100">
+                <div class="col-sm-3 col-3 pe-0">
+                    <div class="score score-biru h-100 bg-gradient-180-gray-dark d-flex justify-content-center flex-column">
+                        <h3 id="total_nilai_akhir_biru" class="text-center text-white my-3"><?= $skorBiru ?></h3>
                     </div>
                 </div>
-
-                <!-- Atlet Merah -->
-                <div class="text-center flex-grow-1" style="max-width: 30%;">
-                    <div class="fw-bolder text-white text-truncate" style="font-size: 0.95rem;">
+                <div class="col-sm-6 col-md-6 col-6">
+                    <div class="timer bg-gradient-180-gray-dark rounded rounded-lg h-100 d-flex justify-content-center flex-column">
+                        <h4 class="text-white text-center my-3">
+                            <?= esc($babak) ?>
+                        </h4>
+                    </div>
+                </div>
+                <div class="col-sm-3 col-3 ps-0">
+                    <div class="score score-merah h-100 bg-gradient-180-gray-dark d-flex justify-content-center flex-column">
+                        <h3 id="total_nilai_akhir_merah" class="text-center text-white my-3"><?= $skorMerah ?></h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 py-2">
+            <div class="row flex-row-reverse flex-md-row h-100">
+                <div class="col-12 bg-gradient-180-red py-3 px-3 d-flex justify-content-center flex-column">
+                    <h1 class="h4 text-white m-0 fw-bolder text-truncate text-end">
                         <?= esc($namaMerah) ?>
-                    </div>
-                    <small class="text-muted"><?= esc($kontMerah) ?></small>
+                    </h1>
+                    <h2 class="h5 text-white m-0 text-truncate text-end">
+                        <?= esc($kontMerah) ?>
+                    </h2>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- ═══ Tabel Skor Per Ronde ═══ -->
-    <div class="px-3 py-2">
-        <table class="table table-sm table-bordered text-center align-middle mb-0 table-dark" style="font-size: 0.8rem;">
-            <thead>
-                <tr>
-                    <th class="bg-gradient-180-blue text-white" style="width: 15%;">Biru</th>
-                    <?php for ($r = 1; $r <= $totalRonde; $r++): ?>
-                    <th class="text-white">R<?= $r ?></th>
-                    <?php endfor; ?>
-                    <th class="bg-gradient-180-red text-white" style="width: 15%;">Merah</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td class="fw-bold text-primary" id="total-biru">0</td>
-                    <?php for ($r = 1; $r <= $totalRonde; $r++): ?>
-                    <td class="text-white">
-                        <span id="ronde-biru-<?= $r ?>">0</span> : <span id="ronde-merah-<?= $r ?>">0</span>
-                    </td>
-                    <?php endfor; ?>
-                    <td class="fw-bold text-danger" id="total-merah">0</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+    <!-- ═══ Tabel Nilai Per Ronde ═══ -->
+    <div class="row flex-grow-1 pb-2">
+        <div class="col-12 d-flex flex-column">
+            <div class="card bg-dark card-container-juri opacity flex-grow-1 d-flex flex-column">
+                <div class="card-body p-2 d-flex flex-column">
+                    <table class="table table-borderless mb-2" id="tabel-nilai-juri">
+                        <thead>
+                            <tr class="opacity">
+                                <th class="bg-dark text-white text-center" colspan="5">
+                                    <?= esc(session()->get('nama') ?? 'Juri') ?>
+                                </th>
+                            </tr>
+                            <tr class="text-center opacity">
+                                <th scope="col" class="border-dark bg-gradient-180-blue text-white" style="width:10%;">Total</th>
+                                <th scope="col" class="border-dark bg-gradient-180-blue text-white" style="width:25%;">Nilai</th>
+                                <th scope="col" class="border-dark bg-gradient-180-dark text-white" style="width:10%;">Ronde</th>
+                                <th scope="col" class="border-dark bg-gradient-180-red text-white" style="width:25%;">Nilai</th>
+                                <th scope="col" class="border-dark bg-gradient-180-red text-white" style="width:10%;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php for ($r = 1; $r <= $totalRonde; $r++):
+                                $romanNumerals = ['I', 'II', 'III', 'IV', 'V'];
+                                $romanLabel = $romanNumerals[$r - 1] ?? $r;
+                            ?>
+                            <tr class="text-center h4 opacity">
+                                <td class="text-white py-2 biru-ronde-<?= $r ?>-total">&nbsp;</td>
+                                <td class="text-white py-2 align-middle" style="max-width: 0;">
+                                    <div class="biru-ronde-<?= $r ?>-nilai d-flex flex-row flex-nowrap overflow-auto pb-2"></div>
+                                </td>
+                                <td class="text-white fw-bolder align-middle ronde-<?= $r ?>" onclick="juri.warning_pindah_babak()"><?= $romanLabel ?></td>
+                                <td class="text-white py-2 align-middle" style="max-width: 0;">
+                                    <div class="merah-ronde-<?= $r ?>-nilai d-flex flex-row flex-nowrap overflow-auto pb-2"></div>
+                                </td>
+                                <td class="text-white py-2 merah-ronde-<?= $r ?>-total">&nbsp;</td>
+                            </tr>
+                            <?php endfor; ?>
+                        </tbody>
+                    </table>
 
-    <!-- ═══ Action Buttons (2 columns: Biru | Merah) ═══ -->
-    <div class="flex-grow-1 d-flex">
-        <!-- Sudut BIRU -->
-        <div class="flex-grow-1 d-flex flex-column gap-2 p-2 bg-gradient-180-blue">
-            <button type="button" class="btn-scoring btn-pukulan flex-grow-1" data-sudut="biru" data-nilai="1">
-                <img src="<?= base_url('assets/images/icons/pukulan.png') ?>" alt="Pukulan" class="scoring-icon" onerror="this.style.display='none'">
-                <span class="scoring-label">Pukulan</span>
-                <span class="scoring-value penilaian-display-font">+1</span>
-            </button>
-            <button type="button" class="btn-scoring btn-tendangan flex-grow-1" data-sudut="biru" data-nilai="2">
-                <img src="<?= base_url('assets/images/icons/tendangan.png') ?>" alt="Tendangan" class="scoring-icon" onerror="this.style.display='none'">
-                <span class="scoring-label">Tendangan</span>
-                <span class="scoring-value penilaian-display-font">+2</span>
-            </button>
-        </div>
+                    <!-- TOMBOL FLEXBOX -->
+                    <div class="row flex-grow-1 align-items-stretch mt-1">
+                        <!-- Sudut Biru (Kiri) -->
+                        <div class="col-6 d-flex flex-column" id="button-biru">
+                            <div class="row flex-grow-1 align-items-stretch">
+                                <div class="col-12 d-flex flex-column px-2">
+                                    <button class="btn h3 bg-blue text-white w-100 text-capitalize opacity mb-2 flex-grow-1 d-flex justify-content-center align-items-center btn-scoring-legacy" data-sudut="biru" data-nilai="1">
+                                        <img src="<?= base_url('assets/images/icons/pukulan.png') ?>" alt="Pukulan" class="img-fluid" style="max-height: 80px;">
+                                    </button>
+                                    <button class="btn h3 bg-blue text-white w-100 text-capitalize opacity mb-0 flex-grow-1 d-flex justify-content-center align-items-center btn-scoring-legacy" data-sudut="biru" data-nilai="2">
+                                        <img src="<?= base_url('assets/images/icons/tendangan-inverted.png') ?>" alt="Tendangan" class="img-fluid" style="max-height: 80px;">
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
 
-        <!-- Sudut MERAH -->
-        <div class="flex-grow-1 d-flex flex-column gap-2 p-2 bg-gradient-180-red">
-            <button type="button" class="btn-scoring btn-pukulan flex-grow-1" data-sudut="merah" data-nilai="1">
-                <img src="<?= base_url('assets/images/icons/pukulan.png') ?>" alt="Pukulan" class="scoring-icon" onerror="this.style.display='none'">
-                <span class="scoring-label">Pukulan</span>
-                <span class="scoring-value penilaian-display-font">+1</span>
-            </button>
-            <button type="button" class="btn-scoring btn-tendangan flex-grow-1" data-sudut="merah" data-nilai="2">
-                <img src="<?= base_url('assets/images/icons/tendangan.png') ?>" alt="Tendangan" class="scoring-icon" onerror="this.style.display='none'">
-                <span class="scoring-label">Tendangan</span>
-                <span class="scoring-value penilaian-display-font">+2</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- ═══ Hapus Button (bottom) ═══ -->
-    <div class="d-flex">
-        <button type="button" class="btn-hapus-scoring flex-grow-1" data-sudut="biru">
-            <i class="fas fa-rotate-left me-1"></i> Hapus Biru
-        </button>
-        <button type="button" class="btn-hapus-scoring flex-grow-1 border-start" data-sudut="merah">
-            <i class="fas fa-rotate-left me-1"></i> Hapus Merah
-        </button>
-    </div>
-</div>
-
-<!-- ═══ Modal Verifikasi Jatuhan ═══ -->
-<div class="modal fade" id="modalVerifikasiJatuhan" data-bs-backdrop="static" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content bg-dark text-white border-warning">
-            <div class="modal-header border-warning">
-                <h5 class="modal-title"><i class="fas fa-gavel me-2"></i>Verifikasi Jatuhan</h5>
-            </div>
-            <div class="modal-body text-center py-4">
-                <p class="fs-5 mb-3">Apakah terjadi <strong>jatuhan</strong> pada sudut <span id="verifikasi-jatuhan-sudut" class="fw-bold text-uppercase"></span>?</p>
-            </div>
-            <div class="modal-footer border-warning justify-content-center gap-3">
-                <button type="button" class="btn btn-success btn-lg px-5" data-jawaban="ya">
-                    <i class="fas fa-check me-2"></i>Ya
-                </button>
-                <button type="button" class="btn btn-danger btn-lg px-5" data-jawaban="tidak">
-                    <i class="fas fa-xmark me-2"></i>Tidak
-                </button>
+                        <!-- Sudut Merah (Kanan) -->
+                        <div class="col-6 d-flex flex-column" id="button-merah">
+                            <div class="row flex-grow-1 align-items-stretch">
+                                <div class="col-12 d-flex flex-column px-2">
+                                    <button class="btn h3 bg-red text-white w-100 text-capitalize opacity mb-2 flex-grow-1 d-flex justify-content-center align-items-center btn-scoring-legacy" data-sudut="merah" data-nilai="1">
+                                        <img src="<?= base_url('assets/images/icons/pukulan-inverted.png') ?>" alt="Pukulan" class="img-fluid" style="max-height: 80px;">
+                                    </button>
+                                    <button class="btn h3 bg-red text-white w-100 text-capitalize opacity mb-0 flex-grow-1 d-flex justify-content-center align-items-center btn-scoring-legacy" data-sudut="merah" data-nilai="2">
+                                        <img src="<?= base_url('assets/images/icons/tendangan.png') ?>" alt="Tendangan" class="img-fluid" style="max-height: 80px;">
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- ═══ Modal Verifikasi Pelanggaran ═══ -->
-<div class="modal fade" id="modalVerifikasiPelanggaran" data-bs-backdrop="static" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content bg-dark text-white border-warning">
-            <div class="modal-header border-warning">
-                <h5 class="modal-title"><i class="fas fa-triangle-exclamation me-2"></i>Verifikasi Pelanggaran</h5>
+<!-- ═══ Modal Verifikasi Jatuhan (3 pilihan: Biru / Invalid / Merah) ═══ -->
+<div class="modal fade" id="modalVerifikasiJatuhan" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Drop Verification</h5>
             </div>
-            <div class="modal-body text-center py-4">
-                <p class="fs-5 mb-3">Apakah terjadi <strong>pelanggaran</strong> pada sudut <span id="verifikasi-pelanggaran-sudut" class="fw-bold text-uppercase"></span>?</p>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-12">
+                        <p class="h3 mb-4 text-center">Valid Drop For ?</p>
+                    </div>
+                    <div class="col">
+                        <button class="btn bg-blue text-white py-7 w-100 h1 btn-jawaban-verifikasi" data-jawaban="biru">
+                            Blue
+                        </button>
+                    </div>
+                    <div class="col">
+                        <button class="btn bg-warning text-white py-7 w-100 h1 btn-jawaban-verifikasi" data-jawaban="invalid">
+                            INVALID
+                        </button>
+                    </div>
+                    <div class="col">
+                        <button class="btn bg-red text-white py-7 w-100 h1 btn-jawaban-verifikasi" data-jawaban="merah">
+                            Red
+                        </button>
+                    </div>
+                </div>
             </div>
-            <div class="modal-footer border-warning justify-content-center gap-3">
-                <button type="button" class="btn btn-success btn-lg px-5" data-jawaban="ya">
-                    <i class="fas fa-check me-2"></i>Ya
-                </button>
-                <button type="button" class="btn btn-danger btn-lg px-5" data-jawaban="tidak">
-                    <i class="fas fa-xmark me-2"></i>Tidak
-                </button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ Modal Verifikasi Pelanggaran (3 pilihan: Biru / Invalid / Merah) ═══ -->
+<div class="modal fade" id="modalVerifikasiPelanggaran" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Penalty Verification</h5>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-12">
+                        <p class="h4 mb-4 text-center">Violation For ?</p>
+                    </div>
+                    <div class="col">
+                        <button class="btn bg-blue text-white py-7 w-100 h1 btn-jawaban-verifikasi" data-jawaban="biru">
+                            Blue
+                        </button>
+                    </div>
+                    <div class="col">
+                        <button class="btn bg-warning text-white py-7 w-100 h1 btn-jawaban-verifikasi" data-jawaban="invalid">
+                            INVALID
+                        </button>
+                    </div>
+                    <div class="col">
+                        <button class="btn bg-red text-white py-7 w-100 h1 btn-jawaban-verifikasi" data-jawaban="merah">
+                            Red
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -185,9 +226,14 @@
 
 <?= $this->section('scripts') ?>
 <script>
-    const JURI_TANDING_INIT = <?= json_encode($data_nilai) ?>;
-    const JURI_TANDING_RONDE = <?= json_encode($ronde) ?>;
-    const JURI_TANDING_TOTAL_RONDE = <?= $totalRonde ?>;
+    const JURI_INIT = {
+        dataNilai: <?= json_encode($data_nilai) ?>,
+        pertandingan: <?= json_encode($pertandingan) ?>,
+        pemenang: <?= json_encode($pemenang ?? null) ?>,
+        verifikasiPertandingan: <?= json_encode($verifikasi_pertandingan ?? null) ?>,
+        jawabanVerifikasi: <?= json_encode($jawaban_verifikasi ?? null) ?>,
+        totalRonde: <?= $totalRonde ?>
+    };
 </script>
 <script src="<?= base_url('assets/js/penilaian/juri_tanding_persilat.js') ?>"></script>
 <?= $this->endSection() ?>

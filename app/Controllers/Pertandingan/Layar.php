@@ -67,6 +67,7 @@ class Layar extends BaseController
      */
     public function tanding(string $theme = 'dark')
     {
+        $db = \Config\Database::connect();
         $pertandingan = $this->pertandinganModel->getPertandinganBerlangsung($this->idGelanggang());
 
         if ($pertandingan === null) {
@@ -77,13 +78,55 @@ class Layar extends BaseController
             ]);
         }
 
-        return view('pertandingan/layar/tanding', [
-            'title'        => 'Papan Skor Tanding',
-            'pertandingan' => $pertandingan,
-            'data_waktu'   => $pertandingan->data_waktu ? json_decode($pertandingan->data_waktu) : null,
-            'atlet_merah'  => $this->pertandinganModel->getAtletPertandingan((int) $pertandingan->id_pertandingan, 'merah'),
-            'atlet_biru'   => $this->pertandinganModel->getAtletPertandingan((int) $pertandingan->id_pertandingan, 'biru'),
-            'theme'        => in_array($theme, ['light', 'dark'], true) ? $theme : 'dark',
+        $idPertandingan = (int) $pertandingan->id_pertandingan;
+
+        // Decode JSON fields (parity legacy)
+        $pertandingan->data_waktu = !empty($pertandingan->data_waktu) ? json_decode($pertandingan->data_waktu) : null;
+        $pertandingan->ringkasan_nilai = !empty($pertandingan->ringkasan_nilai) ? json_decode($pertandingan->ringkasan_nilai) : null;
+
+        // Verifikasi pertandingan (latest)
+        $verifikasiPertandingan = $db->table('verifikasi_pertandingan')
+            ->where('id_pertandingan', $idPertandingan)
+            ->orderBy('id_verifikasi_pertandingan', 'DESC')
+            ->get()->getRow();
+
+        // Perangkat pertandingan (juri list for indicators)
+        // Parity legacy: only show juri that have penilaian records for this match
+        $penilaianJuriIds = $db->table('penilaian_tanding')
+            ->select('id_perangkat_pertandingan')
+            ->where('id_pertandingan', $idPertandingan)
+            ->get()->getResultArray();
+        $juriIds = array_column($penilaianJuriIds, 'id_perangkat_pertandingan');
+
+        $perangkatPertandingan = [];
+        if (!empty($juriIds)) {
+            $perangkatPertandingan = $db->table('perangkat_pertandingan')
+                ->whereIn('id_perangkat_pertandingan', $juriIds)
+                ->get()->getResult();
+        }
+
+        // Data nilai (grouped scoring) — parity legacy kelompokkan_penilaian_tanding()
+        $dataNilai = $this->getGroupedPenilaianTanding($idPertandingan);
+
+        // Get event name (from env or fallback)
+        $eventName = env('app.eventName', 'Pencak Silat Championship');
+
+        // Update session
+        session()->set('id_pertandingan', $idPertandingan);
+
+        $theme = in_array($theme, ['light', 'dark'], true) ? $theme : 'dark';
+
+        return view('pertandingan/layar/tanding/persilat/dark', [
+            'title'                    => 'Papan Skor Tanding',
+            'pertandingan'             => $pertandingan,
+            'verifikasi_pertandingan'  => $verifikasiPertandingan,
+            'perangkat_pertandingan'   => $perangkatPertandingan,
+            'data_nilai'               => $dataNilai,
+            'data_waktu'               => $pertandingan->data_waktu,
+            'atlet_merah'              => $this->pertandinganModel->getAtletPertandingan($idPertandingan, 'merah'),
+            'atlet_biru'               => $this->pertandinganModel->getAtletPertandingan($idPertandingan, 'biru'),
+            'event_name'               => $eventName,
+            'theme'                    => $theme,
         ]);
     }
 
@@ -101,10 +144,14 @@ class Layar extends BaseController
 
         if ($pertandingan === null) {
             // Tidak ada pertandingan aktif
-            return $this->jsonResponse(['status' => true, 'reload' => false]);
+            if ($idPertandingan === null || $idPertandingan === 0) {
+                return $this->jsonResponse(['status' => true, 'reload' => false]);
+            }
+            // Had match but now gone → reload to standby
+            return $this->jsonResponse(['status' => true, 'reload' => true]);
         }
 
-        // Case 1: Dipanggil dari home/standby (null id) → ada pertandingan aktif, suruh redirect
+        // Case 1: Dipanggil dari home/standby (null id) → ada pertandingan aktif
         if ($idPertandingan === null || $idPertandingan === 0) {
             return $this->jsonResponse([
                 'status'          => false,
@@ -114,19 +161,31 @@ class Layar extends BaseController
 
         // Case 2: ID berubah → reload
         if ((int) $pertandingan->id_pertandingan !== $idPertandingan) {
+            session()->set('id_pertandingan', (int) $pertandingan->id_pertandingan);
             return $this->jsonResponse(['status' => true, 'reload' => true]);
         }
 
-        // Case 3: Sama → kirim live data
+        // Case 3: Sama → kirim full live data (parity legacy)
+        $db = \Config\Database::connect();
+
+        // Decode data_waktu + ringkasan_nilai
+        $pertandingan->data_waktu = !empty($pertandingan->data_waktu) ? json_decode($pertandingan->data_waktu) : null;
+        $pertandingan->ringkasan_nilai = !empty($pertandingan->ringkasan_nilai) ? json_decode($pertandingan->ringkasan_nilai) : null;
+
+        // Verifikasi pertandingan (latest)
+        $verifikasiPertandingan = $db->table('verifikasi_pertandingan')
+            ->where('id_pertandingan', $idPertandingan)
+            ->orderBy('id_verifikasi_pertandingan', 'DESC')
+            ->get()->getRow();
+
+        // Data nilai (grouped scoring)
+        $dataNilai = $this->getGroupedPenilaianTanding($idPertandingan);
+
         return $this->jsonResponse([
-            'status'              => false,
-            'id_pertandingan'     => (int) $pertandingan->id_pertandingan,
-            'skor_merah'          => (int) $pertandingan->skor_merah,
-            'skor_biru'           => (int) $pertandingan->skor_biru,
-            'ronde'               => (string) $pertandingan->ronde_pertandingan,
-            'status_pertandingan' => $pertandingan->status_pertandingan,
-            'data_waktu'          => $pertandingan->data_waktu ? json_decode($pertandingan->data_waktu) : null,
-            'ringkasan_nilai'     => $pertandingan->ringkasan_nilai ? json_decode($pertandingan->ringkasan_nilai) : null,
+            'status'                  => false,
+            'pertandingan'            => $pertandingan,
+            'data_nilai'              => $dataNilai,
+            'verifikasi_pertandingan' => $verifikasiPertandingan,
         ]);
     }
 
@@ -136,11 +195,11 @@ class Layar extends BaseController
 
     /**
      * Scoreboard seni — live penampilan display.
-     * Shows participant info, timer, juri scores in real-time.
      * Parity legacy: Layar::seni($mode)
      */
     public function seni(string $theme = 'dark')
     {
+        $db = \Config\Database::connect();
         $penampilan = $this->penampilanSeniModel->getAktif($this->idGelanggang());
 
         if ($penampilan === null) {
@@ -153,80 +212,170 @@ class Layar extends BaseController
 
         $idPenampilan = (int) $penampilan->id_penampilan_seni;
 
-        // Get all juri scores
-        $dataNilaiJuri = $this->penilaianSeniModel
-            ->where('id_penampilan_seni', $idPenampilan)
-            ->findAll();
+        // Get id_kompetisi_seni via kelompok_peserta_seni
+        $idKompetisiSeni = 0;
+        if (!empty($penampilan->id_kelompok_peserta_seni)) {
+            $kps = $db->table('kelompok_peserta_seni')
+                ->select('id_kompetisi_seni')
+                ->where('id_kelompok_peserta_seni', $penampilan->id_kelompok_peserta_seni)
+                ->get()->getRow();
+            $idKompetisiSeni = (int) ($kps->id_kompetisi_seni ?? 0);
+        }
 
-        // Determine sistem (pool or battle)
-        $sistemPenampilan = $penampilan->sistem_penampilan ?? 'pool';
+        // Get kompetisi_seni metadata (join sub_kategori_seni for sistem_penampilan)
+        $kompetisiSeni = $db->table('kompetisi_seni ks')
+            ->select('ks.*, sks.sistem_penampilan, ku.nama_kategori_usia, sks.jenis_seni')
+            ->join('sub_kategori_seni sks', 'sks.id_sub_kategori_seni = ks.id_sub_kategori_seni')
+            ->join('kategori_lomba kl', 'kl.id_kategori_lomba = sks.id_kategori_lomba', 'left')
+            ->join('kategori_usia ku', 'ku.id_kategori_usia = kl.id_kategori_usia', 'left')
+            ->where('ks.id_kompetisi_seni', $idKompetisiSeni)
+            ->get()->getRow();
+
+        // Get partai seni berlangsung (for battle info)
+        $partaiSeni = $db->table('detail_jadwal_seni djs')
+            ->select('djs.*, js.id_gelanggang, g.nama_gelanggang, djs.nomor_partai, bs.babak AS babak_battle')
+            ->join('jadwal_seni js', 'js.id_jadwal_seni = djs.id_jadwal_seni')
+            ->join('gelanggang g', 'g.id_gelanggang = js.id_gelanggang', 'left')
+            ->join('battle_seni bs', 'bs.id_battle_seni = djs.id_battle_seni', 'left')
+            ->where('js.id_gelanggang', $this->idGelanggang())
+            ->where('djs.id_penampilan_seni', $idPenampilan)
+            ->get()->getRow();
+
+        // Get peserta_seni
+        $pesertaSeni = [];
+        if (!empty($penampilan->id_kelompok_peserta_seni)) {
+            $pesertaSeni = $db->table('peserta_seni ps')
+                ->select('ps.*, p.nama_pendaftar, k.nama_kontingen')
+                ->join('pendaftar p', 'p.id_pendaftar = ps.id_pendaftar')
+                ->join('kelompok_peserta_seni kps', 'kps.id_kelompok_peserta_seni = ps.id_kelompok_peserta_seni')
+                ->join('kontingen k', 'k.id_kontingen = kps.id_kontingen', 'left')
+                ->where('ps.id_kelompok_peserta_seni', $penampilan->id_kelompok_peserta_seni)
+                ->get()->getResult();
+        }
+
+        // Get grouped data_nilai (parity legacy kelompokkan_penilaian_seni)
+        $dataNilai = $this->getGroupedPenilaianSeni($idPenampilan);
+
+        // Event name (from CI4 config or fallback)
+        $eventName = env('app.eventName', 'Pencak Silat Championship');
 
         $theme = in_array($theme, ['light', 'dark'], true) ? $theme : 'dark';
 
-        return view('pertandingan/layar/seni', [
-            'title'           => 'Papan Skor Seni',
-            'penampilan'      => $penampilan,
-            'data_nilai_juri' => $dataNilaiJuri,
-            'sistem'          => $sistemPenampilan,
-            'theme'           => $theme,
+        return view("pertandingan/layar/seni/persilat/{$theme}", [
+            'title'                        => 'Papan Skor Seni',
+            'penampilan_seni_berlangsung'   => $penampilan,
+            'kompetisi_seni'               => $kompetisiSeni,
+            'partai_seni_berlangsung'      => $partaiSeni,
+            'peserta_seni'                 => $pesertaSeni,
+            'data_nilai'                   => $dataNilai,
+            'event_name'                   => $eventName,
+            'theme'                        => $theme,
         ]);
     }
 
     /**
      * Polling state authoritative seni.
-     * Returns juri scores, ready status, akses penilaian.
      * Parity legacy: refresh_status_seni($id_penampilan_seni)
-     *
-     * Dua use-case:
-     *  1. Dari home.php (null id) → cek ada penampilan aktif? Return status:false = ada.
-     *  2. Dari seni.php (specific id) → kirim live data; reload jika id berubah.
+     * Complex state machine: detects pool/battle completion, returns live data.
      */
     public function refreshStatusSeni(?int $idPenampilanSeni = null)
     {
+        $db = \Config\Database::connect();
         $penampilan = $this->penampilanSeniModel->getAktif($this->idGelanggang());
 
         if ($penampilan === null) {
-            // Tidak ada penampilan aktif
+            // No active performance — check if there's a completed pool/battle to show results
+            if ($idPenampilanSeni !== null && $idPenampilanSeni > 0) {
+                // Was watching a performance that just ended — check for result views
+                $lastPenampilan = $db->table('penampilan_seni')
+                    ->where('id_penampilan_seni', $idPenampilanSeni)
+                    ->get()->getRow();
+
+                if ($lastPenampilan) {
+                    // Get id_kompetisi_seni via kelompok_peserta_seni
+                    $kompetisiId = null;
+                    if (!empty($lastPenampilan->id_kelompok_peserta_seni)) {
+                        $kpsRow = $db->table('kelompok_peserta_seni')
+                            ->select('id_kompetisi_seni')
+                            ->where('id_kelompok_peserta_seni', $lastPenampilan->id_kelompok_peserta_seni)
+                            ->get()->getRow();
+                        $kompetisiId = $kpsRow ? (int) $kpsRow->id_kompetisi_seni : null;
+                    }
+                    if ($kompetisiId) {
+                        // Get kompetisi metadata for sistem_penampilan
+                        $kompetisi = $db->table('kompetisi_seni ks')
+                            ->select('ks.*, sks.sistem_penampilan')
+                            ->join('sub_kategori_seni sks', 'sks.id_sub_kategori_seni = ks.id_sub_kategori_seni')
+                            ->where('ks.id_kompetisi_seni', $kompetisiId)
+                            ->get()->getRow();
+
+                        $sistemPenampilan = $kompetisi->sistem_penampilan ?? 'pool';
+
+                        if ($sistemPenampilan === 'battle') {
+                            // Check for completed battle
+                            $battle = $db->table('detail_jadwal_seni')
+                                ->where('id_penampilan_seni', $idPenampilanSeni)
+                                ->get()->getRow();
+                            if ($battle && !empty($battle->id_battle_seni)) {
+                                return $this->jsonResponse([
+                                    'status'            => true,
+                                    'reload'            => false,
+                                    'hasil_battle_seni' => true,
+                                    'id_battle_seni'    => (int) $battle->id_battle_seni,
+                                ]);
+                            }
+                        } else {
+                            // Pool: check if all penampilan in kompetisi are sudah_tampil
+                            $belumTampil = $db->table('penampilan_seni ps')
+                                ->join('kelompok_peserta_seni kps', 'kps.id_kelompok_peserta_seni = ps.id_kelompok_peserta_seni')
+                                ->where('kps.id_kompetisi_seni', $kompetisiId)
+                                ->where('ps.status_penampilan !=', 'sudah_tampil')
+                                ->countAllResults();
+
+                            if ($belumTampil === 0) {
+                                return $this->jsonResponse([
+                                    'status'           => true,
+                                    'reload'           => false,
+                                    'hasil_pool_seni'  => true,
+                                    'id_kompetisi_seni' => (int) $kompetisiId,
+                                ]);
+                            }
+                        }
+                    }
+                }
+
+                // Performance ended, no special result → reload to standby
+                return $this->jsonResponse(['status' => true, 'reload' => true]);
+            }
+
+            // Called from standby with no id
             return $this->jsonResponse(['status' => true, 'reload' => false]);
         }
 
-        // Case 1: Dipanggil dari home/standby (null id) → ada penampilan aktif, suruh redirect
+        // Active performance found
+        $idAktif = (int) $penampilan->id_penampilan_seni;
+
+        // Case: called from standby (null id) → there's an active performance
         if ($idPenampilanSeni === null || $idPenampilanSeni === 0) {
             return $this->jsonResponse([
                 'status'             => false,
-                'id_penampilan_seni' => (int) $penampilan->id_penampilan_seni,
+                'id_penampilan_seni' => $idAktif,
             ]);
         }
 
-        // Case 2: ID berubah → reload
-        if ((int) $penampilan->id_penampilan_seni !== $idPenampilanSeni) {
+        // Case: performance changed → reload
+        if ($idAktif !== $idPenampilanSeni) {
             return $this->jsonResponse(['status' => true, 'reload' => true]);
         }
 
-        // Get all juri scores
-        $dataNilaiJuri = $this->penilaianSeniModel
-            ->where('id_penampilan_seni', (int) $penampilan->id_penampilan_seni)
-            ->findAll();
-
-        $juriData = [];
-        foreach ($dataNilaiJuri as $row) {
-            $juriData[] = [
-                'id_perangkat'     => (int) $row->id_perangkat_pertandingan,
-                'nilai_akhir'      => (float) ($row->nilai_akhir_per_juri ?? 0),
-                'ready'            => (int) ($row->status_ready ?? 0),
-                'terpilih'         => (int) ($row->terpilih ?? 0),
-            ];
-        }
+        // Same performance — return live data (parity legacy)
+        $dataNilai = $this->getGroupedPenilaianSeni($idAktif);
 
         return $this->jsonResponse([
-            'status'           => false,
-            'id_penampilan'    => (int) $penampilan->id_penampilan_seni,
-            'akses_penilaian'  => $penampilan->akses_penilaian ?? 'dibuka',
-            'status_penampilan' => $penampilan->status_penampilan ?? 'sedang_tampil',
-            'juri_data'        => $juriData,
-            'nilai_akhir'      => (float) ($penampilan->nilai_akhir ?? 0),
-            'diskualifikasi'   => (int) ($penampilan->diskualifikasi ?? 0),
-        ]);
+            'status'                       => false,
+            'penampilan_seni_berlangsung'   => $penampilan,
+            'data_nilai'                   => $dataNilai,
+        ], JSON_NUMERIC_CHECK);
     }
 
     /**
@@ -235,22 +384,40 @@ class Layar extends BaseController
      */
     public function hasilPoolSeni(int $idKompetisiSeni)
     {
-        // Get all penampilan for this kompetisi, ordered by nilai_akhir DESC
-        $daftarPenampilan = $this->penampilanSeniModel
-            ->select('penampilan_seni.*, kelompok_peserta_seni.*, kontingen.nama_kontingen')
-            ->join('kelompok_peserta_seni', 'kelompok_peserta_seni.id_kelompok_peserta_seni = penampilan_seni.id_kelompok_peserta_seni')
-            ->join('kontingen', 'kontingen.id_kontingen = kelompok_peserta_seni.id_kontingen', 'left')
-            ->join('kompetisi_seni', 'kompetisi_seni.id_kompetisi_seni = kelompok_peserta_seni.id_kompetisi_seni')
-            ->join('detail_jadwal_seni', 'detail_jadwal_seni.id_penampilan_seni = penampilan_seni.id_penampilan_seni')
-            ->join('jadwal_seni', 'jadwal_seni.id_jadwal_seni = detail_jadwal_seni.id_jadwal_seni')
-            ->where('jadwal_seni.id_gelanggang', $this->idGelanggang())
-            ->where('kelompok_peserta_seni.id_kompetisi_seni', $idKompetisiSeni)
-            ->orderBy('penampilan_seni.nilai_akhir', 'DESC')
-            ->findAll();
+        $db = \Config\Database::connect();
 
-        return view('pertandingan/layar/hasil_pool_seni', [
-            'title'     => 'Hasil Pool Seni',
-            'daftar'    => $daftarPenampilan,
+        // Get kompetisi metadata
+        $kompetisiSeni = $db->table('kompetisi_seni ks')
+            ->select('ks.*, sks.sistem_penampilan, sks.jenis_seni, ku.nama_kategori_usia')
+            ->join('sub_kategori_seni sks', 'sks.id_sub_kategori_seni = ks.id_sub_kategori_seni')
+            ->join('kategori_lomba kl', 'kl.id_kategori_lomba = sks.id_kategori_lomba', 'left')
+            ->join('kategori_usia ku', 'ku.id_kategori_usia = kl.id_kategori_usia', 'left')
+            ->where('ks.id_kompetisi_seni', $idKompetisiSeni)
+            ->get()->getRow();
+
+        // Get all penampilan for this kompetisi ordered by nilai_akhir DESC
+        $daftarPenampilan = $db->table('penampilan_seni ps')
+            ->select('ps.*, kps.id_kontingen, k.nama_kontingen, ps.catatan_nilai_sama')
+            ->join('kelompok_peserta_seni kps', 'kps.id_kelompok_peserta_seni = ps.id_kelompok_peserta_seni')
+            ->join('kontingen k', 'k.id_kontingen = kps.id_kontingen', 'left')
+            ->where('kps.id_kompetisi_seni', $idKompetisiSeni)
+            ->orderBy('ps.nilai_akhir', 'DESC')
+            ->get()->getResult();
+
+        // Attach peserta names to each penampilan
+        foreach ($daftarPenampilan as &$penampilan) {
+            $peserta = $db->table('peserta_seni pse')
+                ->select('p.nama_pendaftar')
+                ->join('pendaftar p', 'p.id_pendaftar = pse.id_pendaftar')
+                ->where('pse.id_kelompok_peserta_seni', $penampilan->id_kelompok_peserta_seni)
+                ->get()->getResult();
+            $penampilan->peserta = $peserta;
+        }
+
+        return view('pertandingan/layar/seni/persilat/hasil_pool_seni', [
+            'title'           => 'Hasil Pool Seni',
+            'kompetisi_seni'  => $kompetisiSeni,
+            'daftar'          => $daftarPenampilan,
         ]);
     }
 
@@ -260,10 +427,58 @@ class Layar extends BaseController
      */
     public function hasilBattleSeni(int $idBattleSeni)
     {
-        // Simple view showing battle winner
-        return view('pertandingan/layar/hasil_battle_seni', [
-            'title'         => 'Hasil Battle Seni',
-            'id_battle_seni' => $idBattleSeni,
+        $db = \Config\Database::connect();
+
+        // Get battle info
+        $battle = $db->table('battle_seni')
+            ->where('id_battle_seni', $idBattleSeni)
+            ->get()->getRow();
+
+        if ($battle === null) {
+            return redirect()->to(base_url('layar/seni'));
+        }
+
+        // Get penampilan biru & merah
+        $penampilanBiru = $db->table('penampilan_seni ps')
+            ->select('ps.*, kps.id_kontingen, k.nama_kontingen')
+            ->join('kelompok_peserta_seni kps', 'kps.id_kelompok_peserta_seni = ps.id_kelompok_peserta_seni')
+            ->join('kontingen k', 'k.id_kontingen = kps.id_kontingen', 'left')
+            ->where('ps.id_penampilan_seni', $battle->id_penampilan_seni_biru ?? 0)
+            ->get()->getRow();
+
+        $penampilanMerah = $db->table('penampilan_seni ps')
+            ->select('ps.*, kps.id_kontingen, k.nama_kontingen')
+            ->join('kelompok_peserta_seni kps', 'kps.id_kelompok_peserta_seni = ps.id_kelompok_peserta_seni')
+            ->join('kontingen k', 'k.id_kontingen = kps.id_kontingen', 'left')
+            ->where('ps.id_penampilan_seni', $battle->id_penampilan_seni_merah ?? 0)
+            ->get()->getRow();
+
+        // Get peserta names
+        $pesertaBiru = [];
+        if ($penampilanBiru) {
+            $pesertaBiru = $db->table('peserta_seni pse')
+                ->select('p.nama_pendaftar')
+                ->join('pendaftar p', 'p.id_pendaftar = pse.id_pendaftar')
+                ->where('pse.id_kelompok_peserta_seni', $penampilanBiru->id_kelompok_peserta_seni)
+                ->get()->getResult();
+        }
+
+        $pesertaMerah = [];
+        if ($penampilanMerah) {
+            $pesertaMerah = $db->table('peserta_seni pse')
+                ->select('p.nama_pendaftar')
+                ->join('pendaftar p', 'p.id_pendaftar = pse.id_pendaftar')
+                ->where('pse.id_kelompok_peserta_seni', $penampilanMerah->id_kelompok_peserta_seni)
+                ->get()->getResult();
+        }
+
+        return view('pertandingan/layar/seni/persilat/hasil_battle_seni', [
+            'title'                => 'Hasil Battle Seni',
+            'battle_seni'          => $battle,
+            'penampilan_seni_biru' => $penampilanBiru,
+            'penampilan_seni_merah' => $penampilanMerah,
+            'peserta_seni_biru'    => $pesertaBiru,
+            'peserta_seni_merah'   => $pesertaMerah,
         ]);
     }
 
@@ -305,5 +520,100 @@ class Layar extends BaseController
             'atlet_merah'  => $this->pertandinganModel->getAtletPertandingan($idPertandingan, 'merah'),
             'atlet_biru'   => $this->pertandinganModel->getAtletPertandingan($idPertandingan, 'biru'),
         ]);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  PRIVATE HELPERS
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /**
+     * Grouped penilaian tanding — parity legacy kelompokkan_penilaian_tanding().
+     * Structure per perangkat:
+     *   - penilaian_tanding: { merah: {...}, biru: {...} }
+     *   - pemenang
+     *
+     * Each sudut (merah/biru) is stored as JSON in penilaian_tanding table:
+     *   { ronde_pertandingan: { 1: { rincian: [...], kategori_nilai: {...}, catatan: {...} }, ... },
+     *     ringkasan: { total_nilai_terinput, total_hukuman } }
+     */
+    private function getGroupedPenilaianTanding(int $idPertandingan): object
+    {
+        $db = \Config\Database::connect();
+
+        // Get all penilaian_tanding rows for this match
+        $rows = $db->table('penilaian_tanding')
+            ->where('id_pertandingan', $idPertandingan)
+            ->get()->getResult();
+
+        // Get perangkat (juri) — only those with penilaian records for this match
+        $juriIds = array_unique(array_column(array_map(function($r) { return (array)$r; }, $rows), 'id_perangkat_pertandingan'));
+        $perangkatList = [];
+        if (!empty($juriIds)) {
+            $perangkatList = $db->table('perangkat_pertandingan')
+                ->whereIn('id_perangkat_pertandingan', $juriIds)
+                ->get()->getResult();
+        }
+
+        // Group by perangkat
+        $juriGrouped = [];
+        foreach ($perangkatList as $perangkat) {
+            $idPerangkat = (int) $perangkat->id_perangkat_pertandingan;
+
+            // Find this juri's penilaian row
+            $penilaianRow = null;
+            foreach ($rows as $row) {
+                if ((int) $row->id_perangkat_pertandingan === $idPerangkat) {
+                    $penilaianRow = $row;
+                    break;
+                }
+            }
+
+            // Parse JSON penilaian
+            $penilaianMerah = null;
+            $penilaianBiru = null;
+            $pemenang = '';
+
+            if ($penilaianRow) {
+                $penilaianMerah = !empty($penilaianRow->penilaian_merah) ? json_decode($penilaianRow->penilaian_merah) : null;
+                $penilaianBiru = !empty($penilaianRow->penilaian_biru) ? json_decode($penilaianRow->penilaian_biru) : null;
+                $pemenang = $penilaianRow->pemenang ?? '';
+            }
+
+            $juriGrouped[] = (object) [
+                'id_perangkat_pertandingan' => $idPerangkat,
+                'penilaian_tanding'         => (object) [
+                    'merah' => $penilaianMerah,
+                    'biru'  => $penilaianBiru,
+                ],
+                'pemenang' => $pemenang,
+            ];
+        }
+
+        return (object) ['juri' => $juriGrouped];
+    }
+
+    /**
+     * Grouped penilaian seni — parity legacy kelompokkan_penilaian_seni().
+     * Returns: { [id_penampilan_seni] => [ { id_perangkat_pertandingan, penilaian (JSON string), terpilih } ] }
+     */
+    private function getGroupedPenilaianSeni(int $idPenampilanSeni): array
+    {
+        $db = \Config\Database::connect();
+
+        $rows = $db->table('penilaian_seni')
+            ->where('id_penampilan_seni', $idPenampilanSeni)
+            ->orderBy('id_perangkat_pertandingan', 'ASC')
+            ->get()->getResult();
+
+        $grouped = [];
+        foreach ($rows as $row) {
+            $grouped[$idPenampilanSeni][] = (object) [
+                'id_perangkat_pertandingan' => (int) $row->id_perangkat_pertandingan,
+                'penilaian'                 => $row->penilaian ?? '{}',
+                'terpilih'                  => (int) ($row->terpilih ?? 1),
+            ];
+        }
+
+        return $grouped;
     }
 }

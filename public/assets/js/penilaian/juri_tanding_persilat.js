@@ -1,234 +1,481 @@
 /**
- * Juri Tanding PERSILAT — modular JS
- * Parity legacy: juri/tanding/persilat.js
- * Handles: scoring input, per-ronde table, CSRF rotation, polling, verifikasi modal, socket
+ * Juri Tanding PERSILAT — full parity legacy persilat.js
+ * Features: scoring input, rincian nilai per ronde (spans + soft-delete),
+ *           winner highlight, ronde highlight, auto-scroll, verifikasi modal,
+ *           polling 3s, socket.io, periksa_sistem_dialog, animation
  */
-(function () {
-    'use strict';
+const juri = {
+    data_nilai: null,
+    data_waktu: null,
+    waktu_sekarang: null,
+    pertandingan: null,
+    id_pertandingan: null,
+    ronde_pertandingan: null,
+    pemenang: null,
+    verifikasi_pertandingan: null,
+    jawaban_verifikasi_pertandingan: null,
+    totalRonde: 3,
+    modalVerifikasiJatuhan: null,
+    modalVerifikasiPelanggaran: null,
 
-    const wrapper = document.getElementById('juri-wrapper');
-    if (!wrapper) return;
+    // ─── CSRF ──────────────────────────────────────────────────────────────
+    csrfName: null,
+    csrfHash: null,
 
-    const config = {
-        idPertandingan: wrapper.dataset.idPertandingan,
-        ronde: wrapper.dataset.ronde,
-        endpointEdit: wrapper.dataset.endpointEdit,
-        endpointRefresh: wrapper.dataset.endpointRefresh,
-        endpointVerifikasi: wrapper.dataset.endpointVerifikasi,
-        csrfName: wrapper.dataset.csrfName,
-        csrfHash: wrapper.dataset.csrfHash,
-    };
-
-    const totalRonde = (typeof JURI_TANDING_TOTAL_RONDE !== 'undefined') ? JURI_TANDING_TOTAL_RONDE : 3;
-    let locked = false;
-    let pollInterval = null;
-
-    // ─── CSRF ─────────────────────────────────────────────────────────────
-
-    function rotateCsrf(newHash) {
-        if (newHash) config.csrfHash = newHash;
-    }
-
-    function buildBody(extra) {
-        const body = new URLSearchParams();
-        body.append(config.csrfName, config.csrfHash);
-        if (extra) {
-            Object.entries(extra).forEach(([k, v]) => body.append(k, v));
+    rotateCsrf(newHash) {
+        if (newHash) {
+            juri.csrfHash = newHash;
+            const wrapper = document.getElementById('juri-wrapper');
+            if (wrapper) wrapper.dataset.csrfHash = newHash;
         }
-        return body;
-    }
+    },
 
-    function postJSON(url, params) {
-        return fetch(url, {
+    // ─── INIT ──────────────────────────────────────────────────────────────
+    init(data) {
+        const wrapper = document.getElementById('juri-wrapper');
+        if (!wrapper) return;
+
+        juri.csrfName = wrapper.dataset.csrfName;
+        juri.csrfHash = wrapper.dataset.csrfHash;
+        juri.totalRonde = data.totalRonde || 3;
+
+        juri.setup_modals();
+        juri.start_animation();
+        juri.set_variable(
+            data.dataNilai,
+            data.pertandingan,
+            data.pemenang,
+            data.verifikasiPertandingan,
+            data.jawabanVerifikasi
+        );
+        juri.update_tampilan_nilai();
+        juri.set_ronde();
+        juri.periksa_sistem_dialog();
+        juri.bind_buttons();
+        juri.refresh_status_pertandingan();
+        juri.init_socket();
+    },
+
+    setup_modals() {
+        let elJatuhan = document.getElementById('modalVerifikasiJatuhan');
+        if (elJatuhan && juri.modalVerifikasiJatuhan === null) {
+            juri.modalVerifikasiJatuhan = new bootstrap.Modal(elJatuhan, { keyboard: false });
+        }
+
+        let elPelanggaran = document.getElementById('modalVerifikasiPelanggaran');
+        if (elPelanggaran && juri.modalVerifikasiPelanggaran === null) {
+            juri.modalVerifikasiPelanggaran = new bootstrap.Modal(elPelanggaran, { keyboard: false });
+        }
+    },
+
+    set_variable(dataNilai, pertandingan, pemenang, verifikasi, jawaban) {
+        juri.data_nilai = dataNilai;
+        juri.pertandingan = pertandingan;
+        juri.data_waktu = pertandingan.data_waktu ? (typeof pertandingan.data_waktu === 'string' ? JSON.parse(pertandingan.data_waktu) : pertandingan.data_waktu) : null;
+        juri.waktu_sekarang = juri.data_waktu ? juri.data_waktu[pertandingan.ronde_pertandingan]?.[1] ?? 0 : 0;
+        juri.id_pertandingan = pertandingan.id_pertandingan;
+        juri.ronde_pertandingan = pertandingan.ronde_pertandingan;
+        juri.pemenang = pemenang;
+        juri.verifikasi_pertandingan = verifikasi;
+        juri.jawaban_verifikasi_pertandingan = jawaban;
+    },
+
+    // ─── ANIMATION (parity legacy) ─────────────────────────────────────────
+    start_animation() {
+        $('#header-tanding').addClass('animated fadeInDown').removeClass('opacity');
+        setTimeout(() => {
+            $('.card-container-juri').addClass('animated fadeIn').removeClass('opacity');
+            setTimeout(() => {
+                $('#tabel-nilai-juri tr').each(function (index) {
+                    setTimeout(() => {
+                        $(this).addClass('animated fadeInDown').removeClass('opacity');
+                    }, 300 * index);
+                });
+                setTimeout(() => {
+                    $('#button-biru button').each(function (index) {
+                        setTimeout(() => {
+                            $(this).addClass('animated fadeIn').removeClass('opacity');
+                        }, 350 * index);
+                    });
+                    $('#button-merah button').each(function (index) {
+                        setTimeout(() => {
+                            $(this).addClass('animated fadeIn').removeClass('opacity');
+                        }, 350 * index);
+                    });
+                }, 1700);
+            }, 600);
+        }, 600);
+    },
+
+    // ─── RENDER NILAI (parity legacy update_tampilan_nilai) ─────────────────
+    update_tampilan_nilai() {
+        if (!juri.data_nilai) return;
+
+        $.each(juri.data_nilai, function (sudut, v) {
+            if (!v || !v.ronde_pertandingan) return;
+
+            $.each(v.ronde_pertandingan, function (ronde, nilai) {
+                let jumlah_rincian = nilai.rincian ? nilai.rincian.length : 0;
+                $('.' + sudut + '-ronde-' + ronde + '-nilai').empty();
+
+                let rincian_nilai = '';
+
+                if (jumlah_rincian > 0) {
+                    $.each(nilai.rincian, function (index, entry) {
+                        // Soft-deleted entries
+                        if (entry.is_deleted === true) {
+                            const timestamp = entry.deleted_at
+                                ? new Date(entry.deleted_at * 1000).toLocaleTimeString()
+                                : '';
+                            if (parseInt(entry.nilai) > 0) {
+                                rincian_nilai += '<span class="fw-lighter text-decoration-line-through px-2 d-inline-block" title="deleted at ' + timestamp + '" style="color:#999999">' + entry.nilai + '</span>';
+                            }
+                            return true;
+                        }
+
+                        // Normal entries
+                        if (parseInt(entry.nilai) > 0) {
+                            if (entry.status === 'input') {
+                                // Belum diverifikasi (masih input state)
+                                rincian_nilai += '<span class="fw-lighter text-decoration-line-through px-2 d-inline-block" style="color:#999999">' + entry.nilai + '</span>';
+                            } else {
+                                rincian_nilai += '<span class="px-2 d-inline-block">' + entry.nilai + '</span>';
+                            }
+                        }
+                    });
+                }
+
+                if (rincian_nilai === '') {
+                    $('.' + sudut + '-ronde-' + ronde + '-nilai').html('<span>&emsp;</span>');
+                } else {
+                    $('.' + sudut + '-ronde-' + ronde + '-nilai').html(rincian_nilai);
+                }
+
+                // Total per ronde
+                let totalRonde = (nilai.ringkasan && nilai.ringkasan.nilai_akhir !== undefined)
+                    ? nilai.ringkasan.nilai_akhir : 0;
+                $('.' + sudut + '-ronde-' + ronde + '-total').html(totalRonde);
+            });
+        });
+
+        // Total skor (dari pertandingan object)
+        let skorBiru = parseInt(juri.pertandingan.skor_biru) || 0;
+        let skorMerah = parseInt(juri.pertandingan.skor_merah) || 0;
+
+        $('#total_nilai_akhir_biru').html(skorBiru);
+        $('#total_nilai_akhir_merah').html(skorMerah);
+
+        // Winner highlight (gradient toggle — parity legacy)
+        if (skorMerah > skorBiru) {
+            $('#total_nilai_akhir_biru').parent()
+                .removeClass('bg-gradient-180-blue').addClass('bg-gradient-180-gray-dark');
+            $('#total_nilai_akhir_merah').parent()
+                .addClass('bg-gradient-180-red').removeClass('bg-gradient-180-gray-dark');
+        } else if (skorBiru > skorMerah) {
+            $('#total_nilai_akhir_merah').parent()
+                .removeClass('bg-gradient-180-red').addClass('bg-gradient-180-gray-dark');
+            $('#total_nilai_akhir_biru').parent()
+                .addClass('bg-gradient-180-blue').removeClass('bg-gradient-180-gray-dark');
+        } else {
+            $('#total_nilai_akhir_merah').parent()
+                .removeClass('bg-gradient-180-red').addClass('bg-gradient-180-gray-dark');
+            $('#total_nilai_akhir_biru').parent()
+                .removeClass('bg-gradient-180-blue').addClass('bg-gradient-180-gray-dark');
+        }
+    },
+
+    // ─── RONDE HIGHLIGHT ───────────────────────────────────────────────────
+    set_ronde() {
+        $('td.ronde-1, td.ronde-2, td.ronde-3').removeClass('bg-warning');
+        $('td.ronde-' + juri.ronde_pertandingan).addClass('bg-warning');
+    },
+
+    // ─── BUTTON BINDINGS ───────────────────────────────────────────────────
+    bind_buttons() {
+        // Scoring buttons
+        document.querySelectorAll('.btn-scoring-legacy').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const sudut = this.dataset.sudut;
+                const nilai = parseInt(this.dataset.nilai, 10);
+                juri.edit_penilaian_tanding(sudut, nilai, this);
+            });
+        });
+
+        // Hapus buttons
+        document.querySelectorAll('.btn-hapus-legacy').forEach(btn => {
+            btn.addEventListener('click', function () {
+                juri.edit_penilaian_tanding(this.dataset.sudut, null, this);
+            });
+        });
+
+        // Verifikasi jawaban buttons
+        document.querySelectorAll('.btn-jawaban-verifikasi').forEach(btn => {
+            btn.addEventListener('click', function () {
+                juri.submit_jawaban_verifikasi_pertandingan(this.dataset.jawaban);
+            });
+        });
+    },
+
+    // ─── EDIT PENILAIAN (parity legacy) ────────────────────────────────────
+    edit_penilaian_tanding(sudut, nilai, btn) {
+        // Disable button temporarily
+        $(btn).prop('disabled', true);
+
+        let entry;
+        if (nilai !== null) {
+            entry = {
+                nilai: nilai,
+                waktu_pertandingan: juri.waktu_sekarang,
+                timestamp: null,
+                status: 'input'
+            };
+        } else {
+            entry = { action: 'remove' };
+        }
+
+        const body = new URLSearchParams();
+        body.append(juri.csrfName, juri.csrfHash);
+        body.append('sudut', sudut);
+        body.append('entry', JSON.stringify(entry));
+
+        fetch(document.getElementById('juri-wrapper').dataset.endpointEdit, {
             method: 'POST',
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
-            body: buildBody(params),
-        }).then(r => r.json()).then(data => {
-            rotateCsrf(data.csrf_hash);
-            return data;
-        });
-    }
-
-    // ─── Score Rendering ───────────────────────────────────────────────────
-
-    function hitungSkorSudut(sudutData) {
-        if (!sudutData || !sudutData.ringkasan) return 0;
-        return sudutData.ringkasan.nilai_akhir || 0;
-    }
-
-    function hitungSkorPerRonde(sudutData, ronde) {
-        if (!sudutData || !sudutData.ronde_pertandingan) return 0;
-        const rondeData = sudutData.ronde_pertandingan[ronde];
-        if (!rondeData || !rondeData.ringkasan) return 0;
-        return rondeData.ringkasan.nilai_akhir || 0;
-    }
-
-    function renderSkor(response) {
-        if (!response) return;
-
-        const merah = response.merah || response.response?.merah;
-        const biru = response.biru || response.response?.biru;
-
-        if (merah) {
-            document.getElementById('skor-merah').textContent = hitungSkorSudut(merah);
-            document.getElementById('total-merah').textContent = hitungSkorSudut(merah);
-        }
-        if (biru) {
-            document.getElementById('skor-biru').textContent = hitungSkorSudut(biru);
-            document.getElementById('total-biru').textContent = hitungSkorSudut(biru);
-        }
-
-        // Per-ronde scores
-        for (let r = 1; r <= totalRonde; r++) {
-            const elBiru = document.getElementById('ronde-biru-' + r);
-            const elMerah = document.getElementById('ronde-merah-' + r);
-            if (elBiru && biru) elBiru.textContent = hitungSkorPerRonde(biru, String(r));
-            if (elMerah && merah) elMerah.textContent = hitungSkorPerRonde(merah, String(r));
-        }
-    }
-
-    // ─── Scoring Input ────────────────────────────────────────────────────
-
-    function kirimNilai(sudut, entryObj, btn) {
-        if (locked) return;
-        locked = true;
-        if (btn) btn.classList.add('is-loading');
-
-        postJSON(config.endpointEdit, {
-            sudut: sudut,
-            entry: JSON.stringify(entryObj),
+            body: body
         })
+        .then(r => r.json())
         .then(data => {
-            if (data && data.status === true) {
-                renderSkor(data.response || data);
-                pulseBtn(btn, true);
-            } else {
-                pulseBtn(btn, false);
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({ icon: 'error', title: 'Gagal', text: (data && data.message) || 'Input ditolak.', timer: 1800, showConfirmButton: false });
+            juri.rotateCsrf(data.csrf_hash);
+            $(btn).prop('disabled', false);
+
+            if (data.status === true) {
+                juri.data_nilai = data.response;
+                juri.update_tampilan_nilai();
+
+                // Auto-scroll ke kanan (nilai terbaru)
+                let containerClass = '.' + sudut + '-ronde-' + juri.ronde_pertandingan + '-nilai';
+                let container = $(containerClass);
+                if (container.length > 0) {
+                    container.animate({ scrollLeft: container[0].scrollWidth }, 300);
                 }
+            } else {
+                Swal.fire('Error', 'Gagal mengubah penilaian', 'error');
             }
         })
         .catch(() => {
-            pulseBtn(btn, false);
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({ icon: 'warning', title: 'Koneksi', text: 'Gagal mengirim nilai.', timer: 1500, showConfirmButton: false });
+            $(btn).prop('disabled', false);
+            Swal.fire('Error', 'Koneksi terputus', 'warning');
+        });
+    },
+
+    // ─── VERIFIKASI ────────────────────────────────────────────────────────
+    submit_jawaban_verifikasi_pertandingan(jawaban) {
+        const body = new URLSearchParams();
+        body.append(juri.csrfName, juri.csrfHash);
+        body.append('jawaban', jawaban);
+
+        fetch(document.getElementById('juri-wrapper').dataset.endpointVerifikasi, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: body
+        })
+        .then(r => r.json())
+        .then(data => {
+            juri.rotateCsrf(data.csrf_hash);
+            if (data.status === false) {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'System Error, Failed sending verification answer',
+                    icon: 'error'
+                });
+            } else {
+                juri.close_modal_verifikasi_jatuhan();
+                juri.close_modal_verifikasi_pelanggaran();
+                Swal.fire({
+                    title: 'Success',
+                    text: 'Answer Has Been Sent',
+                    icon: 'success',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
             }
         })
-        .finally(() => {
-            locked = false;
-            if (btn) btn.classList.remove('is-loading');
+        .catch(() => {
+            Swal.fire({
+                title: 'Error',
+                text: 'System Error, Failed sending verification answer (connection lost)',
+                icon: 'error'
+            });
         });
-    }
+    },
 
-    function pulseBtn(btn, success) {
-        if (!btn) return;
-        const cls = success ? 'pulse-success' : 'pulse-error';
-        btn.classList.add(cls);
-        setTimeout(() => btn.classList.remove(cls), 400);
-    }
+    open_modal_verifikasi_jatuhan() {
+        if (juri.modalVerifikasiJatuhan) {
+            juri.modalVerifikasiJatuhan.show();
+        }
+    },
+    close_modal_verifikasi_jatuhan() {
+        if (juri.modalVerifikasiJatuhan) {
+            juri.modalVerifikasiJatuhan.hide();
+        }
+    },
+    open_modal_verifikasi_pelanggaran() {
+        if (juri.modalVerifikasiPelanggaran) {
+            juri.modalVerifikasiPelanggaran.show();
+        }
+    },
+    close_modal_verifikasi_pelanggaran() {
+        if (juri.modalVerifikasiPelanggaran) {
+            juri.modalVerifikasiPelanggaran.hide();
+        }
+    },
 
-    // ─── Event Listeners ──────────────────────────────────────────────────
-
-    document.querySelectorAll('.btn-scoring').forEach(btn => {
-        btn.addEventListener('click', function () {
-            const sudut = this.dataset.sudut;
-            const nilai = parseInt(this.dataset.nilai, 10);
-            kirimNilai(sudut, { nilai: nilai }, this);
-        });
-    });
-
-    document.querySelectorAll('.btn-hapus-scoring').forEach(btn => {
-        btn.addEventListener('click', function () {
-            kirimNilai(this.dataset.sudut, { action: 'remove' }, this);
-        });
-    });
-
-    // ─── Polling ──────────────────────────────────────────────────────────
-
-    function startPolling() {
-        pollInterval = setInterval(() => {
-            postJSON(config.endpointRefresh, {})
-                .then(data => {
-                    if (data && data.reload === true) {
-                        window.location.reload();
-                    } else if (data && data.status === false && data.data_nilai) {
-                        renderSkor(data.data_nilai);
-                    }
-                })
-                .catch(() => {});
-        }, 4000);
-    }
-
-    // ─── Verifikasi Modals ────────────────────────────────────────────────
-
-    function showVerifikasiModal(jenis, sudut) {
-        const modalId = jenis === 'jatuhan' ? 'modalVerifikasiJatuhan' : 'modalVerifikasiPelanggaran';
-        const sudutEl = document.getElementById('verifikasi-' + jenis + '-sudut');
-        if (sudutEl) {
-            sudutEl.textContent = sudut.toUpperCase();
-            sudutEl.className = 'fw-bold text-uppercase ' + (sudut === 'merah' ? 'text-danger' : 'text-primary');
+    // ─── PERIKSA SISTEM DIALOG (parity legacy) ─────────────────────────────
+    periksa_sistem_dialog() {
+        if (juri.verifikasi_pertandingan == null || juri.verifikasi_pertandingan == undefined) {
+            juri.close_modal_verifikasi_jatuhan();
+            juri.close_modal_verifikasi_pelanggaran();
+            return;
         }
 
-        const modalEl = document.getElementById(modalId);
-        if (!modalEl) return;
-        const modal = new bootstrap.Modal(modalEl);
-        modal.show();
+        const verif = juri.verifikasi_pertandingan;
+        const jawaban = juri.jawaban_verifikasi_pertandingan;
+        const belumJawab = (jawaban == null || jawaban.jawaban == null);
 
-        modalEl.querySelectorAll('.modal-footer button').forEach(btn => {
-            btn.onclick = function () {
-                submitVerifikasi(jenis, sudut, this.dataset.jawaban);
-                modal.hide();
-            };
+        if (
+            verif.jenis_verifikasi === 'jatuhan' &&
+            verif.status === 'berlangsung' &&
+            belumJawab &&
+            (juri.modalVerifikasiJatuhan === null || juri.modalVerifikasiJatuhan._isShown === false)
+        ) {
+            juri.open_modal_verifikasi_jatuhan();
+        } else if (
+            verif.jenis_verifikasi === 'pelanggaran' &&
+            verif.status === 'berlangsung' &&
+            belumJawab &&
+            (juri.modalVerifikasiPelanggaran === null || juri.modalVerifikasiPelanggaran._isShown === false)
+        ) {
+            juri.open_modal_verifikasi_pelanggaran();
+        }
+    },
+
+    // ─── POLLING (3s, parity legacy) ───────────────────────────────────────
+    refresh_status_pertandingan() {
+        const body = new URLSearchParams();
+        body.append(juri.csrfName, juri.csrfHash);
+
+        fetch(document.getElementById('juri-wrapper').dataset.endpointRefresh, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: body
+        })
+        .then(r => r.json())
+        .then(data => {
+            juri.rotateCsrf(data.csrf_hash);
+
+            if (data.status === true && data.reload === true) {
+                window.location.reload();
+                return;
+            }
+
+            if (data.status === false) {
+                // Pertandingan sama — update data
+                if (data.data_nilai == null) {
+                    window.location.reload();
+                    return;
+                }
+
+                juri.set_variable(
+                    data.data_nilai,
+                    data.pertandingan,
+                    data.pemenang,
+                    data.verifikasi_pertandingan,
+                    data.jawaban_verifikasi_pertandingan
+                );
+                juri.update_tampilan_nilai();
+                juri.set_ronde();
+                juri.periksa_sistem_dialog();
+            }
+        })
+        .catch(() => {})
+        .finally(() => {
+            setTimeout(() => {
+                juri.refresh_status_pertandingan();
+            }, 3000);
         });
-    }
+    },
 
-    function submitVerifikasi(jenis, sudut, jawaban) {
-        postJSON(config.endpointVerifikasi, {
-            jenis: jenis,
-            sudut: sudut,
-            jawaban: jawaban,
-        }).catch(() => {});
-    }
+    // ─── WARNING PINDAH BABAK (parity legacy) ──────────────────────────────
+    warning_pindah_babak() {
+        Swal.fire({
+            title: 'Error',
+            text: 'Perpindahan babak hanya dapat dilakukan oleh operator !',
+            icon: 'error'
+        });
+    },
 
-    // ─── Socket.IO Integration ────────────────────────────────────────────
-
-    function initSocket() {
+    // ─── SOCKET.IO ─────────────────────────────────────────────────────────
+    init_socket() {
         if (typeof io === 'undefined') return;
 
         const socket = io(window.REALTIME_URL || 'http://localhost:3000');
-        socket.emit('JOIN_ROOM', { id_pertandingan: config.idPertandingan });
+        socket.emit('JOIN_ROOM', { id_pertandingan: juri.id_pertandingan });
 
         socket.on('NILAI_UPDATE', data => {
-            if (data && String(data.id_pertandingan) === String(config.idPertandingan)) {
-                if (data.skor_merah !== undefined) document.getElementById('skor-merah').textContent = data.skor_merah;
-                if (data.skor_biru !== undefined) document.getElementById('skor-biru').textContent = data.skor_biru;
+            if (data && String(data.id_pertandingan) === String(juri.id_pertandingan)) {
+                if (data.skor_merah !== undefined) {
+                    juri.pertandingan.skor_merah = data.skor_merah;
+                }
+                if (data.skor_biru !== undefined) {
+                    juri.pertandingan.skor_biru = data.skor_biru;
+                }
+                juri.update_tampilan_nilai();
             }
         });
 
         socket.on('VERIFIKASI_JATUHAN', data => {
-            if (data && String(data.id_pertandingan) === String(config.idPertandingan)) {
-                showVerifikasiModal('jatuhan', data.sudut);
+            if (data && String(data.id_pertandingan) === String(juri.id_pertandingan)) {
+                // Set verifikasi object so periksa_sistem_dialog picks it up
+                juri.verifikasi_pertandingan = {
+                    jenis_verifikasi: 'jatuhan',
+                    status: 'berlangsung'
+                };
+                juri.jawaban_verifikasi_pertandingan = null;
+                juri.periksa_sistem_dialog();
             }
         });
 
         socket.on('VERIFIKASI_PELANGGARAN', data => {
-            if (data && String(data.id_pertandingan) === String(config.idPertandingan)) {
-                showVerifikasiModal('pelanggaran', data.sudut);
+            if (data && String(data.id_pertandingan) === String(juri.id_pertandingan)) {
+                juri.verifikasi_pertandingan = {
+                    jenis_verifikasi: 'pelanggaran',
+                    status: 'berlangsung'
+                };
+                juri.jawaban_verifikasi_pertandingan = null;
+                juri.periksa_sistem_dialog();
             }
         });
 
         socket.on('MATCH_STATUS_CHANGE', data => {
-            if (data && String(data.id_pertandingan) === String(config.idPertandingan)) {
+            if (data && String(data.id_pertandingan) === String(juri.id_pertandingan)) {
                 window.location.reload();
             }
         });
+
+        socket.on('KONTROL_WAKTU', data => {
+            if (data && String(data.id_pertandingan) === String(juri.id_pertandingan)) {
+                if (data.ronde_pertandingan) {
+                    juri.ronde_pertandingan = data.ronde_pertandingan;
+                    juri.set_ronde();
+                }
+            }
+        });
     }
+};
 
-    // ─── Init ─────────────────────────────────────────────────────────────
-
-    renderSkor(typeof JURI_TANDING_INIT !== 'undefined' ? JURI_TANDING_INIT : null);
-    startPolling();
-    initSocket();
-
-})();
+// ─── Bootstrap on DOM Ready ────────────────────────────────────────────────
+$(document).ready(function () {
+    if (typeof JURI_INIT !== 'undefined') {
+        juri.init(JURI_INIT);
+    }
+});

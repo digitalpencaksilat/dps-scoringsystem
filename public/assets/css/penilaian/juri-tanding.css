@@ -1,6 +1,6 @@
 /* ══════════════════════════════════════════════════════════════════════════
    Juri Tanding PERSILAT — parity legacy UI/UX
-   Gradient corners, score table, large touch buttons
+   Gradient corners, score table, large touch buttons, verifikasi modals
    ══════════════════════════════════════════════════════════════════════════ */
 
 /* ─── Gradient Backgrounds (parity legacy argon-dashboard) ─────────────── */
@@ -13,158 +13,161 @@
 .bg-gradient-180-dark {
     background: linear-gradient(180deg, #23303e 0%, #0a0d11 100%);
 }
+.bg-gradient-180-gray-dark {
+    background: linear-gradient(180deg, #2c2f33 0%, #1a1d21 100%);
+}
+
+/* ─── Corner Colors (parity legacy) ────────────────────────────────────── */
+.bg-blue { background-color: #1565c0 !important; }
+.bg-red { background-color: #c62828 !important; }
+
+/* ─── Score Boxes ──────────────────────────────────────────────────────── */
+.score h3 {
+    font-size: 2.5rem;
+    font-weight: 700;
+}
 
 /* ─── Card Container ───────────────────────────────────────────────────── */
 .card-container-juri {
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-}
-
-/* ─── Score Table ──────────────────────────────────────────────────────── */
-.table-dark {
-    --bs-table-bg: #1a1d24;
-}
-
-/* ─── Scoring Buttons (large, touch-friendly — parity legacy 20vh) ─────── */
-.btn-scoring {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
+    border-radius: 0;
     border: none;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.12);
+}
+
+/* ─── Tabel Nilai Juri ─────────────────────────────────────────────────── */
+#tabel-nilai-juri {
+    background: transparent;
+}
+#tabel-nilai-juri th, #tabel-nilai-juri td {
+    border: 1px solid rgba(255,255,255,0.1);
+    vertical-align: middle;
+    background: #1a1d24;
+    color: #e0e0e0;
+}
+#tabel-nilai-juri thead th {
     color: #fff;
+}
+#tabel-nilai-juri .border-dark {
+    border-color: rgba(255,255,255,0.15) !important;
+}
+
+/* Rincian nilai: horizontal scrollable container */
+#tabel-nilai-juri td div[class*="-nilai"] {
+    gap: 2px;
+    font-size: 1.1rem;
+}
+#tabel-nilai-juri td div[class*="-nilai"] span {
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* ─── Scoring Buttons (large, touch-friendly — parity legacy) ──────────── */
+.btn-scoring-legacy {
     min-height: 20vh;
-    cursor: pointer;
-    transition: transform 0.06s ease, background 0.15s ease, opacity 0.15s ease;
+    border: none;
+    border-radius: 8px;
+    transition: transform 0.06s ease, opacity 0.15s ease;
     -webkit-tap-highlight-color: transparent;
     user-select: none;
-    padding: 16px;
-}
-
-.btn-scoring:active {
-    transform: scale(0.96);
-    background: rgba(255, 255, 255, 0.25);
-}
-
-.btn-scoring:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-.scoring-icon {
-    width: 48px;
-    height: 48px;
-    object-fit: contain;
-    filter: brightness(0) invert(1);
-    opacity: 0.9;
-}
-
-.scoring-label {
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    opacity: 0.85;
-}
-
-.scoring-value {
-    font-size: clamp(1.8rem, 5vw, 3rem);
-    font-weight: 700;
-    line-height: 1;
-}
-
-/* ─── Hapus Button ─────────────────────────────────────────────────────── */
-.btn-hapus-scoring {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 14px;
-    background: #1a1d24;
-    color: #fff;
-    border: none;
-    font-size: 0.85rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
     cursor: pointer;
-    transition: background 0.15s;
+}
+.btn-scoring-legacy:active {
+    transform: scale(0.95);
+    opacity: 0.8;
+}
+.btn-scoring-legacy:disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+.btn-scoring-legacy img {
+    pointer-events: none;
+}
+
+/* ─── Hapus Button (parity legacy) ─────────────────────────────────────── */
+.btn-hapus-legacy {
+    border: none;
+    border-radius: 8px;
+    transition: transform 0.06s ease, opacity 0.15s ease;
     -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    cursor: pointer;
 }
-
-.btn-hapus-scoring:active,
-.btn-hapus-scoring:hover {
-    background: #2d3239;
+.btn-hapus-legacy:active {
+    transform: scale(0.95);
+    opacity: 0.8;
 }
-
-.border-start {
-    border-left: 1px solid rgba(255,255,255,0.1) !important;
-}
-
-/* ─── Loading & Feedback ───────────────────────────────────────────────── */
-.is-loading {
+.btn-hapus-legacy:disabled {
     opacity: 0.5;
     pointer-events: none;
 }
 
-.pulse-success {
-    animation: pulseGreen 0.3s ease;
-}
-.pulse-error {
-    animation: pulseRed 0.3s ease;
-}
-
-@keyframes pulseGreen {
-    0% { box-shadow: inset 0 0 0 0 rgba(40, 167, 69, 0.5); }
-    100% { box-shadow: inset 0 0 40px 0 rgba(40, 167, 69, 0); }
-}
-@keyframes pulseRed {
-    0% { box-shadow: inset 0 0 0 0 rgba(220, 53, 69, 0.5); }
-    100% { box-shadow: inset 0 0 40px 0 rgba(220, 53, 69, 0); }
+/* ─── Verifikasi Modal Buttons (parity legacy py-7) ────────────────────── */
+.py-7 {
+    padding-top: 3.5rem !important;
+    padding-bottom: 3.5rem !important;
 }
 
-/* ─── Responsive: Tablet Landscape (parity legacy @media 768-1366px) ──── */
+/* ─── Animation Classes (parity legacy) ────────────────────────────────── */
+.opacity {
+    opacity: 0;
+}
+.animated {
+    animation-duration: 0.6s;
+    animation-fill-mode: both;
+}
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translate3d(0, -20px, 0); }
+    to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+.fadeIn { animation-name: fadeIn; }
+.fadeInDown { animation-name: fadeInDown; }
+
+/* ─── Ronde Highlight ──────────────────────────────────────────────────── */
+td.bg-warning {
+    background-color: #ffc107 !important;
+    color: #000 !important;
+    font-weight: 700;
+}
+
+/* ─── Responsive: Tablet Landscape ─────────────────────────────────────── */
 @media (min-width: 768px) and (max-width: 1366px) {
-    .btn-scoring {
+    .btn-scoring-legacy {
         min-height: 18vh;
     }
-    .scoring-value {
-        font-size: 2.2rem;
-    }
-    .scoring-icon {
-        width: 40px;
-        height: 40px;
+    .score h3 {
+        font-size: 2rem;
     }
 }
 
 /* ─── Responsive: Mobile Portrait ──────────────────────────────────────── */
 @media (max-width: 575.98px) {
-    .btn-scoring {
+    .btn-scoring-legacy {
         min-height: 15vh;
-        border-radius: 8px;
     }
-    .scoring-value {
-        font-size: 1.6rem;
+    .btn-scoring-legacy img {
+        max-height: 50px !important;
     }
-    .scoring-icon {
-        width: 36px;
-        height: 36px;
+    .score h3 {
+        font-size: 1.8rem;
     }
-    .scoring-label {
-        font-size: 0.75rem;
+    #tabel-nilai-juri td div[class*="-nilai"] {
+        font-size: 0.9rem;
     }
 }
 
 /* ─── Landscape Fullscreen (scoring device) ────────────────────────────── */
 @media (orientation: landscape) and (max-height: 600px) {
-    .btn-scoring {
+    .btn-scoring-legacy {
         min-height: 30vh;
-        gap: 4px;
     }
-    .card-container-juri .card-body {
-        padding: 8px 12px !important;
-    }
-    .px-3.py-2 {
+    #header-tanding {
         padding: 4px 8px !important;
+    }
+    .score h3 {
+        font-size: 1.8rem;
+        margin: 8px 0 !important;
     }
 }

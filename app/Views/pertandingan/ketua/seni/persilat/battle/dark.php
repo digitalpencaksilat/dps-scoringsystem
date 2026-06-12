@@ -1,232 +1,387 @@
 <?= $this->extend('layouts/penilaian') ?>
 
 <?= $this->section('styles') ?>
-<link rel="stylesheet" href="<?= base_url('assets/css/penilaian/ketua-seni.css') ?>">
-<?= $this->endSection() ?>
-
-<?= $this->section('navbar') ?>
-<?= view('pertandingan/components/navbar', ['nav_role' => 'ketua_pertandingan', 'nav_active' => 'seni']) ?>
+<link rel="stylesheet" href="<?= base_url('assets/css/penilaian/kp-seni.css') ?>">
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
-<?php
-    $idPenampilan  = (int) $penampilan->id_penampilan_seni;
-    $namaPeserta   = $penampilan->nama_peserta ?? $penampilan->nama_kontingen ?? 'Peserta';
-    $kontingen     = $penampilan->nama_kontingen ?? '-';
-    $kategori      = ($penampilan->nama_seni ?? '') . ' - ' . ($penampilan->nama_kategori_usia ?? '');
-    $gelanggang    = $penampilan->nama_gelanggang ?? 'Gelanggang';
-    $aksesStr      = $akses_penilaian ?? 'dibuka';
-    $isDQ          = (int) ($penampilan->diskualifikasi ?? 0);
-    // Battle: determine sudut from penampilan data
-    $sudutPeserta  = $penampilan->sudut ?? 'biru';
-?>
-
-<div class="container-fluid bg-black min-vh-100 d-flex flex-column p-0"
-     id="kp-seni-wrapper"
-     data-id-penampilan="<?= $idPenampilan ?>"
-     data-endpoint-edit="<?= base_url('ketua-pertandingan/edit-penilaian-seni/' . $idPenampilan) ?>"
-     data-endpoint-refresh="<?= base_url('ketua-pertandingan/refresh-status-seni/' . $idPenampilan) ?>"
-     data-endpoint-akses="<?= base_url('ketua-pertandingan/ganti-akses-penilaian/' . $idPenampilan) ?>"
-     data-endpoint-dq="<?= base_url('ketua-pertandingan/diskualifikasi-seni/' . $idPenampilan) ?>"
-     data-endpoint-undq="<?= base_url('ketua-pertandingan/batalkan-diskualifikasi-seni/' . $idPenampilan) ?>"
-     data-csrf-name="<?= csrf_token() ?>"
-     data-csrf-hash="<?= csrf_hash() ?>"
-     data-akses="<?= esc($aksesStr, 'attr') ?>"
-     data-sistem="battle">
-
-    <!-- ═══ Header Bar ═══ -->
-    <div class="kp-seni-header">
-        <div class="d-flex align-items-center gap-2">
-            <a href="<?= base_url('ketua-pertandingan') ?>" class="text-white opacity-75" title="Kembali">
-                <i class="fas fa-arrow-left"></i>
-            </a>
-            <span class="badge bg-dark border border-secondary"><?= esc($gelanggang) ?></span>
-            <span class="kp-seni-kategori"><?= esc($kategori) ?></span>
-            <span class="badge bg-info">Battle</span>
-        </div>
-        <div class="d-flex align-items-center gap-3">
-            <span class="badge <?= $aksesStr === 'dibuka' ? 'bg-success' : 'bg-danger' ?>" id="badge-akses">
-                <?= $aksesStr === 'dibuka' ? 'DIBUKA' : 'DITUTUP' ?>
-            </span>
-            <a href="<?= base_url('ketua-pertandingan/seni/light') ?>" class="btn btn-sm btn-outline-light border-secondary" title="Light Mode">
-                <i class="fas fa-sun"></i>
-            </a>
+<div class="container-fluid min-vh-100 bg-black pb-4" id="mainContainer">
+    <!-- HEADER -->
+    <div class="row py-2 px-2">
+        <div class="col-12 text-center">
+            <p class="text-white mb-0 fw-bold text-uppercase">
+                <?= $penampilan_seni_berlangsung->nama_seni ?? 'Seni' ?> —
+                <?= $penampilan_seni_berlangsung->nama_kategori_usia ?? '' ?>
+                <?= ($penampilan_seni_berlangsung->jenis_kelamin ?? '') === 'Putra' ? 'Putra' : 'Putri' ?>
+                (Battle)
+            </p>
         </div>
     </div>
 
-    <!-- ═══ Peserta Info (Battle: show sudut) ═══ -->
-    <div class="kp-seni-peserta">
-        <div class="d-flex align-items-center gap-3">
-            <span class="badge bg-gradient-180-<?= $sudutPeserta ?> text-white px-3 py-2 fs-6">
-                <?= strtoupper($sudutPeserta) ?>
-            </span>
-            <div>
-                <span class="peserta-nama"><?= esc($namaPeserta) ?></span>
-                <span class="peserta-kontingen"><?= esc($kontingen) ?></span>
-            </div>
-        </div>
-        <?php if ($isDQ): ?>
-            <span class="badge bg-danger fs-6">DISKUALIFIKASI</span>
-        <?php endif; ?>
-    </div>
-
-    <!-- ═══ Tabel Skor Juri (Battle — per sudut) ═══ -->
-    <div class="flex-grow-1 overflow-auto p-3">
-        <!-- Nav Tabs: Biru / Merah / Summary -->
-        <ul class="nav nav-pills nav-fill mb-3" id="battleTabs">
+    <!-- NAV TABS: Blue / Red / Summary -->
+    <div class="nav-wrapper position-relative end-0">
+        <ul class="nav nav-pills nav-fill p-1" role="tablist" id="tabNilai">
             <li class="nav-item">
-                <button class="nav-link active kp-tab-biru" data-bs-toggle="pill" data-bs-target="#tab-biru">
-                    <i class="fas fa-circle text-primary me-1"></i> Sudut Biru
-                </button>
+                <a class="nav-link mb-0 px-0 py-1 active text-white" data-bs-toggle="tab" href="#blue_corner"
+                    role="tab" aria-selected="true" id="blueCornerNav">BLUE</a>
             </li>
             <li class="nav-item">
-                <button class="nav-link kp-tab-merah" data-bs-toggle="pill" data-bs-target="#tab-merah">
-                    <i class="fas fa-circle text-danger me-1"></i> Sudut Merah
-                </button>
+                <a class="nav-link mb-0 px-0 py-1 text-white" data-bs-toggle="tab" href="#red_corner"
+                    role="tab" aria-selected="false" id="redCornerNav">RED</a>
             </li>
             <li class="nav-item">
-                <button class="nav-link kp-tab-summary" data-bs-toggle="pill" data-bs-target="#tab-summary">
-                    <i class="fas fa-chart-bar me-1"></i> Ringkasan
-                </button>
+                <a class="nav-link mb-0 px-0 py-1 text-white" data-bs-toggle="tab" href="#summary"
+                    role="tab" aria-selected="false" id="summaryNav">SUMMARY</a>
             </li>
         </ul>
 
         <div class="tab-content">
-            <!-- Tab Biru -->
-            <div class="tab-pane fade show active" id="tab-biru">
-                <div class="card bg-dark border-0 rounded-3">
-                    <div class="card-header border-primary bg-gradient-180-blue text-white">
-                        <h6 class="mb-0"><i class="fas fa-users me-2"></i>Nilai Juri — Sudut Biru</h6>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-dark table-sm table-bordered text-center align-middle mb-0">
-                                <thead>
-                                    <tr><th>#</th><th class="text-start">Juri</th><th>Nilai</th><th>Ready</th></tr>
-                                </thead>
-                                <tbody id="tbody-juri-biru">
-                                    <?php foreach ($data_nilai_juri as $idx => $juri): ?>
-                                    <tr>
-                                        <td><?= $idx + 1 ?></td>
-                                        <td class="text-start"><?= esc($juri->nama_perangkat ?? ('Juri ' . ($idx + 1))) ?></td>
-                                        <td class="fw-bold penilaian-display-font">-</td>
-                                        <td><i class="fas fa-clock text-muted"></i></td>
-                                    </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                                <tfoot>
-                                    <tr class="table-secondary">
-                                        <td colspan="2" class="text-end fw-bold">Median Biru</td>
-                                        <td class="fw-bold penilaian-display-font text-primary" id="median-biru">-</td>
-                                        <td></td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <!-- ═══════════ TAB BLUE ═══════════ -->
+            <div class="tab-pane active" id="blue_corner" role="tabpanel">
+                <?php foreach ($semua_penampilan_seni as $penampilan_seni): ?>
+                <?php if ($battle_seni !== null && (int)$penampilan_seni->id_penampilan_seni === (int)$battle_seni->id_penampilan_seni_biru): ?>
 
-            <!-- Tab Merah -->
-            <div class="tab-pane fade" id="tab-merah">
-                <div class="card bg-dark border-0 rounded-3">
-                    <div class="card-header border-danger bg-gradient-180-red text-white">
-                        <h6 class="mb-0"><i class="fas fa-users me-2"></i>Nilai Juri — Sudut Merah</h6>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-dark table-sm table-bordered text-center align-middle mb-0">
-                                <thead>
-                                    <tr><th>#</th><th class="text-start">Juri</th><th>Nilai</th><th>Ready</th></tr>
-                                </thead>
-                                <tbody id="tbody-juri-merah">
-                                    <?php foreach ($data_nilai_juri as $idx => $juri): ?>
-                                    <tr>
-                                        <td><?= $idx + 1 ?></td>
-                                        <td class="text-start"><?= esc($juri->nama_perangkat ?? ('Juri ' . ($idx + 1))) ?></td>
-                                        <td class="fw-bold penilaian-display-font">-</td>
-                                        <td><i class="fas fa-clock text-muted"></i></td>
-                                    </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                                <tfoot>
-                                    <tr class="table-secondary">
-                                        <td colspan="2" class="text-end fw-bold">Median Merah</td>
-                                        <td class="fw-bold penilaian-display-font text-danger" id="median-merah">-</td>
-                                        <td></td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tab Summary -->
-            <div class="tab-pane fade" id="tab-summary">
-                <div class="card bg-dark border-0 rounded-3">
-                    <div class="card-body text-center py-4">
-                        <div class="d-flex justify-content-center align-items-center gap-5">
-                            <div>
-                                <div class="text-primary fs-3 fw-bold penilaian-display-font" id="summary-biru">0.00</div>
-                                <small class="text-muted">Sudut Biru</small>
-                            </div>
-                            <div class="text-muted fs-4">VS</div>
-                            <div>
-                                <div class="text-danger fs-3 fw-bold penilaian-display-font" id="summary-merah">0.00</div>
-                                <small class="text-muted">Sudut Merah</small>
+                <!-- Peserta Blue -->
+                <div class="row my-3 justify-content-center">
+                    <div class="col-10 px-4">
+                        <div class="row bg-blue bg-gradient h-100">
+                            <div class="col-12 justify-content-center d-flex flex-column py-2">
+                                <p class="h5 text-decoration-underline text-truncate m-0 fw-bolder text-white text-center">
+                                    <?= str_replace('<br>', ' ', $penampilan_seni->anggota_kelompok_peserta_seni ?? '-') ?>
+                                </p>
+                                <p class="text-truncate m-0 text-white text-sm fw-lighter text-center"><?= $penampilan_seni->nama_kontingen ?? '' ?></p>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- ═══ Hukuman Input ═══ -->
-        <div class="card bg-dark border-0 rounded-3 mt-3">
-            <div class="card-header border-secondary">
-                <h6 class="text-white mb-0"><i class="fas fa-triangle-exclamation me-2 text-warning"></i>Input Hukuman</h6>
+                <?php $idPs = (int) $penampilan_seni->id_penampilan_seni; ?>
+                <?php if (!empty($data_nilai[$idPs])): ?>
+                <?php $juriList = $data_nilai[$idPs]; ?>
+
+                <!-- Tabel Unsur Nilai Blue -->
+                <div class="row">
+                    <div class="col-12">
+                        <table class="table w-100 table-sm penampilan_seni_<?= $idPs ?> blue-corner">
+                            <thead class="bg-dark text-white">
+                                <tr>
+                                    <th rowspan="2" class="align-middle text-center w-25 py-2">Unsur</th>
+                                    <th class="text-center py-2" colspan="<?= count($juriList) ?>">Juri</th>
+                                </tr>
+                                <tr>
+                                    <?php for ($i = 1; $i <= count($juriList); $i++): ?>
+                                        <th class="text-center py-2"><?= $i ?></th>
+                                    <?php endfor ?>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($jenis_unsur_nilai as $jenis): ?>
+                                <tr>
+                                    <td><p class="mb-0 fw-bolder text-capitalize text-center"><?= ucwords(str_replace('_', ' ', $jenis)) ?></p></td>
+                                    <?php foreach ($juriList as $juri): ?>
+                                        <td class="fw-bold text-center <?= $jenis ?>_juri_<?= $juri->id_perangkat_pertandingan ?> juri_<?= $juri->id_perangkat_pertandingan ?>"></td>
+                                    <?php endforeach ?>
+                                </tr>
+                                <?php endforeach; ?>
+                                <tr class="fw-bolder">
+                                    <td><p class="mb-0 fw-bolder text-capitalize text-center">Total Nilai</p></td>
+                                    <?php foreach ($juriList as $juri): ?>
+                                        <td class="fw-bold text-center total_nilai_juri_<?= $juri->id_perangkat_pertandingan ?> juri_<?= $juri->id_perangkat_pertandingan ?>"></td>
+                                    <?php endforeach ?>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Sorted Jury Score Blue -->
+                <div class="row shadow-lg penampilan_seni_<?= $idPs ?> blue-corner mb-1 px-2">
+                    <div class="col-12 bg-dark py-2">
+                        <p class="text-sm fw-bolder text-white text-center m-0 text-uppercase">Jury Score (Without penalty)</p>
+                    </div>
+                    <div class="col-12">
+                        <div class="row urutan_total_nilai_juri">
+                            <?php foreach ($juriList as $juri): ?>
+                            <div class="col mb-3 kolom_total_nilai_<?= $idPs ?>">
+                                <div class="row bg-dark">
+                                    <div class="col-12 bg-gradient-dark"><p class="text-sm fw-bolder text-white text-center my-2 text-uppercase nomor_juri"></p></div>
+                                    <div class="col-12 kolom_bobot_total_nilai">
+                                        <p class="fw-bolder text-center text-white my-1 h5 total_nilai_juri_<?= $juri->id_perangkat_pertandingan ?> juri_<?= $juri->id_perangkat_pertandingan ?>">0</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php endforeach ?>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ringkasan Blue -->
+                <div class="row penampilan_seni_<?= $idPs ?> blue-corner mb-2">
+                    <div class="col-12 col-xl-6 px-3">
+                        <div class="row">
+                            <div class="col-4 px-2 mb-3">
+                                <div class="row shadow-lg stat-card"><div class="col-12 bg-dark"><p class="h6 text-white text-center my-2 text-uppercase">Median</p></div><div class="col-12"><p class="fw-bolder text-center my-1 h3 text-white median_<?= $idPs ?>">0</p></div></div>
+                            </div>
+                            <div class="col-4 px-2 mb-3">
+                                <div class="row shadow-lg stat-card"><div class="col-12 bg-dark"><p class="h6 text-white text-center my-2 text-uppercase">Penalty</p></div><div class="col-12"><p class="fw-bolder text-center my-1 h3 text-white hukuman_<?= $idPs ?>">0</p></div></div>
+                            </div>
+                            <div class="col-4 px-2 mb-3">
+                                <div class="row shadow-lg stat-card"><div class="col-12 bg-dark"><p class="h6 text-white text-center my-2 text-uppercase">Final Score</p></div><div class="col-12 bg-blue"><p class="fw-bolder text-white text-center my-1 h3 nilai_akhir_<?= $idPs ?>">0</p></div></div>
+                            </div>
+                            <div class="col-4 px-2 mb-3">
+                                <div class="row shadow-lg stat-card"><div class="col-12 bg-dark"><p class="h6 text-white text-center my-2 text-uppercase">Std. Deviation</p></div><div class="col-12"><p class="fw-bolder text-center my-1 h3 text-white standar_deviasi_<?= $idPs ?>">0</p></div></div>
+                            </div>
+                            <div class="col-4 px-2 mb-3">
+                                <div class="row shadow-lg stat-card"><div class="col-12 bg-dark"><p class="h6 text-white text-center my-2 text-uppercase">Median Kebenaran</p></div><div class="col-12"><p class="fw-bolder text-center my-1 h3 text-white kebenaran_median_<?= $idPs ?>">0</p></div></div>
+                            </div>
+                            <div class="col-4 px-2 mb-3">
+                                <div class="row shadow-lg stat-card"><div class="col-12 bg-dark"><p class="h6 text-white text-center my-2 text-uppercase">Time</p></div><div class="col-12"><p class="fw-bolder text-center my-1 h3 text-white waktu_<?= $idPs ?>">0</p></div></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-xl-6 px-3">
+                        <div class="row"><div class="col-12">
+                            <?php
+                                $sampelHukuman = json_decode($juriList[0]->penilaian ?? '{}');
+                                $hukumanBlue = $sampelHukuman->penilaian->hukuman ?? null;
+                            ?>
+                            <?php if ($hukumanBlue !== null): ?>
+                                <?php foreach ($hukumanBlue as $jenisHukuman => $valueHukuman): ?>
+                                <div class="row mb-1">
+                                    <div class="col-8 bg-dark text-end"><p class="my-2 small text-white"><?= $valueHukuman->metadata->label ?? ucwords(str_replace('_', ' ', $jenisHukuman)) ?></p></div>
+                                    <div class="col-4 bg-secondary d-flex align-items-center justify-content-center"><p class="fw-bolder text-center text-white my-1 h4 nilai_hukuman_<?= $jenisHukuman ?>">0</p></div>
+                                </div>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </div></div>
+                    </div>
+                </div>
+
+                <?php endif; ?>
+                <?php endif; ?>
+                <?php endforeach; ?>
             </div>
-            <div class="card-body">
-                <div class="row g-2">
-                    <div class="col-md-5">
-                        <select class="form-select form-select-sm bg-dark text-white border-secondary" id="select-jenis-hukuman">
-                            <option value="">-- Pilih Jenis --</option>
-                            <option value="pengulangan_gerakan">Pengulangan Gerakan</option>
-                            <option value="waktu">Waktu Lewat</option>
-                            <option value="kostum">Kostum / Senjata</option>
-                            <option value="keluar_arena">Keluar Arena</option>
-                            <option value="lainnya">Lainnya</option>
-                        </select>
+
+            <!-- ═══════════ TAB RED ═══════════ -->
+            <div class="tab-pane" id="red_corner" role="tabpanel">
+                <?php foreach ($semua_penampilan_seni as $penampilan_seni): ?>
+                <?php if ($battle_seni !== null && (int)$penampilan_seni->id_penampilan_seni === (int)$battle_seni->id_penampilan_seni_merah): ?>
+
+                <!-- Peserta Red -->
+                <div class="row my-3 justify-content-center">
+                    <div class="col-10 px-4">
+                        <div class="row bg-red bg-gradient h-100">
+                            <div class="col-12 justify-content-center d-flex flex-column py-2">
+                                <p class="h5 text-decoration-underline text-truncate m-0 fw-bolder text-white text-center">
+                                    <?= str_replace('<br>', ' ', $penampilan_seni->anggota_kelompok_peserta_seni ?? '-') ?>
+                                </p>
+                                <p class="text-truncate m-0 text-white text-sm fw-lighter text-center"><?= $penampilan_seni->nama_kontingen ?? '' ?></p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-md-3">
-                        <input type="number" class="form-control form-control-sm bg-dark text-white border-secondary"
-                               id="input-jumlah-hukuman" placeholder="Jumlah" min="1" max="10" value="1">
+                </div>
+
+                <?php $idPs = (int) $penampilan_seni->id_penampilan_seni; ?>
+                <?php if (!empty($data_nilai[$idPs])): ?>
+                <?php $juriList = $data_nilai[$idPs]; ?>
+
+                <!-- Tabel Unsur Nilai Red -->
+                <div class="row">
+                    <div class="col-12">
+                        <table class="table w-100 table-sm penampilan_seni_<?= $idPs ?> red-corner">
+                            <thead class="bg-dark text-white">
+                                <tr>
+                                    <th rowspan="2" class="align-middle text-center w-25 py-2">Unsur</th>
+                                    <th class="text-center py-2" colspan="<?= count($juriList) ?>">Juri</th>
+                                </tr>
+                                <tr>
+                                    <?php for ($i = 1; $i <= count($juriList); $i++): ?>
+                                        <th class="text-center py-2"><?= $i ?></th>
+                                    <?php endfor ?>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($jenis_unsur_nilai as $jenis): ?>
+                                <tr>
+                                    <td><p class="mb-0 fw-bolder text-capitalize text-center"><?= ucwords(str_replace('_', ' ', $jenis)) ?></p></td>
+                                    <?php foreach ($juriList as $juri): ?>
+                                        <td class="fw-bold text-center <?= $jenis ?>_juri_<?= $juri->id_perangkat_pertandingan ?> juri_<?= $juri->id_perangkat_pertandingan ?>"></td>
+                                    <?php endforeach ?>
+                                </tr>
+                                <?php endforeach; ?>
+                                <tr class="fw-bolder">
+                                    <td><p class="mb-0 fw-bolder text-capitalize text-center">Total Nilai</p></td>
+                                    <?php foreach ($juriList as $juri): ?>
+                                        <td class="fw-bold text-center total_nilai_juri_<?= $juri->id_perangkat_pertandingan ?> juri_<?= $juri->id_perangkat_pertandingan ?>"></td>
+                                    <?php endforeach ?>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
-                    <div class="col-md-4">
-                        <button type="button" class="btn btn-warning btn-sm w-100 fw-bold" id="btn-tambah-hukuman">
-                            <i class="fas fa-plus me-1"></i> Tambah Hukuman
-                        </button>
+                </div>
+
+                <!-- Sorted Jury Score Red -->
+                <div class="row shadow-lg penampilan_seni_<?= $idPs ?> red-corner mb-1 px-2">
+                    <div class="col-12 bg-dark py-2">
+                        <p class="text-sm fw-bolder text-white text-center m-0 text-uppercase">Jury Score (Without penalty)</p>
+                    </div>
+                    <div class="col-12">
+                        <div class="row urutan_total_nilai_juri">
+                            <?php foreach ($juriList as $juri): ?>
+                            <div class="col mb-3 kolom_total_nilai_<?= $idPs ?>">
+                                <div class="row bg-dark">
+                                    <div class="col-12 bg-gradient-dark"><p class="text-sm fw-bolder text-white text-center my-2 text-uppercase nomor_juri"></p></div>
+                                    <div class="col-12 kolom_bobot_total_nilai">
+                                        <p class="fw-bolder text-center text-white my-1 h5 total_nilai_juri_<?= $juri->id_perangkat_pertandingan ?> juri_<?= $juri->id_perangkat_pertandingan ?>">0</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php endforeach ?>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ringkasan Red -->
+                <div class="row penampilan_seni_<?= $idPs ?> red-corner mb-2">
+                    <div class="col-12 col-xl-6 px-3">
+                        <div class="row">
+                            <div class="col-4 px-2 mb-3">
+                                <div class="row shadow-lg stat-card"><div class="col-12 bg-dark"><p class="h6 text-white text-center my-2 text-uppercase">Median</p></div><div class="col-12"><p class="fw-bolder text-center my-1 h3 text-white median_<?= $idPs ?>">0</p></div></div>
+                            </div>
+                            <div class="col-4 px-2 mb-3">
+                                <div class="row shadow-lg stat-card"><div class="col-12 bg-dark"><p class="h6 text-white text-center my-2 text-uppercase">Penalty</p></div><div class="col-12"><p class="fw-bolder text-center my-1 h3 text-white hukuman_<?= $idPs ?>">0</p></div></div>
+                            </div>
+                            <div class="col-4 px-2 mb-3">
+                                <div class="row shadow-lg stat-card"><div class="col-12 bg-dark"><p class="h6 text-white text-center my-2 text-uppercase">Final Score</p></div><div class="col-12 bg-red"><p class="fw-bolder text-white text-center my-1 h3 nilai_akhir_<?= $idPs ?>">0</p></div></div>
+                            </div>
+                            <div class="col-4 px-2 mb-3">
+                                <div class="row shadow-lg stat-card"><div class="col-12 bg-dark"><p class="h6 text-white text-center my-2 text-uppercase">Std. Deviation</p></div><div class="col-12"><p class="fw-bolder text-center my-1 h3 text-white standar_deviasi_<?= $idPs ?>">0</p></div></div>
+                            </div>
+                            <div class="col-4 px-2 mb-3">
+                                <div class="row shadow-lg stat-card"><div class="col-12 bg-dark"><p class="h6 text-white text-center my-2 text-uppercase">Median Kebenaran</p></div><div class="col-12"><p class="fw-bolder text-center my-1 h3 text-white kebenaran_median_<?= $idPs ?>">0</p></div></div>
+                            </div>
+                            <div class="col-4 px-2 mb-3">
+                                <div class="row shadow-lg stat-card"><div class="col-12 bg-dark"><p class="h6 text-white text-center my-2 text-uppercase">Time</p></div><div class="col-12"><p class="fw-bolder text-center my-1 h3 text-white waktu_<?= $idPs ?>">0</p></div></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-xl-6 px-3">
+                        <div class="row"><div class="col-12">
+                            <?php
+                                $sampelHukuman = json_decode($juriList[0]->penilaian ?? '{}');
+                                $hukumanRed = $sampelHukuman->penilaian->hukuman ?? null;
+                            ?>
+                            <?php if ($hukumanRed !== null): ?>
+                                <?php foreach ($hukumanRed as $jenisHukuman => $valueHukuman): ?>
+                                <div class="row mb-1">
+                                    <div class="col-8 bg-dark text-end"><p class="my-2 small text-white"><?= $valueHukuman->metadata->label ?? ucwords(str_replace('_', ' ', $jenisHukuman)) ?></p></div>
+                                    <div class="col-4 bg-secondary d-flex align-items-center justify-content-center"><p class="fw-bolder text-center text-white my-1 h4 nilai_hukuman_<?= $jenisHukuman ?>">0</p></div>
+                                </div>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </div></div>
+                    </div>
+                </div>
+
+                <?php endif; ?>
+                <?php endif; ?>
+                <?php endforeach; ?>
+            </div>
+
+            <!-- ═══════════ TAB SUMMARY ═══════════ -->
+            <div class="tab-pane" id="summary" role="tabpanel">
+                <div class="row px-2 justify-content-between">
+                    <!-- BLUE SUMMARY -->
+                    <div class="col-12 col-md-6 pe-md-4">
+                        <?php foreach ($semua_penampilan_seni as $penampilan_seni): ?>
+                        <?php if ($battle_seni !== null && (int)$penampilan_seni->id_penampilan_seni === (int)$battle_seni->id_penampilan_seni_biru): ?>
+                        <?php $idPs = (int) $penampilan_seni->id_penampilan_seni; ?>
+                        <div class="row my-3 justify-content-center px-1">
+                            <div class="col-12">
+                                <div class="row bg-blue bg-gradient h-100">
+                                    <div class="col-12 justify-content-center d-flex flex-column py-2">
+                                        <p class="h5 text-decoration-underline text-truncate m-0 fw-bolder text-white text-center"><?= str_replace('<br>', ' ', $penampilan_seni->anggota_kelompok_peserta_seni ?? '-') ?></p>
+                                        <p class="text-truncate m-0 text-white text-sm fw-lighter text-center"><?= $penampilan_seni->nama_kontingen ?? '' ?></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row penampilan_seni_<?= $idPs ?> blue-corner mb-2">
+                            <div class="col-12">
+                                <div class="row">
+                                    <div class="col-4 px-2 mb-3"><div class="row shadow-lg stat-card"><div class="col-12 bg-dark"><p class="h6 text-white text-center my-2">Median</p></div><div class="col-12"><p class="fw-bolder text-center my-1 h3 text-white median_<?= $idPs ?>">0</p></div></div></div>
+                                    <div class="col-4 px-2 mb-3"><div class="row shadow-lg stat-card"><div class="col-12 bg-dark"><p class="h6 text-white text-center my-2">Penalty</p></div><div class="col-12"><p class="fw-bolder text-center my-1 h3 text-white hukuman_<?= $idPs ?>">0</p></div></div></div>
+                                    <div class="col-4 px-2 mb-3"><div class="row shadow-lg stat-card"><div class="col-12 bg-dark"><p class="h6 text-white text-center my-2">Final Score</p></div><div class="col-12 bg-blue"><p class="fw-bolder text-white text-center my-1 h3 nilai_akhir_<?= $idPs ?>">0</p></div></div></div>
+                                    <div class="col-4 px-2 mb-3"><div class="row shadow-lg stat-card"><div class="col-12 bg-dark"><p class="h6 text-white text-center my-2">Std. Dev</p></div><div class="col-12"><p class="fw-bolder text-center my-1 h3 text-white standar_deviasi_<?= $idPs ?>">0</p></div></div></div>
+                                    <div class="col-4 px-2 mb-3"><div class="row shadow-lg stat-card"><div class="col-12 bg-dark"><p class="h6 text-white text-center my-2">Med. Kebenaran</p></div><div class="col-12"><p class="fw-bolder text-center my-1 h3 text-white kebenaran_median_<?= $idPs ?>">0</p></div></div></div>
+                                    <div class="col-4 px-2 mb-3"><div class="row shadow-lg stat-card"><div class="col-12 bg-dark"><p class="h6 text-white text-center my-2">Time</p></div><div class="col-12"><p class="fw-bolder text-center my-1 h3 text-white waktu_<?= $idPs ?>">0</p></div></div></div>
+                                </div>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+                        <?php endforeach; ?>
+                    </div>
+
+                    <!-- RED SUMMARY -->
+                    <div class="col-12 col-md-6 ps-md-4">
+                        <?php foreach ($semua_penampilan_seni as $penampilan_seni): ?>
+                        <?php if ($battle_seni !== null && (int)$penampilan_seni->id_penampilan_seni === (int)$battle_seni->id_penampilan_seni_merah): ?>
+                        <?php $idPs = (int) $penampilan_seni->id_penampilan_seni; ?>
+                        <div class="row my-3 justify-content-center px-1">
+                            <div class="col-12">
+                                <div class="row bg-red bg-gradient h-100">
+                                    <div class="col-12 justify-content-center d-flex flex-column py-2">
+                                        <p class="h5 text-decoration-underline text-truncate m-0 fw-bolder text-white text-center"><?= str_replace('<br>', ' ', $penampilan_seni->anggota_kelompok_peserta_seni ?? '-') ?></p>
+                                        <p class="text-truncate m-0 text-white text-sm fw-lighter text-center"><?= $penampilan_seni->nama_kontingen ?? '' ?></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row penampilan_seni_<?= $idPs ?> red-corner mb-2">
+                            <div class="col-12">
+                                <div class="row">
+                                    <div class="col-4 px-2 mb-3"><div class="row shadow-lg stat-card"><div class="col-12 bg-dark"><p class="h6 text-white text-center my-2">Median</p></div><div class="col-12"><p class="fw-bolder text-center my-1 h3 text-white median_<?= $idPs ?>">0</p></div></div></div>
+                                    <div class="col-4 px-2 mb-3"><div class="row shadow-lg stat-card"><div class="col-12 bg-dark"><p class="h6 text-white text-center my-2">Penalty</p></div><div class="col-12"><p class="fw-bolder text-center my-1 h3 text-white hukuman_<?= $idPs ?>">0</p></div></div></div>
+                                    <div class="col-4 px-2 mb-3"><div class="row shadow-lg stat-card"><div class="col-12 bg-dark"><p class="h6 text-white text-center my-2">Final Score</p></div><div class="col-12 bg-red"><p class="fw-bolder text-white text-center my-1 h3 nilai_akhir_<?= $idPs ?>">0</p></div></div></div>
+                                    <div class="col-4 px-2 mb-3"><div class="row shadow-lg stat-card"><div class="col-12 bg-dark"><p class="h6 text-white text-center my-2">Std. Dev</p></div><div class="col-12"><p class="fw-bolder text-center my-1 h3 text-white standar_deviasi_<?= $idPs ?>">0</p></div></div></div>
+                                    <div class="col-4 px-2 mb-3"><div class="row shadow-lg stat-card"><div class="col-12 bg-dark"><p class="h6 text-white text-center my-2">Med. Kebenaran</p></div><div class="col-12"><p class="fw-bolder text-center my-1 h3 text-white kebenaran_median_<?= $idPs ?>">0</p></div></div></div>
+                                    <div class="col-4 px-2 mb-3"><div class="row shadow-lg stat-card"><div class="col-12 bg-dark"><p class="h6 text-white text-center my-2">Time</p></div><div class="col-12"><p class="fw-bolder text-center my-1 h3 text-white waktu_<?= $idPs ?>">0</p></div></div></div>
+                                </div>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+                        <?php endforeach; ?>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- ═══ Bottom Action Bar ═══ -->
-    <div class="kp-seni-actions">
-        <button type="button" class="btn-kp-action btn-akses" id="btn-toggle-akses">
-            <i class="fas <?= $aksesStr === 'dibuka' ? 'fa-lock' : 'fa-lock-open' ?>"></i>
-            <span><?= $aksesStr === 'dibuka' ? 'Tutup Penilaian' : 'Buka Penilaian' ?></span>
-        </button>
-        <button type="button" class="btn-kp-action btn-dq" id="btn-diskualifikasi">
-            <i class="fas fa-ban"></i>
-            <span><?= $isDQ ? 'Batalkan DQ' : 'Diskualifikasi' ?></span>
-        </button>
+        </div>
     </div>
 </div>
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script src="<?= base_url('assets/js/penilaian/kp_seni.js') ?>"></script>
+<script src="<?= base_url('assets/js/penilaian/kp_seni_persilat.js') ?>"></script>
+<script>
+    var $data_nilai = <?= json_encode($data_nilai, JSON_NUMERIC_CHECK) ?>;
+    var $penampilan_seni_berlangsung = <?= json_encode($penampilan_seni_berlangsung, JSON_NUMERIC_CHECK) ?>;
+    var $semua_penampilan_seni = <?= json_encode($semua_penampilan_seni, JSON_NUMERIC_CHECK) ?>;
+    var $autorefresh = true;
+
+    <?php if ($battle_seni !== null && (int)$battle_seni->id_penampilan_seni_biru === (int)$penampilan_seni_berlangsung->id_penampilan_seni): ?>
+    setTimeout(() => { document.getElementById('blueCornerNav').click(); }, 1000);
+    <?php else: ?>
+    setTimeout(() => { document.getElementById('redCornerNav').click(); }, 1000);
+    <?php endif; ?>
+
+    $(document).ready(function() {
+        ketua_pertandingan.init(
+            <?= $penampilan_seni_berlangsung->id_penampilan_seni ?>,
+            $data_nilai,
+            $penampilan_seni_berlangsung,
+            $semua_penampilan_seni,
+            $autorefresh
+        );
+    });
+</script>
 <?= $this->endSection() ?>

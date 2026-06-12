@@ -79,11 +79,11 @@
                     </div>
                     <div class="card-body-custom">
                         <div class="d-flex flex-column gap-3">
-                            <a href="<?= base_url('ketua-pertandingan/tanding/dark') ?>" class="btn-brand-red">
-                                <i class="fas fa-circle-half-stroke"></i> Kontrol Tanding (Dark)
+                            <a href="<?= base_url('ketua-pertandingan/tanding/monitoring') ?>" class="btn-brand-red">
+                                <i class="fas fa-chart-line"></i> Monitor
                             </a>
-                            <a href="<?= base_url('ketua-pertandingan/tanding/light') ?>" class="btn-brand-outline">
-                                <i class="fas fa-sun"></i> Kontrol Tanding (Light)
+                            <a href="<?= base_url('ketua-pertandingan/tanding/dewan') ?>" class="btn-brand-outline">
+                                <i class="fas fa-gavel"></i> Dewan
                             </a>
                         </div>
                     </div>
@@ -104,11 +104,11 @@
                     </div>
                     <div class="card-body-custom">
                         <div class="d-flex flex-column gap-3">
-                            <a href="<?= base_url('ketua-pertandingan/seni/dark') ?>" class="btn-brand-red">
-                                <i class="fas fa-gavel"></i> Kontrol Seni (Dark)
+                            <a href="<?= base_url('ketua-pertandingan/seni') ?>" class="btn-brand-red">
+                                <i class="fas fa-chart-line"></i> Monitor
                             </a>
-                            <a href="<?= base_url('ketua-pertandingan/seni/light') ?>" class="btn-brand-outline">
-                                <i class="fas fa-sun"></i> Kontrol Seni (Light)
+                            <a href="<?= base_url('ketua-pertandingan/dewan-seni') ?>" class="btn-brand-outline">
+                                <i class="fas fa-gavel"></i> Dewan
                             </a>
                         </div>
                     </div>

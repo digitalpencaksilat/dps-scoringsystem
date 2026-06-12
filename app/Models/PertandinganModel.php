@@ -279,4 +279,60 @@ class PertandinganModel extends Model
             'status_pertandingan' => 'selesai',
         ]);
     }
+
+    /**
+     * Get verifikasi yang sedang berlangsung (status = berlangsung).
+     * Parity legacy: verifikasi_pertandingan table.
+     */
+    public function getVerifikasiBerlangsung(int $idPertandingan): ?object
+    {
+        return $this->db->table('verifikasi_pertandingan')
+            ->where('id_pertandingan', $idPertandingan)
+            ->where('status', 'berlangsung')
+            ->orderBy('id_verifikasi_pertandingan', 'DESC')
+            ->get(1)
+            ->getRow();
+    }
+
+    /**
+     * Get riwayat verifikasi (selesai) untuk satu pertandingan.
+     * Parity legacy: verifikasi history di KP tanding view.
+     */
+    public function getRiwayatVerifikasi(int $idPertandingan): array
+    {
+        $rows = $this->db->table('verifikasi_pertandingan')
+            ->where('id_pertandingan', $idPertandingan)
+            ->where('status !=', 'berlangsung')
+            ->orderBy('id_verifikasi_pertandingan', 'ASC')
+            ->get()
+            ->getResult();
+
+        // Attach jawaban per juri
+        foreach ($rows as &$row) {
+            $jawabanRows = $this->db->table('jawaban_verifikasi_pertandingan')
+                ->where('id_verifikasi_pertandingan', $row->id_verifikasi_pertandingan)
+                ->orderBy('id_perangkat_pertandingan', 'ASC')
+                ->get()
+                ->getResult();
+
+            $row->jawaban = array_map(fn($j) => $j->jawaban ?? '-', $jawabanRows);
+            $row->hasil = $row->hasil_verifikasi ?? '-';
+            $row->ronde = $row->ronde_pertandingan ?? '-';
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Get jawaban verifikasi dari satu juri tertentu.
+     * Parity legacy: jawaban_verifikasi_pertandingan table.
+     */
+    public function getJawabanVerifikasiJuri(int $idVerifikasi, int $idPerangkat): ?object
+    {
+        return $this->db->table('jawaban_verifikasi_pertandingan')
+            ->where('id_verifikasi_pertandingan', $idVerifikasi)
+            ->where('id_perangkat_pertandingan', $idPerangkat)
+            ->get(1)
+            ->getRow();
+    }
 }

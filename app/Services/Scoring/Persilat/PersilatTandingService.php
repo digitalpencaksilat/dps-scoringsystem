@@ -445,8 +445,33 @@ class PersilatTandingService
     }
 
     /**
-     * Validasi struktur JSON penilaian tanding.
-     * Parity legacy _validasi_format_json_penilaian() (versi setelah ringkasan dihitung).
+     * Validasi struktur minimal JSON penilaian tanding — dipakai SEBELUM hitungDanSimpanSkor.
+     * Hanya cek ronde_pertandingan + rincian; kategori_nilai/ringkasan belum ada saat ini.
+     */
+    public function validasiStrukturMinimal(string|object $json): bool
+    {
+        $data = is_object($json) ? $json : json_decode($json);
+
+        if (! is_object($data) || ! isset($data->ronde_pertandingan)) {
+            return false;
+        }
+
+        foreach (['1', '2', '3'] as $ronde) {
+            if (! property_exists($data->ronde_pertandingan, $ronde)) {
+                return false;
+            }
+            $rondeData = $data->ronde_pertandingan->$ronde;
+            if (! isset($rondeData->rincian) || ! is_array($rondeData->rincian)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Validasi struktur JSON penilaian tanding (lengkap — setelah ringkasan dihitung).
+     * Parity legacy _validasi_format_json_penilaian().
      */
     public function validasiFormatJson(string|object $json): bool
     {
@@ -522,6 +547,102 @@ class PersilatTandingService
     }
 
     /**
+     * Get data nilai untuk tampilan KP: per-juri total + per-ronde breakdown.
+     * Return format yang dibutuhkan view KP untuk monitoring.
+     *
+     * @param int $idPertandingan
+     * @param \App\Models\PenilaianTandingModel $model
+     * @return array{juri: array}
+     */
+    /**
+     * Ambil data nilai KP lengkap — parity legacy kelompokkan_penilaian_tanding().
+     * Returns:
+     *   - juri[]: per juri → id_perangkat, penilaian_tanding (raw decoded per sudut)
+     *   - penilaian_verified: { merah: [...], biru: [...] } grouped verified entries
+     *   - ringkasan: { per_ronde, semua_ronde }
+     */
+    public function getDataNilaiKp(int $idPertandingan, $model): array
+    {
+        $rows = $model->where('id_pertandingan', $idPertandingan)->findAll();
+
+        if (empty($rows)) {
+            return ['juri' => [], 'penilaian_verified' => ['merah' => [], 'biru' => []], 'ringkasan' => []];
+        }
+
+        // Run hitungSkorAtlet to get verified + colored data + ringkasan
+        $result = $this->hitungSkorAtlet($rows);
+        $processedRows = $result['rows'];
+        $ringkasan     = $result['ringkasan'];
+
+        // ─── Build juri data (raw penilaian per sudut per ronde) ─────
+        $juriData = [];
+        foreach ($processedRows as $row) {
+            $entry = [
+                'id_perangkat_pertandingan' => $row->id_perangkat_pertandingan,
+                'total_nilai_biru'  => 0,
+                'total_nilai_merah' => 0,
+                'per_ronde'         => [],
+                'penilaian_tanding' => [],
+            ];
+
+            foreach (['merah', 'biru'] as $sudut) {
+                $kolom   = 'penilaian_' . $sudut;
+                $decoded = json_decode($row->$kolom);
+
+                if (! $decoded || ! isset($decoded->ronde_pertandingan)) {
+                    continue;
+                }
+
+                // Raw decoded structure for JS rendering (ronde_pertandingan → rincian + catatan)
+                $entry['penilaian_tanding'][$sudut] = $decoded;
+
+                foreach ($decoded->ronde_pertandingan as $ronde => $rondeData) {
+                    if (! isset($entry['per_ronde'][$ronde])) {
+                        $entry['per_ronde'][$ronde] = ['biru' => 0, 'merah' => 0];
+                    }
+
+                    $nilaiRonde = 0;
+                    if (isset($rondeData->rincian) && is_array($rondeData->rincian)) {
+                        foreach ($rondeData->rincian as $item) {
+                            if (isset($item->is_deleted) && $item->is_deleted === true) {
+                                continue;
+                            }
+                            if (isset($item->status) && $item->status === 'verified') {
+                                $nilaiRonde += (int) $item->nilai;
+                            }
+                        }
+                    }
+
+                    $entry['per_ronde'][$ronde][$sudut] = $nilaiRonde;
+                    $entry['total_nilai_' . $sudut] += $nilaiRonde;
+                }
+            }
+
+            $juriData[] = (object) $entry;
+        }
+
+        // ─── Build penilaian_verified (grouped) ─────────────────────
+        $penilaianVerified = $this->getPenilaianVerified($processedRows);
+
+        // Flatten for JSON output: per sudut → array of { entry_nilai, ronde, id_perangkat }
+        $verifiedOutput = ['merah' => [], 'biru' => []];
+        foreach ($penilaianVerified as $sudut => $groups) {
+            foreach ($groups as $group) {
+                // Each group is array of matching entries; pick the first for display
+                if (! empty($group) && isset($group[0])) {
+                    $verifiedOutput[$sudut][] = $group[0];
+                }
+            }
+        }
+
+        return [
+            'juri'                => $juriData,
+            'penilaian_verified'  => $verifiedOutput,
+            'ringkasan'           => $ringkasan,
+        ];
+    }
+
+    /**
      * Proses penilaian oleh Ketua Pertandingan (hukuman/teguran/peringatan/binaan/
      * jatuhan + penghapusannya) yang diterapkan ke SELURUH baris juri (pure).
      * Parity legacy proses_penilaian_kp().
@@ -541,14 +662,34 @@ class PersilatTandingService
         $now   = $now ?? time();
         $kolom = $sudut === 'merah' ? 'penilaian_merah' : 'penilaian_biru';
 
+        // Mode-mode yang masuk sebagai catatan binaan (bukan entry rincian).
+        $modeBinaan = ['binaan', 'binaan_1', 'binaan_2'];
+
         foreach ($rows as $i => $row) {
-            $decoded   = json_decode($row->$kolom);
+            $decoded    = json_decode($row->$kolom);
             $semuaRonde = $decoded->ronde_pertandingan;
-            $rinciRef  = &$semuaRonde->$ronde->rincian;
+            $rinciRef   = &$semuaRonde->$ronde->rincian;
 
             if ($jumlah !== 'hapus') {
-                if ($mode !== 'binaan') {
-                    // Tambah entry hukuman/jatuhan (verified langsung; diinput KP).
+                // ─── INSERT ──────────────────────────────────────────────
+                if (in_array($mode, $modeBinaan, true)) {
+                    // Binaan disimpan sebagai catatan, bukan entry rincian.
+                    // mode 'binaan'   + jumlah=1 → binaan_1, jumlah=2 → binaan_2
+                    // mode 'binaan_1' → set catatan.binaan = 1
+                    // mode 'binaan_2' → set catatan.binaan = 2
+                    if (! isset($semuaRonde->$ronde->catatan)) {
+                        $semuaRonde->$ronde->catatan = (object) ['binaan' => 0];
+                    }
+                    if ($mode === 'binaan_1') {
+                        $semuaRonde->$ronde->catatan->binaan = 1;
+                    } elseif ($mode === 'binaan_2') {
+                        $semuaRonde->$ronde->catatan->binaan = 2;
+                    } else {
+                        // mode === 'binaan' (legacy compat)
+                        $semuaRonde->$ronde->catatan->binaan = (int) $jumlah;
+                    }
+                } else {
+                    // Hukuman/jatuhan — masuk sebagai entry rincian (verified langsung; diinput KP).
                     $rinciRef[] = (object) [
                         'status'     => 'verified',
                         'warna'      => null,
@@ -556,41 +697,39 @@ class PersilatTandingService
                         'timestamp'  => $now,
                         'is_deleted' => false,
                     ];
-                } else {
-                    if (! isset($semuaRonde->$ronde->catatan)) {
-                        $semuaRonde->$ronde->catatan = (object) ['binaan' => 0];
-                    }
-                    $semuaRonde->$ronde->catatan->binaan = (int) $jumlah;
                 }
             } else {
-                // Penghapusan.
+                // ─── HAPUS ───────────────────────────────────────────────
                 if ($mode === 'binaan' || $mode === 'binaan_1') {
+                    // Hapus binaan 1 → reset catatan ke 0
                     if (! isset($semuaRonde->$ronde->catatan)) {
                         $semuaRonde->$ronde->catatan = (object) ['binaan' => 0];
                     }
                     $semuaRonde->$ronde->catatan->binaan = 0;
                 } elseif ($mode === 'binaan_2') {
+                    // Hapus binaan 2 → turunkan catatan ke 1
                     if (! isset($semuaRonde->$ronde->catatan)) {
                         $semuaRonde->$ronde->catatan = (object) ['binaan' => 1];
                     }
                     $semuaRonde->$ronde->catatan->binaan = 1;
                 } else {
+                    // Soft-delete entry terakhir yang cocok dari rincian.
                     for ($k = count($rinciRef) - 1; $k >= 0; $k--) {
                         $entry = $rinciRef[$k];
                         if (isset($entry->is_deleted) && $entry->is_deleted === true) {
                             continue;
                         }
                         if (
-                            ($mode === 'hukuman'     && $entry->nilai < 0)
-                            || ($mode === 'teguran'    && $entry->nilai < 0 && $entry->nilai >= -2)
-                            || ($mode === 'teguran_1'  && $entry->nilai == -1)
-                            || ($mode === 'teguran_2'  && $entry->nilai == -2)
+                            ($mode === 'hukuman'       && $entry->nilai < 0)
+                            || ($mode === 'teguran'      && $entry->nilai < 0 && $entry->nilai >= -2)
+                            || ($mode === 'teguran_1'    && $entry->nilai == -1)
+                            || ($mode === 'teguran_2'    && $entry->nilai == -2)
                             || ($mode === 'peringatan'   && $entry->nilai <= -5 && $entry->nilai >= -10)
                             || ($mode === 'peringatan_1' && $entry->nilai == -5)
                             || ($mode === 'peringatan_2' && $entry->nilai == -10)
-                            || ($mode === 'jatuhan'    && $entry->nilai == 3)
-                            || ($mode === 'serangan'   && $entry->nilai == 1 && $entry->status === 'verified')
-                            || ($mode === 'serangan'   && $entry->nilai == 2 && $entry->status === 'verified')
+                            || ($mode === 'jatuhan'      && $entry->nilai == 3)
+                            || ($mode === 'serangan'     && $entry->nilai == 1 && $entry->status === 'verified')
+                            || ($mode === 'serangan'     && $entry->nilai == 2 && $entry->status === 'verified')
                         ) {
                             $rinciRef[$k]->is_deleted = true;
                             $rinciRef[$k]->deleted_at = $now;

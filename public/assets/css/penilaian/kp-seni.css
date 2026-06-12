@@ -1,0 +1,108 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   KP Seni PERSILAT — Monitoring Nilai (Pool & Battle)
+   Dark theme, parity legacy styling
+   ══════════════════════════════════════════════════════════════════════════ */
+
+#mainContainer {
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Nav pills */
+.nav-pills .nav-link {
+    background: rgba(255,255,255,0.08);
+    border-radius: 4px;
+    margin: 0 2px;
+    color: #ccc !important;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+.nav-pills .nav-link.active {
+    background: var(--brand-primary, #c60000) !important;
+    color: #fff !important;
+}
+
+/* Tables */
+.table {
+    --bs-table-bg: transparent;
+    color: #e0e0e0;
+}
+.table thead {
+    background: #1a1a1a !important;
+}
+.table thead th {
+    color: #fff;
+    border-color: rgba(255,255,255,0.1);
+    font-size: 0.8rem;
+}
+.table tbody td {
+    background: #1e1e1e;
+    border-color: rgba(255,255,255,0.06);
+    color: #e0e0e0;
+    font-size: 0.85rem;
+    padding: 0.4rem 0.3rem;
+}
+.table tbody td p {
+    color: #e0e0e0;
+}
+
+/* Corner colors */
+.bg-blue { background: var(--corner-blue, #1565c0) !important; }
+.bg-red { background: var(--corner-red, #c62828) !important; }
+.bg-gradient-dark { background: linear-gradient(180deg, #2c2c2c 0%, #1a1a1a 100%); }
+
+/* Stat cards */
+.stat-card {
+    border-radius: 6px;
+    overflow: hidden;
+    background: #1e1e1e;
+}
+.stat-card .col-12:first-child {
+    padding: 0.3rem 0.5rem;
+}
+.stat-card .col-12:last-child {
+    padding: 0.5rem;
+}
+.stat-card p {
+    margin: 0;
+}
+
+/* Sorted jury score columns */
+.kolom_total_nilai, [class*="kolom_total_nilai_"] {
+    padding: 0 4px;
+}
+.kolom_total_nilai .row, [class*="kolom_total_nilai_"] .row {
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+/* Highlight selected juri */
+.bg-blue.text-white { background: var(--corner-blue, #1565c0) !important; color: #fff !important; }
+.bg-red.text-white { background: var(--corner-red, #c62828) !important; color: #fff !important; }
+.bg-warning.text-white { background: #f0ad4e !important; color: #fff !important; }
+
+/* Card overrides for dark theme */
+.card.bg-dark {
+    border-color: rgba(255,255,255,0.1) !important;
+}
+.card-header.bg-dark {
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+/* Hukuman rows */
+.col-8.bg-dark {
+    border-radius: 4px 0 0 4px;
+}
+.col-4.bg-secondary {
+    border-radius: 0 4px 4px 0;
+    background: #2a2a2a !important;
+}
+
+/* Text utilities */
+.text-sm { font-size: 0.8rem; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .stat-card p.h3 { font-size: 1.2rem; }
+    .stat-card p.h6 { font-size: 0.65rem; }
+    .table { font-size: 0.75rem; }
+}

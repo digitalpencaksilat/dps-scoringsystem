@@ -50,9 +50,7 @@ class PerangkatPertandingan extends BaseController
             }
         }
 
-        return view('pertandingan/login', [
-            'title' => 'Login Perangkat Pertandingan',
-        ]);
+        return view('pertandingan/login');
     }
 
     public function login()
@@ -102,16 +100,22 @@ class PerangkatPertandingan extends BaseController
         $session       = session();
         $idGelanggang  = (int) $session->get('id_gelanggang');
         $pertandingan  = null;
+        $namaGelanggang = '';
 
         if ($idGelanggang > 0) {
             $pertandingan = (new PertandinganModel())->getPertandinganBerlangsung($idGelanggang);
+            $gelanggang = \Config\Database::connect()->table('gelanggang')
+                ->where('id_gelanggang', $idGelanggang)
+                ->get()->getRow();
+            $namaGelanggang = $gelanggang->nama_gelanggang ?? '';
         }
 
         return view('pertandingan/standby', [
-            'title'        => 'Menunggu Pertandingan',
-            'posisi'       => $session->get('posisi'),
-            'nama'         => $session->get('nama'),
-            'pertandingan' => $pertandingan,
+            'title'           => 'Menunggu Pertandingan',
+            'posisi'          => $session->get('posisi'),
+            'nama'            => $session->get('nama_perangkat') ?? $session->get('nama'),
+            'nama_gelanggang' => $namaGelanggang,
+            'pertandingan'    => $pertandingan,
         ]);
     }
 
