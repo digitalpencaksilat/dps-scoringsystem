@@ -93,6 +93,7 @@ class PenampilanSeniModel extends Model
                     sub_kategori_seni.jenis_seni, sub_kategori_seni.nama_seni,
                     sub_kategori_seni.sistem_penampilan, sub_kategori_seni.format_penilaian,
                     kategori_usia.nama_kategori_usia, kategori_usia.jenis_kelamin,
+                    penampilan_seni.catatan_nilai_sama,
                     (SELECT GROUP_CONCAT(CONCAT_WS(' ', pendaftar.nama_pendaftar) SEPARATOR ' ,<br> ')
                         FROM pendaftar
                         JOIN peserta_seni ON peserta_seni.id_pendaftar = pendaftar.id_pendaftar

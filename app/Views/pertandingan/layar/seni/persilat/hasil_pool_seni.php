@@ -101,7 +101,7 @@
             <div class="rank-row <?= $rankClass ?>">
                 <div class="rank-number"><?= $index + 1 ?></div>
                 <div class="rank-info">
-                    <p class="rank-name m-0"><?= implode(' &bull; ', $namaPeserta) ?: '-' ?></p>
+                    <p class="rank-name m-0"><?= !empty($item->anggota_kelompok_peserta_seni) ? esc($item->anggota_kelompok_peserta_seni) : (implode(' &bull; ', $namaPeserta) ?: '-') ?></p>
                     <p class="rank-kontingen m-0"><?= strtoupper(esc($item->nama_kontingen ?? '')) ?></p>
                 </div>
                 <div class="rank-stats">

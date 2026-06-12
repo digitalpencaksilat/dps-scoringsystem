@@ -146,11 +146,19 @@
     $waktuBiru = (int) ($penampilan_seni_biru->waktu_tampil ?? 0);
     $waktuMerah = (int) ($penampilan_seni_merah->waktu_tampil ?? 0);
 
-    // Peserta names
+    // Peserta names (prefer anggota_kelompok_peserta_seni from kps, fallback to individual names)
     $namaBiru = [];
-    foreach ($peserta_seni_biru as $ps) { $namaBiru[] = esc($ps->nama_pendaftar ?? ''); }
+    if (!empty($penampilan_seni_biru->anggota_kelompok_peserta_seni)) {
+        $namaBiru = [esc($penampilan_seni_biru->anggota_kelompok_peserta_seni)];
+    } else {
+        foreach ($peserta_seni_biru as $ps) { $namaBiru[] = esc($ps->nama_pendaftar ?? ''); }
+    }
     $namaMerah = [];
-    foreach ($peserta_seni_merah as $ps) { $namaMerah[] = esc($ps->nama_pendaftar ?? ''); }
+    if (!empty($penampilan_seni_merah->anggota_kelompok_peserta_seni)) {
+        $namaMerah = [esc($penampilan_seni_merah->anggota_kelompok_peserta_seni)];
+    } else {
+        foreach ($peserta_seni_merah as $ps) { $namaMerah[] = esc($ps->nama_pendaftar ?? ''); }
+    }
 
     // Winner
     $idPemenang = $battle_seni->id_penampilan_seni_pemenang ?? null;

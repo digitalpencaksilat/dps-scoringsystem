@@ -22,21 +22,40 @@
         justify-content: center;
         align-items: center;
         transition: all 0.3s ease;
+        background: linear-gradient(180deg, #2c2c2c 0%, #1a1a1a 100%);
     }
     .kolom_total_nilai .nilai-juri {
         font-size: clamp(3rem, 8vw, 5rem);
         font-weight: 900;
         line-height: 1;
         color: #fff;
+        transition: all 0.3s ease;
     }
     .kolom_total_nilai .label-juri {
         font-size: 1rem;
         color: #aaa;
         margin-top: 0.25rem;
+        transition: all 0.3s ease;
     }
-    .kolom_total_nilai.terpilih { }
-    .kolom_total_nilai.tidak-terpilih .nilai-juri {
+    /* Terpilih: yellow/warning gradient (parity legacy bg-gradient-180-warning) */
+    .urutan_total_nilai_juri .kolom_total_nilai.terpilih {
+        background: linear-gradient(180deg, #ffc107 0%, #e0a800 100%) !important;
+    }
+    .urutan_total_nilai_juri .kolom_total_nilai.terpilih .nilai-juri {
+        color: #000 !important;
+        text-decoration: none !important;
+        opacity: 1 !important;
+    }
+    .urutan_total_nilai_juri .kolom_total_nilai.terpilih .label-juri {
+        color: #333 !important;
+        opacity: 1 !important;
+    }
+    /* Tidak terpilih: strikethrough + opacity */
+    .urutan_total_nilai_juri .kolom_total_nilai.tidak-terpilih .nilai-juri {
         text-decoration: line-through;
+        opacity: 0.4;
+    }
+    .urutan_total_nilai_juri .kolom_total_nilai.tidak-terpilih .label-juri {
         opacity: 0.4;
     }
 
@@ -125,13 +144,21 @@
             <div class="flex-grow-1">
                 <p class="nama-peserta m-0">
                     <?php
-                        $namaPeserta = [];
-                        if (!empty($peserta_seni)) {
-                            foreach ($peserta_seni as $ps) {
-                                $namaPeserta[] = esc($ps->nama_pendaftar ?? '');
+                        // Prefer anggota_kelompok_peserta_seni from penampilan query (via kps join)
+                        // Legacy parity: kps.anggota_kelompok_peserta_seni stores formatted display string
+                        $displayName = 'Peserta';
+                        if (!empty($penampilan_seni_berlangsung->anggota_kelompok_peserta_seni)) {
+                            $displayName = esc($penampilan_seni_berlangsung->anggota_kelompok_peserta_seni);
+                        } else {
+                            $namaPeserta = [];
+                            if (!empty($peserta_seni)) {
+                                foreach ($peserta_seni as $ps) {
+                                    $namaPeserta[] = esc($ps->nama_pendaftar ?? '');
+                                }
                             }
+                            $displayName = implode(' &bull; ', $namaPeserta) ?: 'Peserta';
                         }
-                        echo implode(' &bull; ', $namaPeserta) ?: 'Peserta';
+                        echo $displayName;
                     ?>
                 </p>
                 <p class="nama-kontingen m-0">

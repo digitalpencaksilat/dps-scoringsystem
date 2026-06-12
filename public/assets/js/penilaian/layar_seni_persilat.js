@@ -177,6 +177,12 @@ const ui = {
     /**
      * Parse penilaian JSON per juri, extract total_nilai, sort ascending,
      * and display in juri columns. Mark terpilih/tidak.
+     * 
+     * Parity legacy: layar/seni/persilat.js update_tampilan_urutan_nilai_tiap_juri()
+     * Logic:
+     * - Sort juri by total_nilai ascending (lowest to highest)
+     * - Display columns in sorted order (column 1 = lowest score, last = highest)
+     * - Mark terpilih juri with special styling (those used for median calculation)
      */
     update_tampilan_urutan_nilai_tiap_juri: function () {
         var idP = layar.id_penampilan_seni;
@@ -229,18 +235,20 @@ const ui = {
                 labelEl.textContent = 'Juri ' + (juri.index + 1);
             }
 
-            // Terpilih highlighting
+            // Terpilih highlighting (parity legacy: bg-gradient-180-warning + text-white for selected)
             col.classList.remove('terpilih', 'tidak-terpilih');
-            if (juri.terpilih === 0 || juri.terpilih === '0') {
-                col.classList.add('tidak-terpilih');
-            } else {
+            
+            if (juri.terpilih === 1 || juri.terpilih === '1') {
                 col.classList.add('terpilih');
+            } else {
+                col.classList.add('tidak-terpilih');
             }
         });
 
         // Hide extra columns if fewer juri
         for (var extra = sorted.length; extra < columns.length; extra++) {
-            columns[extra].closest('.col') && (columns[extra].closest('.col').style.display = 'none');
+            var colWrapper = columns[extra].closest('.col');
+            if (colWrapper) colWrapper.style.display = 'none';
         }
     },
 
@@ -265,7 +273,8 @@ const ui = {
                 $('.median_kebenaran').text(parseFloat(parsed.median_kebenaran).toFixed(3));
             }
             if (parsed.standar_deviasi !== undefined) {
-                $('.standar_deviasi').text(parseFloat(parsed.standar_deviasi).toFixed(3));
+                // Use 6 decimals for std dev (parity legacy uses 10, display uses 6)
+                $('.standar_deviasi').text(parseFloat(parsed.standar_deviasi).toFixed(6));
             }
             if (parsed.median !== undefined) {
                 $('.median').text(parseFloat(parsed.median).toFixed(3));
@@ -275,7 +284,7 @@ const ui = {
                 $('.hukuman').text(hukuman > 0 ? '-' + hukuman.toFixed(1) : '0');
             }
         } else {
-            // Fallback: calculate from data_nilai
+            // Fallback: calculate from data_nilai if catatan_nilai_sama not yet populated
             ui.calculate_summary_from_data();
         }
     },
@@ -311,9 +320,9 @@ const ui = {
                 var tn = parseFloat(ringkasan.total_nilai) || 0;
                 if (tn > 0) totalNilaiArr.push(tn);
 
-                // Kebenaran
-                if (unsurNilai.kebenaran !== undefined) {
-                    kebenaranArr.push(parseFloat(unsurNilai.kebenaran) || 0);
+                // Kebenaran (untuk median kebenaran)
+                if (unsurNilai.kebenaran !== undefined && unsurNilai.kebenaran.nilai_diperoleh !== undefined) {
+                    kebenaranArr.push(parseFloat(unsurNilai.kebenaran.nilai_diperoleh) || 0);
                 }
 
                 // Hukuman from ringkasan
@@ -333,10 +342,10 @@ const ui = {
             $('.median_kebenaran').text(medianKebenaran.toFixed(3));
         }
 
-        // Std deviation
+        // Std deviation (6 decimals)
         if (totalNilaiArr.length > 1) {
             var stdDev = ui.calcStdDev(totalNilaiArr);
-            $('.standar_deviasi').text(stdDev.toFixed(3));
+            $('.standar_deviasi').text(stdDev.toFixed(6));
         }
 
         // Hukuman

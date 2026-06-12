@@ -3,380 +3,270 @@
 namespace App\Services\Scoring\Persilat;
 
 /**
- * PERSILAT Seni scoring service.
- *
- * Parity legacy: application/models/sistem_penilaian/seni/PERSILAT_model.php
- * Logic:
- *   - Ambil nilai setiap juri (nilai_akhir_per_juri atau total_nilai dari JSON ringkasan)
- *   - Urutkan ascending → hitung median
- *   - Ambil total hukuman (penalties) — harus identik antar juri (diisi KP)
- *   - Standar deviasi
- *   - Nilai akhir = median - hukuman
- *   - Pilih juri terpilih (median position) → flag `terpilih` = 1
+ * PersilatSeniService — scoring calculation for PERSILAT seni
+ * Parity: /dps/application/models/sistem_penilaian/seni/PERSILAT_model.php
+ * 
+ * Handles:
+ * - Median calculation (nilai tengah)
+ * - Standard deviation (standar deviasi)
+ * - Median kebenaran calculation
+ * - Penalty calculation (hukuman)
+ * - Jury selection (terpilih flag) based on median
+ * - Final score calculation (median - penalty)
  */
 class PersilatSeniService
 {
     /**
-     * Hitung nilai akhir dari semua penilaian juri untuk satu penampilan.
-     *
-     * @param array $penilaianJuri array of penilaian_seni rows (objects)
-     * @return array{nilai_akhir: float, median: float, hukuman: float, standar_deviasi: float, median_kebenaran: float, terpilih_ids: int[]}
+     * Calculate final score and update catatan_nilai_sama
+     * Parity: PERSILAT_model::hitung_nilai_akhir()
+     * 
+     * @param object $penampilanSeni penampilan_seni row
+     * @param array $dataNilai array of penilaian_seni rows
+     * @return float|false Final score or false on error
      */
-    public function hitungNilaiAkhir(array $penilaianJuri): array
+    public function hitungNilaiAkhir(object $penampilanSeni, array $dataNilai)
     {
-        $default = [
-            'nilai_akhir'      => 0.0,
-            'median'           => 0.0,
-            'hukuman'          => 0.0,
-            'standar_deviasi'  => 0.0,
-            'median_kebenaran' => 0.0,
-            'terpilih_ids'     => [],
-        ];
-
-        if (empty($penilaianJuri)) {
-            return $default;
+        if (empty($dataNilai)) {
+            return false;
         }
 
-        // Extract nilai per juri
+        // Extract total_nilai from each jury
         $arrayTotalNilai = [];
-        $arrayKebenaranNilai = [];
+        foreach ($dataNilai as $penilaianJuri) {
+            $nilaiAkhir = 0;
 
-        foreach ($penilaianJuri as $row) {
-            $nilai = $this->extractNilaiAkhirPerJuri($row);
-            if ($nilai === null) continue;
+            // Parse penilaian JSON
+            $penilaian = is_string($penilaianJuri->penilaian)
+                ? json_decode($penilaianJuri->penilaian, true)
+                : (array) $penilaianJuri->penilaian;
+
+            if (isset($penilaian['penilaian']['ringkasan']['total_nilai'])) {
+                $nilaiAkhir = (float) $penilaian['penilaian']['ringkasan']['total_nilai'];
+            }
 
             $arrayTotalNilai[] = [
-                'id_perangkat_pertandingan' => (int) $row->id_perangkat_pertandingan,
-                'nilai_akhir'               => $nilai,
+                'id_perangkat_pertandingan' => (int) $penilaianJuri->id_perangkat_pertandingan,
+                'nilai_akhir' => $nilaiAkhir,
             ];
-
-            // Extract kebenaran value if exists
-            $kebenaranNilai = $this->extractKebenaranNilai($row);
-            if ($kebenaranNilai !== null) {
-                $arrayKebenaranNilai[] = $kebenaranNilai;
-            }
         }
 
-        if (empty($arrayTotalNilai)) {
-            return $default;
-        }
-
-        // Sort ascending for median calculation
+        // Sort ascending (lowest to highest) — parity legacy
         usort($arrayTotalNilai, fn($a, $b) => $a['nilai_akhir'] <=> $b['nilai_akhir']);
+
+        // Calculate components
+        $valuesOnly = array_column($arrayTotalNilai, 'nilai_akhir');
+        $median = $this->hitungMedian($valuesOnly);
+        $hukuman = $this->hitungHukuman($dataNilai);
+        $standarDeviasi = $this->hitungStandarDeviasi($valuesOnly);
+
+        // Calculate median kebenaran
+        $arrayKebenaranNilai = [];
+        foreach ($dataNilai as $penilaianJuri) {
+            $penilaian = is_string($penilaianJuri->penilaian)
+                ? json_decode($penilaianJuri->penilaian, true)
+                : (array) $penilaianJuri->penilaian;
+
+            if (isset($penilaian['penilaian']['unsur_nilai']['kebenaran']['nilai_diperoleh'])) {
+                $arrayKebenaranNilai[] = (float) $penilaian['penilaian']['unsur_nilai']['kebenaran']['nilai_diperoleh'];
+            }
+        }
         sort($arrayKebenaranNilai);
+        $medianKebenaran = !empty($arrayKebenaranNilai) ? $this->hitungMedian($arrayKebenaranNilai) : 0;
 
-        $nilaiValues = array_column($arrayTotalNilai, 'nilai_akhir');
-        $median = $this->hitungMedian($nilaiValues);
-        $hukuman = $this->hitungHukuman($penilaianJuri);
-        $stdDev = $this->hitungStandarDeviasi($nilaiValues);
-        $medianKebenaran = !empty($arrayKebenaranNilai) ? $this->hitungMedian($arrayKebenaranNilai) : 0.0;
-        $nilaiAkhir = round($median - $hukuman, 4);
-
-        // Pilih juri terpilih (median position)
-        $terpilihIds = $this->pilihJuriTerpilih($arrayTotalNilai);
-
-        return [
-            'nilai_akhir'      => $nilaiAkhir,
-            'median'           => $median,
-            'hukuman'          => $hukuman,
-            'standar_deviasi'  => $stdDev,
+        // Save calculation details to catatan_nilai_sama
+        $catatanNilaiSama = [
+            'hukuman' => $hukuman,
+            'median' => $median,
+            'standar_deviasi' => $standarDeviasi,
             'median_kebenaran' => $medianKebenaran,
-            'terpilih_ids'     => $terpilihIds,
         ];
+
+        $db = \Config\Database::connect();
+        $db->table('penampilan_seni')
+            ->where('id_penampilan_seni', $penampilanSeni->id_penampilan_seni)
+            ->update(['catatan_nilai_sama' => json_encode($catatanNilaiSama)]);
+
+        // Update terpilih flag for selected jury (median jury)
+        $this->pilihPenilaianJuri($penampilanSeni->id_penampilan_seni, $arrayTotalNilai);
+
+        // Return final score
+        return $median - $hukuman;
     }
 
     /**
-     * Urutkan juara — descending by nilai_akhir.
-     * Parity legacy urutkan_juara().
+     * Select jury based on median position (terpilih flag)
+     * Parity: PERSILAT_model::_pilih_penilaian_juri()
+     * 
+     * Logic:
+     * - Sort ascending by total_nilai
+     * - If even count: select middle 2 jury
+     * - If odd count: select middle 1 jury
+     * 
+     * @param int $idPenampilanSeni
+     * @param array $arrayTotalNilai sorted array of ['id_perangkat_pertandingan', 'nilai_akhir']
      */
-    public function urutkanJuara(array $penampilanList): array
+    private function pilihPenilaianJuri(int $idPenampilanSeni, array $arrayTotalNilai): void
     {
-        usort($penampilanList, function ($a, $b) {
-            $na = is_object($a) ? (float) ($a->nilai_akhir ?? 0) : (float) ($a['nilai_akhir'] ?? 0);
-            $nb = is_object($b) ? (float) ($b->nilai_akhir ?? 0) : (float) ($b['nilai_akhir'] ?? 0);
-            return $nb <=> $na;
-        });
-        return $penampilanList;
-    }
+        $db = \Config\Database::connect();
 
-    /**
-     * Get jenis unsur nilai dari record penilaian.
-     * Parity legacy get_jenis_unsur_nilai_seni().
-     */
-    public function getJenisUnsurNilai($dataNilai): array
-    {
-        $unsurNilai = [];
+        // Reset all to not selected
+        $db->table('penilaian_seni')
+            ->where('id_penampilan_seni', $idPenampilanSeni)
+            ->update(['terpilih' => 0]);
 
-        if (is_object($dataNilai)) {
-            $penilaian = isset($dataNilai->penilaian)
-                ? (is_string($dataNilai->penilaian) ? json_decode($dataNilai->penilaian) : $dataNilai->penilaian)
-                : null;
+        $jumlahData = count($arrayTotalNilai);
 
-            if ($penilaian && isset($penilaian->penilaian->unsur_nilai)) {
-                foreach ($penilaian->penilaian->unsur_nilai as $jenis => $isi) {
-                    $unsurNilai[] = $jenis;
-                }
-            }
-        } elseif (is_array($dataNilai) && !empty($dataNilai)) {
-            $first = $dataNilai[0];
-            $penilaian = json_decode($first->penilaian ?? '{}');
-            if (isset($penilaian->penilaian->unsur_nilai)) {
-                foreach ($penilaian->penilaian->unsur_nilai as $jenis => $isi) {
-                    $unsurNilai[] = $jenis;
-                }
-            }
-        }
+        if ($jumlahData % 2 === 0) {
+            // Even: select middle 2
+            $index1 = ($jumlahData / 2) - 1;
+            $index2 = ($jumlahData / 2);
 
-        return $unsurNilai;
-    }
+            $idPerangkat1 = $arrayTotalNilai[$index1]['id_perangkat_pertandingan'];
+            $idPerangkat2 = $arrayTotalNilai[$index2]['id_perangkat_pertandingan'];
 
-    /**
-     * Get jenis hukuman dari record penilaian.
-     * Parity legacy get_jenis_hukuman_seni().
-     */
-    public function getJenisHukuman($dataNilai): array
-    {
-        $hukuman = [];
-
-        if (is_object($dataNilai)) {
-            $penilaian = isset($dataNilai->penilaian)
-                ? (is_string($dataNilai->penilaian) ? json_decode($dataNilai->penilaian) : $dataNilai->penilaian)
-                : null;
-
-            if ($penilaian && isset($penilaian->penilaian->hukuman)) {
-                foreach ($penilaian->penilaian->hukuman as $jenis => $isi) {
-                    $hukuman[] = $jenis;
-                }
-            }
-        } elseif (is_array($dataNilai) && !empty($dataNilai)) {
-            $first = $dataNilai[0];
-            $penilaian = json_decode($first->penilaian ?? '{}');
-            if (isset($penilaian->penilaian->hukuman)) {
-                foreach ($penilaian->penilaian->hukuman as $jenis => $isi) {
-                    $hukuman[] = $jenis;
-                }
-            }
-        }
-
-        return $hukuman;
-    }
-
-    /**
-     * Kelompokkan penilaian seni per id_penampilan_seni.
-     * Parity legacy kelompokkan_penilaian_seni().
-     */
-    public function kelompokkanPenilaian(array $dataNilai): array
-    {
-        $kelompok = [];
-        foreach ($dataNilai as $row) {
-            $kelompok[$row->id_penampilan_seni][] = $row;
-        }
-        return $kelompok;
-    }
-
-    /**
-     * Validasi konsistensi penalty di semua juri.
-     * Parity legacy validate_penalty_consistency().
-     */
-    public function validatePenaltyConsistency(array $penilaianJuri): array
-    {
-        if (empty($penilaianJuri)) {
-            return ['valid' => false, 'error' => 'No records found'];
-        }
-
-        $penaltyHashes = [];
-        $penaltyTotals = [];
-
-        foreach ($penilaianJuri as $row) {
-            $data = is_string($row->penilaian) ? json_decode($row->penilaian, true) : (array) $row->penilaian;
-            if (!$data) continue;
-
-            $penalties = $data['penilaian']['hukuman'] ?? [];
-            $totalHukuman = (float) ($data['penilaian']['ringkasan']['total_hukuman'] ?? 0);
-
-            ksort($penalties);
-            $penaltyHashes[] = md5(json_encode($penalties));
-            $penaltyTotals[] = $totalHukuman;
-        }
-
-        $uniqueHashes = array_unique($penaltyHashes);
-        $uniqueTotals = array_unique($penaltyTotals);
-
-        $isValid = (count($uniqueHashes) <= 1) && (count($uniqueTotals) <= 1);
-
-        return [
-            'valid'             => $isValid,
-            'error'             => !$isValid ? 'Inconsistent penalties across jury records' : null,
-            'penalty_totals'    => $penaltyTotals,
-            'unique_totals'     => count($uniqueTotals),
-        ];
-    }
-
-    /**
-     * Sync hukuman dari KP ke semua juri (update hukuman section di semua rows).
-     * Dipanggil oleh KP saat mengubah hukuman.
-     *
-     * @param array  $penilaianJuri array of penilaian_seni rows
-     * @param array  $hukumanBaru   hukuman object baru dari KP
-     * @return array updated rows (penilaian JSON sudah dimodifikasi)
-     */
-    public function syncHukumanKeSemuaJuri(array $penilaianJuri, array $hukumanBaru): array
-    {
-        $totalHukuman = $this->hitungTotalDariHukumanObj($hukumanBaru);
-
-        foreach ($penilaianJuri as $index => $row) {
-            $data = is_string($row->penilaian) ? json_decode($row->penilaian, true) : (array) $row->penilaian;
-            if (!$data) continue;
-
-            $data['penilaian']['hukuman'] = $hukumanBaru;
-            $data['penilaian']['ringkasan']['total_hukuman'] = $totalHukuman;
-
-            // Recalc total_nilai = total_unsur_nilai - total_hukuman
-            $totalUnsur = (float) ($data['penilaian']['ringkasan']['total_unsur_nilai'] ?? $data['penilaian']['ringkasan']['total_nilai'] ?? 0);
-            $data['penilaian']['ringkasan']['total_nilai'] = round($totalUnsur - $totalHukuman, 4);
-
-            $row->penilaian = json_encode($data);
-            $penilaianJuri[$index] = $row;
-        }
-
-        return $penilaianJuri;
-    }
-
-    // ─── Private Methods ──────────────────────────────────────────────────
-
-    /**
-     * Ambil nilai akhir per juri dari row penilaian_seni.
-     * Parity legacy: cek nilai_akhir_per_juri dulu, fallback ke JSON ringkasan.
-     */
-    private function extractNilaiAkhirPerJuri(object $row): ?float
-    {
-        if (!empty($row->nilai_akhir_per_juri) && (float) $row->nilai_akhir_per_juri !== 0.0) {
-            return (float) $row->nilai_akhir_per_juri;
-        }
-
-        if (empty($row->penilaian)) return null;
-
-        $parsed = is_string($row->penilaian) ? json_decode($row->penilaian, true) : (array) $row->penilaian;
-        if (!$parsed || (is_string($row->penilaian) && json_last_error() !== JSON_ERROR_NONE)) return null;
-
-        return (float) ($parsed['penilaian']['ringkasan']['total_nilai'] ?? 0);
-    }
-
-    /**
-     * Extract kebenaran nilai_diperoleh dari row penilaian.
-     */
-    private function extractKebenaranNilai(object $row): ?float
-    {
-        if (empty($row->penilaian)) return null;
-
-        $parsed = is_string($row->penilaian) ? json_decode($row->penilaian, true) : (array) $row->penilaian;
-        if (!$parsed) return null;
-
-        $kebenaran = $parsed['penilaian']['unsur_nilai']['kebenaran'] ?? null;
-        if ($kebenaran && isset($kebenaran['nilai_diperoleh'])) {
-            return (float) $kebenaran['nilai_diperoleh'];
-        }
-
-        return null;
-    }
-
-    /**
-     * Hitung median dari array nilai yang sudah di-sort ascending.
-     * Parity legacy _hitung_median().
-     */
-    private function hitungMedian(array $sortedNilai): float
-    {
-        $n = count($sortedNilai);
-        if ($n === 0) return 0.0;
-
-        if ($n % 2 === 0) {
-            $median = ($sortedNilai[$n / 2 - 1] + $sortedNilai[$n / 2]) / 2;
+            $db->table('penilaian_seni')
+                ->where('id_penampilan_seni', $idPenampilanSeni)
+                ->whereIn('id_perangkat_pertandingan', [$idPerangkat1, $idPerangkat2])
+                ->update(['terpilih' => 1]);
         } else {
-            $median = $sortedNilai[(int) floor($n / 2)];
-        }
+            // Odd: select middle 1
+            $indexMedian = (int) floor($jumlahData / 2);
+            $idPerangkat = $arrayTotalNilai[$indexMedian]['id_perangkat_pertandingan'];
 
-        return round((float) $median, 4);
+            $db->table('penilaian_seni')
+                ->where('id_penampilan_seni', $idPenampilanSeni)
+                ->where('id_perangkat_pertandingan', $idPerangkat)
+                ->update(['terpilih' => 1]);
+        }
     }
 
     /**
-     * Hitung total hukuman — harus identik di semua juri (diisi oleh KP).
-     * Parity legacy _hitung_hukuman().
+     * Calculate median from sorted array
+     * Parity: PERSILAT_model::_hitung_median()
+     * 
+     * @param array $values sorted array of float values
+     * @return float
      */
-    private function hitungHukuman(array $penilaianJuri): float
+    private function hitungMedian(array $values): float
     {
-        $penaltyValues = [];
+        $count = count($values);
 
-        foreach ($penilaianJuri as $row) {
-            if (empty($row->penilaian)) continue;
-            $parsed = is_string($row->penilaian) ? json_decode($row->penilaian, true) : (array) $row->penilaian;
-            if (!$parsed) continue;
-            $penaltyValues[] = (float) ($parsed['penilaian']['ringkasan']['total_hukuman'] ?? 0);
+        if ($count === 0) {
+            return 0.0;
         }
 
-        if (empty($penaltyValues)) return 0.0;
-
-        $uniqueValues = array_unique($penaltyValues);
-        if (count($uniqueValues) > 1) {
-            log_message('warning', 'PERSILAT Seni: penalty inconsistency — values: ' . json_encode($penaltyValues));
-            // Use most common value (parity legacy)
-            $counts = array_count_values(array_map(fn($v) => (string) $v, $penaltyValues));
-            $mostCommon = array_search(max($counts), $counts);
-            return (float) $mostCommon;
+        if ($count % 2 === 0) {
+            // Even: average of middle 2
+            $median = ($values[($count / 2) - 1] + $values[$count / 2]) / 2;
+        } else {
+            // Odd: middle value
+            $indexMedian = (int) floor($count / 2);
+            $median = $values[$indexMedian];
         }
 
-        return (float) $penaltyValues[0];
+        return (float) number_format($median, 4, '.', '');
     }
 
     /**
-     * Hitung standar deviasi populasi.
-     * Parity legacy _hitung_standar_deviasi().
+     * Calculate standard deviation (population)
+     * Parity: PERSILAT_model::_hitung_standar_deviasi()
+     * 
+     * @param array $values array of float values
+     * @return float
      */
-    private function hitungStandarDeviasi(array $nilai): float
+    private function hitungStandarDeviasi(array $values): float
     {
-        $n = count($nilai);
-        if ($n === 0) return 0.0;
+        $count = count($values);
 
-        $mean = array_sum($nilai) / $n;
-        $variance = array_sum(array_map(fn($v) => pow($v - $mean, 2), $nilai)) / $n;
+        if ($count === 0) {
+            return 0.0;
+        }
 
-        return round(sqrt($variance), 10);
+        // Calculate mean
+        $mean = array_sum($values) / $count;
+
+        // Calculate variance
+        $variance = 0.0;
+        foreach ($values as $value) {
+            $variance += pow($value - $mean, 2);
+        }
+
+        // Standard deviation (population)
+        $stdDev = sqrt($variance / $count);
+
+        return (float) number_format($stdDev, 10, '.', '');
     }
 
     /**
-     * Pilih juri terpilih — median position (middle 1 or 2 jurors).
-     * Parity legacy _pilih_penilaian_juri().
-     *
-     * @param array $sortedNilai array of ['id_perangkat_pertandingan' => int, 'nilai_akhir' => float] sorted ascending
-     * @return int[] list of id_perangkat_pertandingan yang terpilih
+     * Calculate total penalty (hukuman)
+     * Parity: PERSILAT_model::_hitung_hukuman()
+     * 
+     * Note: Penalty should be identical across all jury (entered by KP).
+     * We take the first jury's penalty value.
+     * 
+     * @param array $dataNilai array of penilaian_seni rows
+     * @return float
      */
-    private function pilihJuriTerpilih(array $sortedNilai): array
+    private function hitungHukuman(array $dataNilai): float
     {
-        $n = count($sortedNilai);
-        if ($n === 0) return [];
-
-        if ($n % 2 === 0) {
-            return [
-                $sortedNilai[$n / 2 - 1]['id_perangkat_pertandingan'],
-                $sortedNilai[$n / 2]['id_perangkat_pertandingan'],
-            ];
+        if (empty($dataNilai)) {
+            return 0.0;
         }
 
-        return [$sortedNilai[(int) floor($n / 2)]['id_perangkat_pertandingan']];
+        $penilaian = is_string($dataNilai[0]->penilaian)
+            ? json_decode($dataNilai[0]->penilaian, true)
+            : (array) $dataNilai[0]->penilaian;
+
+        $totalHukuman = $penilaian['penilaian']['ringkasan']['total_hukuman'] ?? 0;
+
+        return (float) $totalHukuman;
     }
 
     /**
-     * Hitung total hukuman dari object hukuman (bukan dari ringkasan).
+     * Get jenis unsur nilai from penilaian data
+     * Parity: PERSILAT_model::get_jenis_unsur_nilai_seni()
+     * 
+     * @param array $dataNilai
+     * @return array
      */
-    private function hitungTotalDariHukumanObj(array $hukumanObj): float
+    public function getJenisUnsurNilai(array $dataNilai): array
     {
-        $total = 0.0;
-        foreach ($hukumanObj as $jenis => $hukuman) {
-            if (isset($hukuman['detail_hukuman']['nilai_hukuman'])) {
-                $total += (float) $hukuman['detail_hukuman']['nilai_hukuman'];
-            } elseif (isset($hukuman['nilai_hukuman'])) {
-                $total += (float) $hukuman['nilai_hukuman'];
-            }
+        if (empty($dataNilai)) {
+            return [];
         }
-        return round($total, 4);
+
+        $penilaian = is_string($dataNilai[0]->penilaian)
+            ? json_decode($dataNilai[0]->penilaian, true)
+            : (array) $dataNilai[0]->penilaian;
+
+        if (!isset($penilaian['penilaian']['unsur_nilai'])) {
+            return [];
+        }
+
+        return array_keys($penilaian['penilaian']['unsur_nilai']);
+    }
+
+    /**
+     * Get jenis hukuman from penilaian data
+     * Parity: PERSILAT_model::get_jenis_hukuman_seni()
+     * 
+     * @param array $dataNilai
+     * @return array
+     */
+    public function getJenisHukuman(array $dataNilai): array
+    {
+        if (empty($dataNilai)) {
+            return [];
+        }
+
+        $penilaian = is_string($dataNilai[0]->penilaian)
+            ? json_decode($dataNilai[0]->penilaian, true)
+            : (array) $dataNilai[0]->penilaian;
+
+        if (!isset($penilaian['penilaian']['hukuman'])) {
+            return [];
+        }
+
+        return array_keys($penilaian['penilaian']['hukuman']);
     }
 }

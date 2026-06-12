@@ -212,15 +212,28 @@ class Layar extends BaseController
 
         $idPenampilan = (int) $penampilan->id_penampilan_seni;
 
-        // Get id_kompetisi_seni via kelompok_peserta_seni
+        // Get id_kompetisi_seni + compute anggota_kelompok_peserta_seni via subquery (parity legacy)
         $idKompetisiSeni = 0;
+        $anggotaKelompok = null;
         if (!empty($penampilan->id_kelompok_peserta_seni)) {
             $kps = $db->table('kelompok_peserta_seni')
                 ->select('id_kompetisi_seni')
                 ->where('id_kelompok_peserta_seni', $penampilan->id_kelompok_peserta_seni)
                 ->get()->getRow();
             $idKompetisiSeni = (int) ($kps->id_kompetisi_seni ?? 0);
+
+            // Subquery: GROUP_CONCAT nama peserta (parity legacy Penampilan_seni_model::select())
+            $anggotaKelompok = $db->query(
+                "SELECT GROUP_CONCAT(CONCAT_WS(' ', p.nama_pendaftar) SEPARATOR ' ,<br>') AS anggota
+                 FROM pendaftar p
+                 JOIN peserta_seni ps ON ps.id_pendaftar = p.id_pendaftar
+                 WHERE ps.id_kelompok_peserta_seni = ?",
+                [$penampilan->id_kelompok_peserta_seni]
+            )->getRow()->anggota ?? null;
         }
+
+        // Attach anggota_kelompok_peserta_seni to penampilan object for view (parity legacy)
+        $penampilan->anggota_kelompok_peserta_seni = $anggotaKelompok;
 
         // Get kompetisi_seni metadata (join sub_kategori_seni for sistem_penampilan)
         $kompetisiSeni = $db->table('kompetisi_seni ks')
@@ -396,15 +409,24 @@ class Layar extends BaseController
             ->get()->getRow();
 
         // Get all penampilan for this kompetisi ordered by nilai_akhir DESC
-        $daftarPenampilan = $db->table('penampilan_seni ps')
-            ->select('ps.*, kps.id_kontingen, k.nama_kontingen, ps.catatan_nilai_sama')
-            ->join('kelompok_peserta_seni kps', 'kps.id_kelompok_peserta_seni = ps.id_kelompok_peserta_seni')
-            ->join('kontingen k', 'k.id_kontingen = kps.id_kontingen', 'left')
-            ->where('kps.id_kompetisi_seni', $idKompetisiSeni)
-            ->orderBy('ps.nilai_akhir', 'DESC')
-            ->get()->getResult();
+        // Use subquery for anggota_kelompok_peserta_seni (parity legacy Penampilan_seni_model::select())
+        $daftarPenampilan = $db->query("
+            SELECT ps.*,
+                   kps.id_kontingen,
+                   k.nama_kontingen,
+                   ps.catatan_nilai_sama,
+                   (SELECT GROUP_CONCAT(CONCAT_WS(' ', p.nama_pendaftar) SEPARATOR ' ,<br>')
+                    FROM pendaftar p
+                    JOIN peserta_seni pse ON pse.id_pendaftar = p.id_pendaftar
+                    WHERE pse.id_kelompok_peserta_seni = kps.id_kelompok_peserta_seni) AS anggota_kelompok_peserta_seni
+            FROM penampilan_seni ps
+            JOIN kelompok_peserta_seni kps ON kps.id_kelompok_peserta_seni = ps.id_kelompok_peserta_seni
+            LEFT JOIN kontingen k ON k.id_kontingen = kps.id_kontingen
+            WHERE kps.id_kompetisi_seni = ?
+            ORDER BY ps.nilai_akhir DESC
+        ", [$idKompetisiSeni])->getResult();
 
-        // Attach peserta names to each penampilan
+        // Attach peserta names to each penampilan (for display flexibility)
         foreach ($daftarPenampilan as &$penampilan) {
             $peserta = $db->table('peserta_seni pse')
                 ->select('p.nama_pendaftar')
@@ -438,20 +460,34 @@ class Layar extends BaseController
             return redirect()->to(base_url('layar/seni'));
         }
 
-        // Get penampilan biru & merah
-        $penampilanBiru = $db->table('penampilan_seni ps')
-            ->select('ps.*, kps.id_kontingen, k.nama_kontingen')
-            ->join('kelompok_peserta_seni kps', 'kps.id_kelompok_peserta_seni = ps.id_kelompok_peserta_seni')
-            ->join('kontingen k', 'k.id_kontingen = kps.id_kontingen', 'left')
-            ->where('ps.id_penampilan_seni', $battle->id_penampilan_seni_biru ?? 0)
-            ->get()->getRow();
+        // Get penampilan biru & merah with subquery for anggota_kelompok_peserta_seni
+        $penampilanBiru = $db->query("
+            SELECT ps.*,
+                   kps.id_kontingen,
+                   k.nama_kontingen,
+                   (SELECT GROUP_CONCAT(CONCAT_WS(' ', p.nama_pendaftar) SEPARATOR ' ,<br>')
+                    FROM pendaftar p
+                    JOIN peserta_seni pse ON pse.id_pendaftar = p.id_pendaftar
+                    WHERE pse.id_kelompok_peserta_seni = kps.id_kelompok_peserta_seni) AS anggota_kelompok_peserta_seni
+            FROM penampilan_seni ps
+            JOIN kelompok_peserta_seni kps ON kps.id_kelompok_peserta_seni = ps.id_kelompok_peserta_seni
+            LEFT JOIN kontingen k ON k.id_kontingen = kps.id_kontingen
+            WHERE ps.id_penampilan_seni = ?
+        ", [$battle->id_penampilan_seni_biru ?? 0])->getRow();
 
-        $penampilanMerah = $db->table('penampilan_seni ps')
-            ->select('ps.*, kps.id_kontingen, k.nama_kontingen')
-            ->join('kelompok_peserta_seni kps', 'kps.id_kelompok_peserta_seni = ps.id_kelompok_peserta_seni')
-            ->join('kontingen k', 'k.id_kontingen = kps.id_kontingen', 'left')
-            ->where('ps.id_penampilan_seni', $battle->id_penampilan_seni_merah ?? 0)
-            ->get()->getRow();
+        $penampilanMerah = $db->query("
+            SELECT ps.*,
+                   kps.id_kontingen,
+                   k.nama_kontingen,
+                   (SELECT GROUP_CONCAT(CONCAT_WS(' ', p.nama_pendaftar) SEPARATOR ' ,<br>')
+                    FROM pendaftar p
+                    JOIN peserta_seni pse ON pse.id_pendaftar = p.id_pendaftar
+                    WHERE pse.id_kelompok_peserta_seni = kps.id_kelompok_peserta_seni) AS anggota_kelompok_peserta_seni
+            FROM penampilan_seni ps
+            JOIN kelompok_peserta_seni kps ON kps.id_kelompok_peserta_seni = ps.id_kelompok_peserta_seni
+            LEFT JOIN kontingen k ON k.id_kontingen = kps.id_kontingen
+            WHERE ps.id_penampilan_seni = ?
+        ", [$battle->id_penampilan_seni_merah ?? 0])->getRow();
 
         // Get peserta names
         $pesertaBiru = [];
@@ -610,7 +646,7 @@ class Layar extends BaseController
             $grouped[$idPenampilanSeni][] = (object) [
                 'id_perangkat_pertandingan' => (int) $row->id_perangkat_pertandingan,
                 'penilaian'                 => $row->penilaian ?? '{}',
-                'terpilih'                  => (int) ($row->terpilih ?? 1),
+                'terpilih'                  => (int) ($row->terpilih ?? 0), // Default 0 = not selected
             ];
         }
 
