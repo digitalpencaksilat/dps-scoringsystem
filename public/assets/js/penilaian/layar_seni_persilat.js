@@ -187,13 +187,8 @@ const ui = {
     update_tampilan_urutan_nilai_tiap_juri: function () {
         var idP = layar.id_penampilan_seni;
         var dataNilaiArr = layar.data_nilai[idP];
-        
-        console.log('[DEBUG] update_tampilan_urutan_nilai_tiap_juri called');
-        console.log('[DEBUG] idP:', idP);
-        console.log('[DEBUG] dataNilaiArr:', dataNilaiArr);
-        
+
         if (!dataNilaiArr || dataNilaiArr.length === 0) {
-            console.log('[DEBUG] No data, abort');
             return;
         }
 
@@ -230,8 +225,7 @@ const ui = {
 
         // Update DOM columns
         var columns = document.querySelectorAll('.urutan_total_nilai_juri .kolom_total_nilai');
-        console.log('[DEBUG] Found', columns.length, 'columns in DOM');
-        
+
         sorted.forEach(function (juri, displayIdx) {
             if (displayIdx >= columns.length) return;
             var col = columns[displayIdx];
@@ -247,15 +241,11 @@ const ui = {
 
             // Terpilih highlighting (parity legacy: bg-gradient-180-warning + text-white for selected)
             col.classList.remove('terpilih', 'tidak-terpilih');
-            
-            console.log('[DEBUG] Juri', juri.index + 1, 'displayIdx:', displayIdx, 'terpilih:', juri.terpilih, 'total_nilai:', juri.total_nilai);
-            
+
             if (juri.terpilih === 1 || juri.terpilih === '1') {
                 col.classList.add('terpilih');
-                console.log('[DEBUG] → Added class TERPILIH');
             } else {
                 col.classList.add('tidak-terpilih');
-                console.log('[DEBUG] → Added class TIDAK-TERPILIH');
             }
         });
 

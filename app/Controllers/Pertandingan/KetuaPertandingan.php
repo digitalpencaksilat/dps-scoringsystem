@@ -521,6 +521,8 @@ class KetuaPertandingan extends BaseController
 
     /**
      * Recalculate nilai_akhir for a penampilan_seni based on median of juri scores.
+     * Also updates terpilih flag and median_kebenaran.
+     * Parity: PersilatSeniService::hitungNilaiAkhir()
      */
     private function recalculateNilaiAkhirSeni(int $idPenampilanSeni): void
     {
@@ -534,20 +536,34 @@ class KetuaPertandingan extends BaseController
 
         $nilaiAkhirList = [];
         $totalNilaiList = [];
+        $kebenaranList = [];
         $totalHukuman = 0;
+        $arrayTotalNilai = [];
 
         foreach ($rows as $row) {
             $parsed = json_decode($row->penilaian);
             if ($parsed && isset($parsed->penilaian->ringkasan)) {
-                $nilaiAkhirList[] = (float) ($parsed->penilaian->ringkasan->nilai_akhir ?? 0);
-                $totalNilaiList[] = (float) ($parsed->penilaian->ringkasan->total_nilai ?? 0);
+                $na = (float) ($parsed->penilaian->ringkasan->nilai_akhir ?? 0);
+                $tn = (float) ($parsed->penilaian->ringkasan->total_nilai ?? 0);
+                $nilaiAkhirList[] = $na;
+                $totalNilaiList[] = $tn;
                 $totalHukuman = (float) ($parsed->penilaian->ringkasan->total_hukuman ?? 0);
+
+                $arrayTotalNilai[] = [
+                    'id_perangkat_pertandingan' => (int) $row->id_perangkat_pertandingan,
+                    'nilai_akhir' => $tn,
+                ];
+
+                if (isset($parsed->penilaian->unsur_nilai->kebenaran->nilai_diperoleh)) {
+                    $kebenaranList[] = (float) $parsed->penilaian->unsur_nilai->kebenaran->nilai_diperoleh;
+                }
             }
         }
 
         if (empty($totalNilaiList)) return;
 
-        // Median total_nilai
+        // Sort for median + terpilih selection
+        usort($arrayTotalNilai, fn($a, $b) => $a['nilai_akhir'] <=> $b['nilai_akhir']);
         sort($totalNilaiList);
         $count = count($totalNilaiList);
         $mid = (int) floor($count / 2);
@@ -571,16 +587,51 @@ class KetuaPertandingan extends BaseController
         }
         $stdDev = sqrt($sumSquares / $count);
 
+        // Median kebenaran
+        sort($kebenaranList);
+        $medianKebenaran = 0;
+        if (!empty($kebenaranList)) {
+            $countK = count($kebenaranList);
+            $midK = (int) floor($countK / 2);
+            $medianKebenaran = ($countK % 2 === 0)
+                ? ($kebenaranList[$midK - 1] + $kebenaranList[$midK]) / 2
+                : $kebenaranList[$midK];
+        }
+
         $db->table('penampilan_seni')
             ->where('id_penampilan_seni', $idPenampilanSeni)
             ->update([
                 'nilai_akhir' => round($medianNilaiAkhir, 4),
                 'catatan_nilai_sama' => json_encode([
-                    'median'          => round($medianTotalNilai, 6),
-                    'hukuman'         => round($totalHukuman, 4),
-                    'standar_deviasi' => round($stdDev, 6),
+                    'median'            => round($medianTotalNilai, 6),
+                    'hukuman'           => round($totalHukuman, 4),
+                    'standar_deviasi'   => round($stdDev, 6),
+                    'median_kebenaran'  => round($medianKebenaran, 6),
                 ]),
             ]);
+
+        // Update terpilih flag — select median juri
+        $db->table('penilaian_seni')
+            ->where('id_penampilan_seni', $idPenampilanSeni)
+            ->update(['terpilih' => 0]);
+
+        if ($count % 2 === 0) {
+            $idx1 = ($count / 2) - 1;
+            $idx2 = ($count / 2);
+            $db->table('penilaian_seni')
+                ->where('id_penampilan_seni', $idPenampilanSeni)
+                ->whereIn('id_perangkat_pertandingan', [
+                    $arrayTotalNilai[$idx1]['id_perangkat_pertandingan'],
+                    $arrayTotalNilai[$idx2]['id_perangkat_pertandingan'],
+                ])
+                ->update(['terpilih' => 1]);
+        } else {
+            $idxMedian = (int) floor($count / 2);
+            $db->table('penilaian_seni')
+                ->where('id_penampilan_seni', $idPenampilanSeni)
+                ->where('id_perangkat_pertandingan', $arrayTotalNilai[$idxMedian]['id_perangkat_pertandingan'])
+                ->update(['terpilih' => 1]);
+        }
     }
 
     /**
