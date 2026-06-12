@@ -1,8 +1,5 @@
 <!-- Offcanvas Pindah Partai Tanding -->
-<button class="btn btn-success w-100 btn-lg h3 py-5" type="button" data-bs-toggle="offcanvas"
-	data-bs-target="#offcanvasPindahPartaiTanding" aria-controls="offcanvasPindahPartaiTanding">
-	Jump To Match
-</button>
+<!-- Tombol trigger di-render oleh timer_tanding.php (block-jump-to-match), bukan di sini -->
 
 <div class="offcanvas offcanvas-bottom min-vh-75" data-bs-scroll="true" tabindex="-1" id="offcanvasPindahPartaiTanding"
 	aria-labelledby="offcanvasPindahPartaiTandingTitle">
@@ -54,9 +51,9 @@
 									<span class="badge <?= $badgeClass ?>"><?= $statusLabel ?></span>
 								</td>
 								<td>
-									<a href="<?= base_url('sekretaris-pertandingan/pindah-partai-tanding/' . ($row->id_pertandingan ?? '')) ?>"
-										class="btn btn-sm btn-primary">Pilih</a>
-								</td>
+										<button type="button" class="btn btn-sm btn-primary"
+											onclick="sekretaris_pertandingan.pindah_partai(<?= (int)($row->id_pertandingan ?? 0) ?>)">Pilih</button>
+									</td>
 							</tr>
 						<?php endforeach; ?>
 					</tbody>

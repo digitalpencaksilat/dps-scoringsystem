@@ -16,6 +16,7 @@ const sekretaris_pertandingan = {
 	 */
 	init: function(pertandingan, waktu_pertandingan) {
 		this.pertandingan = pertandingan;
+		// FIX: legacy field is waktu_per_ronde, not durasi_ronde
 		this.waktu_pertandingan = waktu_pertandingan || (pertandingan.waktu_per_ronde || 120);
 		this.ronde_aktif = pertandingan.ronde_pertandingan || 1;
 
@@ -42,10 +43,11 @@ const sekretaris_pertandingan = {
 		// Emit to realtime server
 		this._emit_waktu('TOGGLE', shared_timer.time_seconds);
 
-		// AJAX sync
+		// FIX: controller reads 'status_pertandingan' expecting 'berlangsung'/'berhenti'
 		$.post(window.location.origin + '/sekretaris-pertandingan/toggle-timer-tanding/' + this.pertandingan.id_pertandingan, {
-			status: this.is_playing ? 'playing' : 'paused',
-			waktu: shared_timer.time_seconds
+			status_pertandingan: this.is_playing ? 'berlangsung' : 'berhenti',
+			waktu: shared_timer.time_seconds,
+			data_waktu: JSON.stringify({ sisa_waktu: shared_timer.time_seconds, ronde: this.ronde_aktif })
 		});
 	},
 
@@ -62,7 +64,8 @@ const sekretaris_pertandingan = {
 			cancelButtonText: 'Batal'
 		}).then((result) => {
 			if (result.isConfirmed) {
-				shared_timer.reset(this.pertandingan.durasi_ronde || 120);
+				// FIX: field is waktu_per_ronde, not durasi_ronde
+				shared_timer.reset(this.pertandingan.waktu_per_ronde || 120);
 				this.is_playing = false;
 				this._update_play_button();
 				this._emit_waktu('RESET', shared_timer.time_seconds);
@@ -102,9 +105,9 @@ const sekretaris_pertandingan = {
 	 * Apply manual time change
 	 */
 	tetapkan_perubahan_manual_waktu: function() {
-		const puluhMenit = parseInt($('.puluh-menit').text()) || 0;
+		const puluhMenit  = parseInt($('.puluh-menit').text()) || 0;
 		const satuanMenit = parseInt($('.satuan-menit').text()) || 0;
-		const puluhDetik = parseInt($('.puluh-detik').text()) || 0;
+		const puluhDetik  = parseInt($('.puluh-detik').text()) || 0;
 		const satuanDetik = parseInt($('.satuan-detik').text()) || 0;
 
 		const totalSeconds = ((puluhMenit * 10) + satuanMenit) * 60 + (puluhDetik * 10) + satuanDetik;
@@ -115,33 +118,45 @@ const sekretaris_pertandingan = {
 	},
 
 	/**
-	 * Navigate to round
+	 * Navigate to round — shows confirmation first
 	 */
 	pindah_ronde: function(ronde) {
-		this.ronde_aktif = ronde;
+		Swal.fire({
+			title: 'Pindah ke Ronde ' + ronde + '?',
+			text: 'Timer akan direset ke waktu awal ronde ' + ronde,
+			icon: 'question',
+			showCancelButton: true,
+			confirmButtonText: 'Ya, Pindah',
+			cancelButtonText: 'Batal'
+		}).then((result) => {
+			if (!result.isConfirmed) return;
 
-		// Update UI
-		$('.btn-ronde').removeClass('btn-warning').addClass('btn-outline-light');
-		$(`.btn-ronde[data-ronde="${ronde}"]`).removeClass('btn-outline-light').addClass('btn-warning');
+			this.ronde_aktif = ronde;
 
-		// Reset timer for new round
-		shared_timer.reset(this.pertandingan.durasi_ronde || 120);
-		this.is_playing = false;
-		this._update_play_button();
+			// Update UI
+			$('.btn-ronde').removeClass('btn-warning').addClass('btn-outline-light');
+			$(`.btn-ronde[data-ronde="${ronde}"]`).removeClass('btn-outline-light').addClass('btn-warning');
 
-		// AJAX
-		$.post(window.location.origin + '/sekretaris-pertandingan/pindah-ronde-tanding/' + this.pertandingan.id_pertandingan, {
-			ronde: ronde
+			// Reset timer for new round
+			// FIX: field is waktu_per_ronde, not durasi_ronde
+			shared_timer.reset(this.pertandingan.waktu_per_ronde || 120);
+			this.is_playing = false;
+			this._update_play_button();
+
+			// FIX: controller reads 'ronde_berikutnya', not 'ronde'
+			$.post(window.location.origin + '/sekretaris-pertandingan/pindah-ronde-tanding/' + this.pertandingan.id_pertandingan, {
+				ronde_berikutnya: ronde
+			});
+
+			this._emit_waktu('PINDAH_RONDE', shared_timer.time_seconds);
 		});
-
-		this._emit_waktu('PINDAH_RONDE', shared_timer.time_seconds);
 	},
 
 	/**
 	 * End match - submit winner decision
 	 */
 	selesaikan_pertandingan: function() {
-		const pemenang = $('input[name="pemenang"]:checked').val();
+		const pemenang        = $('input[name="pemenang"]:checked').val();
 		const jenisKemenangan = $('input[name="jenis_kemenangan"]:checked').val();
 
 		if (!pemenang || !jenisKemenangan) {
@@ -158,8 +173,9 @@ const sekretaris_pertandingan = {
 			cancelButtonText: 'Batal'
 		}).then((result) => {
 			if (result.isConfirmed) {
+				// FIX: controller reads 'sudut_pemenang', not 'id_pemenang'
 				$.post(window.location.origin + '/sekretaris-pertandingan/selesaikan-pertandingan/' + this.pertandingan.id_pertandingan, {
-					id_pemenang: pemenang,
+					sudut_pemenang: pemenang,
 					jenis_kemenangan: jenisKemenangan
 				}, function(response) {
 					if (response.status) {
@@ -185,30 +201,41 @@ const sekretaris_pertandingan = {
 	},
 
 	/**
-	 * Jump to different match
+	 * Jump to different match by id_pertandingan
+	 * NOTE: caller must pass id_pertandingan (PK), not nomor_partai
 	 */
-	pindah_partai: function(nomor_partai) {
-		$.post(window.location.origin + '/sekretaris-pertandingan/pindah-partai-tanding/' + nomor_partai, function(response) {
+	pindah_partai: function(id_pertandingan) {
+		if (!id_pertandingan || id_pertandingan <= 0) {
+			Swal.fire('Info', 'Partai tidak tersedia', 'info');
+			return;
+		}
+		$.post(window.location.origin + '/sekretaris-pertandingan/pindah-partai-tanding/' + id_pertandingan, function(response) {
 			if (response.status) {
 				window.location.reload();
 			} else {
 				Swal.fire('Info', response.message || 'Partai tidak ditemukan', 'info');
 			}
 		}, 'json').fail(function() {
-			window.location.href = window.location.origin + '/sekretaris-pertandingan/pindah-partai-tanding/' + nomor_partai;
+			window.location.href = window.location.origin + '/sekretaris-pertandingan/pindah-partai-tanding/' + id_pertandingan;
 		});
 	},
 
 	/**
-	 * Change time settings
+	 * Change time settings (AJAX — controller now returns JSON)
 	 */
 	ubah_waktu: function() {
+		// FIX: read correct field IDs and names matching the view
 		const data = {
-			jumlah_ronde: $('input[name="jumlah_ronde"]:checked').val(),
-			durasi_ronde: $('#durasi_ronde').val(),
-			durasi_istirahat: $('#durasi_istirahat').val(),
-			mode: $('input[name="mode_ubah_waktu"]:checked').val()
+			jumlah_ronde:    $('input[name="jumlah_ronde"]:checked').val(),
+			waktu_per_ronde: $('#waktu_per_ronde').val(),
+			waktu_istirahat: $('#waktu_istirahat').val(),
+			mode:            $('input[name="mode"]:checked', '#formUbahWaktu').val()
 		};
+
+		if (!data.jumlah_ronde || !data.waktu_per_ronde || !data.mode) {
+			Swal.fire('Peringatan', 'Isi semua field konfigurasi waktu', 'warning');
+			return;
+		}
 
 		$.post(window.location.origin + '/sekretaris-pertandingan/ubah-waktu-tanding/' + this.pertandingan.id_pertandingan, data, function(response) {
 			if (response.status) {
@@ -218,14 +245,46 @@ const sekretaris_pertandingan = {
 			} else {
 				Swal.fire('Error', response.message || 'Gagal mengubah waktu', 'error');
 			}
-		}, 'json');
+		}, 'json').fail(function() {
+			Swal.fire('Error', 'Terjadi kesalahan jaringan', 'error');
+		});
+	},
+
+	/**
+	 * Submit format score change via AJAX
+	 */
+	ganti_format_penilaian: function() {
+		const form = $('#formGantiFormatPenilaian');
+		const format     = form.find('select[name="format_penilaian"]').val();
+		const jumlahJuri = form.find('input[name="jumlah_juri"]:checked').val();
+		const mode       = form.find('input[name="mode"]:checked').val();
+
+		if (!format || !jumlahJuri || !mode) {
+			Swal.fire('Peringatan', 'Isi semua field format penilaian', 'warning');
+			return;
+		}
+
+		$.post(form.attr('action'), {
+			format_penilaian: format,
+			jumlah_juri:      jumlahJuri,
+			mode:             mode
+		}, function(response) {
+			if (response.status) {
+				$('#modal_ganti_format_penilaian').modal('hide');
+				Swal.fire({ icon: 'success', title: 'Format diganti', timer: 1500, showConfirmButton: false });
+			} else {
+				Swal.fire('Error', response.message || 'Gagal mengganti format', 'error');
+			}
+		}, 'json').fail(function() {
+			Swal.fire('Error', 'Terjadi kesalahan jaringan', 'error');
+		});
 	},
 
 	/**
 	 * Save sound settings
 	 */
 	simpan_pengaturan_suara: function() {
-		const gongType = $('#jenis_gong').val();
+		const gongType   = $('#jenis_gong').val();
 		const beepEnabled = $('input[name="beep_alarm"]:checked').val() === '1';
 		shared_timer.set_sound(gongType, beepEnabled);
 		$('#modal_pengaturan_suara').modal('hide');

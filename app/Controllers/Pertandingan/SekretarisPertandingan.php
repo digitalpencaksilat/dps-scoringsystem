@@ -264,18 +264,63 @@ class SekretarisPertandingan extends BaseController
         $db = \Config\Database::connect();
 
         // Cek apakah ada penampilan seni berlangsung di gelanggang ini.
-        $aktif = $db->table('detail_jadwal_seni djs')
+        // Check pool-based
+        $aktifPool = $db->table('detail_jadwal_seni djs')
             ->select('ps.id_penampilan_seni')
             ->join('penampilan_seni ps', 'ps.id_penampilan_seni = djs.id_penampilan_seni')
             ->join('jadwal_seni js', 'js.id_jadwal_seni = djs.id_jadwal_seni')
             ->where('js.id_gelanggang', $this->idGelanggang())
+            ->where('djs.id_penampilan_seni IS NOT NULL')
             ->whereNotIn('ps.status_penampilan', ['belum_tampil', 'sudah_tampil'])
             ->get()->getRow();
 
+        // Check battle-based (biru/merah)
+        $aktifBattle = null;
+        $battleRows = $db->table('detail_jadwal_seni djs')
+            ->select('bs.id_penampilan_seni_biru, bs.id_penampilan_seni_merah')
+            ->join('jadwal_seni js', 'js.id_jadwal_seni = djs.id_jadwal_seni')
+            ->join('battle_seni bs', 'bs.id_battle_seni = djs.id_battle_seni')
+            ->where('js.id_gelanggang', $this->idGelanggang())
+            ->where('djs.id_battle_seni IS NOT NULL')
+            ->get()->getResult();
+
+        foreach ($battleRows as $bRow) {
+            foreach (['id_penampilan_seni_biru', 'id_penampilan_seni_merah'] as $col) {
+                if ($bRow->$col !== null) {
+                    $st = $db->table('penampilan_seni')
+                        ->select('id_penampilan_seni, status_penampilan')
+                        ->where('id_penampilan_seni', $bRow->$col)
+                        ->whereNotIn('status_penampilan', ['belum_tampil', 'sudah_tampil'])
+                        ->get(1)->getRow();
+                    if ($st !== null) {
+                        $aktifBattle = $st;
+                        break 2;
+                    }
+                }
+            }
+        }
+
+        $aktif = $aktifPool ?? $aktifBattle;
+
+        // Tentukan redirect back URL
+        // Cari jadwal via pool atau battle
         $jadwalId = $db->table('detail_jadwal_seni')
             ->select('id_jadwal_seni')
             ->where('id_penampilan_seni', $idPenampilanSeni)
             ->get()->getRow();
+
+        if ($jadwalId === null) {
+            // Cari via battle_seni
+            $jadwalId = $db->table('detail_jadwal_seni djs')
+                ->select('djs.id_jadwal_seni')
+                ->join('battle_seni bs', 'bs.id_battle_seni = djs.id_battle_seni')
+                ->groupStart()
+                    ->where('bs.id_penampilan_seni_biru', $idPenampilanSeni)
+                    ->orWhere('bs.id_penampilan_seni_merah', $idPenampilanSeni)
+                ->groupEnd()
+                ->get(1)->getRow();
+        }
+
         $back = $jadwalId !== null
             ? '/sekretaris-pertandingan/jadwal-seni/' . (int) $jadwalId->id_jadwal_seni
             : '/sekretaris-pertandingan';
@@ -293,7 +338,7 @@ class SekretarisPertandingan extends BaseController
         realtime_emit_seni_berlangsung($this->idGelanggang(), $idPenampilanSeni);
 
         return redirect()->to($back)
-            ->with('message', 'Penampilan di-set standby. Layar Timer Seni masih dalam tahap migrasi.');
+            ->with('message', 'Penampilan seni dimulai (standby).');
     }
 
     /**
@@ -367,18 +412,24 @@ class SekretarisPertandingan extends BaseController
     {
         $target = $this->pertandinganModel->find($idPertandingan);
         if ($target === null) {
-            return redirect()->to('/sekretaris-pertandingan/timer-tanding')->with('error', 'Partai tidak ditemukan.');
+            return $this->response->setJSON(['status' => false, 'message' => 'Partai tidak ditemukan.']);
         }
         if ($target->id_atlet_merah === null || $target->id_atlet_biru === null) {
-            return redirect()->to('/sekretaris-pertandingan/timer-tanding')->with('error', 'Atlet belum lengkap pada partai tujuan.');
+            return $this->response->setJSON(['status' => false, 'message' => 'Atlet belum lengkap pada partai tujuan.']);
         }
 
         $berlangsung = $this->pertandinganModel->getPertandinganBerlangsung($this->idGelanggang());
         if ($berlangsung !== null && (int) $berlangsung->id_pertandingan !== $idPertandingan) {
-            return redirect()->to('/sekretaris-pertandingan/timer-tanding')->with('error', 'Masih ada partai yang berlangsung.');
+            return $this->response->setJSON(['status' => false, 'message' => 'Masih ada partai yang berlangsung.']);
         }
 
-        return redirect()->to('/sekretaris-pertandingan/mulai-pertandingan/' . $idPertandingan);
+        // Set partai tujuan ke standby, redirect dilakukan client-side via reload.
+        $this->pertandinganModel->update($idPertandingan, ['status_pertandingan' => 'standby']);
+
+        helper('realtime');
+        realtime_emit_tanding_berlangsung($this->idGelanggang(), $idPertandingan);
+
+        return $this->response->setJSON(['status' => true, 'csrf_hash' => csrf_hash()]);
     }
 
     /**
@@ -394,16 +445,16 @@ class SekretarisPertandingan extends BaseController
 
         $modeLegal = ['pertandingan_ini', 'kelas_ini', 'kategori_lomba_ini', 'gelanggang_ini'];
         if (! in_array($mode, $modeLegal, true)) {
-            return redirect()->to('/sekretaris-pertandingan/timer-tanding')->with('error', 'Mode pengubah tidak ditemukan.');
+            return $this->response->setJSON(['status' => false, 'message' => 'Mode pengubah tidak ditemukan.']);
         }
         if (! in_array($jumlahRonde, [2, 3], true) || $waktuPerRonde <= 0) {
-            return redirect()->to('/sekretaris-pertandingan/timer-tanding')->with('error', 'Konfigurasi waktu tidak valid.');
+            return $this->response->setJSON(['status' => false, 'message' => 'Konfigurasi waktu tidak valid.']);
         }
 
         // Ambil partai aktif untuk konteks kelas/kategori/gelanggang.
         $partai = $this->pertandinganModel->getPertandinganBerlangsung($this->idGelanggang());
         if ($partai === null || (int) $partai->id_pertandingan !== $idPertandingan) {
-            return redirect()->to('/sekretaris-pertandingan/timer-tanding')->with('error', 'Partai aktif tidak ditemukan.');
+            return $this->response->setJSON(['status' => false, 'message' => 'Partai aktif tidak ditemukan.']);
         }
 
         $this->pertandinganModel->ubahWaktu(
@@ -417,7 +468,10 @@ class SekretarisPertandingan extends BaseController
             $waktuIstirahat
         );
 
-        return redirect()->to('/sekretaris-pertandingan/timer-tanding')->with('message', 'Berhasil mengubah waktu.');
+        // Return JSON — JS (ubah_waktu) expects JSON response, then reloads.
+        return $this->response
+            ->setHeader('X-CSRF-TOKEN', csrf_hash())
+            ->setJSON(['status' => true, 'message' => 'Berhasil mengubah waktu.', 'csrf_hash' => csrf_hash()]);
     }
 
     /**
@@ -1163,8 +1217,10 @@ class SekretarisPertandingan extends BaseController
             return $this->response->setJSON(['status' => false, 'message' => 'Parameter tidak valid.']);
         }
 
-        // Load format JSON
-        $jsonPath = FCPATH . 'assets/penilaian/format-penilaian/tanding/' . $formatPenilaian . '.json';
+        // Load format JSON — getFormatListTanding() returns filenames WITH .json extension
+        // Strip .json if caller submitted full filename, then append .json for path lookup.
+        $formatBase = preg_replace('/\.json$/i', '', $formatPenilaian);
+        $jsonPath = FCPATH . 'assets/penilaian/format-penilaian/tanding/' . $formatBase . '.json';
         if (! is_file($jsonPath)) {
             return $this->response->setJSON(['status' => false, 'message' => 'Format penilaian tidak ditemukan.']);
         }

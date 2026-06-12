@@ -185,6 +185,19 @@
 		</div>
 	</div>
 
+	<!-- JUMP TO MATCH — selalu visible di bawah, sebelum navigasi partai -->
+	<div class="col-12 mt-3 block-jump-to-match d-none">
+		<div class="row">
+			<div class="col-12">
+				<button class="btn btn-outline-light w-100 py-3 fw-bold fs-5" type="button"
+					data-bs-toggle="offcanvas" data-bs-target="#offcanvasPindahPartaiTanding"
+					aria-controls="offcanvasPindahPartaiTanding">
+					<i class="fas fa-list me-2"></i> Jump To Match
+				</button>
+			</div>
+		</div>
+	</div>
+
 	<div class="row my-5 block-navigasi-partai d-none opacity">
 		<div class="col-12 mb-2">
 			<div class="row mb-4">
@@ -194,27 +207,34 @@
 			</div>
 			<div class="row">
 				<div class="col-12 col-md-6 mb-2">
-					<button class="btn bg-light bg-gradient h4 w-100 py-3" onclick="sekretaris_pertandingan.pindah_partai(<?= ($pertandingan->nomor_partai ?? 1) - 1 ?>)">
-						<i class="fas fa-arrow-left me-2"></i> Previous Match
-						<?php if (!empty($partai_prev)) : ?>
+					<?php if (!empty($partai_prev)) : ?>
+						<button class="btn bg-light bg-gradient h4 w-100 py-3" onclick="sekretaris_pertandingan.pindah_partai(<?= (int) $partai_prev->id_pertandingan ?>)">
+							<i class="fas fa-arrow-left me-2"></i> Previous Match
 							<br><small class="text-primary">Partai <?= esc($partai_prev->nomor_partai ?? '') ?></small>
-						<?php endif; ?>
-					</button>
+						</button>
+					<?php else : ?>
+						<button class="btn bg-light bg-gradient h4 w-100 py-3" disabled>
+							<i class="fas fa-arrow-left me-2"></i> Previous Match
+							<br><small class="text-muted">Tidak ada</small>
+						</button>
+					<?php endif; ?>
 				</div>
 				<div class="col-12 col-md-6 mb-2">
-					<button class="btn bg-light bg-gradient h4 w-100 py-3" onclick="sekretaris_pertandingan.pindah_partai(<?= ($pertandingan->nomor_partai ?? 1) + 1 ?>)">
-						Next Match <i class="fas fa-arrow-right ms-2"></i>
-						<?php if (!empty($partai_next)) : ?>
+					<?php if (!empty($partai_next)) : ?>
+						<button class="btn bg-light bg-gradient h4 w-100 py-3" onclick="sekretaris_pertandingan.pindah_partai(<?= (int) $partai_next->id_pertandingan ?>)">
+							Next Match <i class="fas fa-arrow-right ms-2"></i>
 							<br><small class="text-primary">Partai <?= esc($partai_next->nomor_partai ?? '') ?></small>
-						<?php endif; ?>
-					</button>
+						</button>
+					<?php else : ?>
+						<button class="btn bg-light bg-gradient h4 w-100 py-3" disabled>
+							Next Match <i class="fas fa-arrow-right ms-2"></i>
+							<br><small class="text-muted">Tidak ada</small>
+						</button>
+					<?php endif; ?>
 				</div>
 			</div>
-		</div>
-		<div class="col-12">
-			<?= view('pertandingan/sekretaris/components/_offcanvas_pindah_partai_tanding') ?>
-		</div>
-	</div>
+			</div>
+			</div>
 </div>
 
 <!-- MODAL: Keputusan Pemenang -->
@@ -368,7 +388,7 @@
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-					<button type="submit" class="btn btn-primary">Ganti Format</button>
+					<button type="button" class="btn btn-primary" onclick="sekretaris_pertandingan.ganti_format_penilaian()">Ganti Format</button>
 				</div>
 			</form>
 		</div>
@@ -486,12 +506,15 @@ const ui = {
 			setTimeout(() => {
 				$('.block-stopwatch').children('.opacity').addClass('animated slideInUp').removeClass('opacity');
 				setTimeout(() => { $('.block-end-match').children('.row.opacity').addClass('animated slideInUp').removeClass('opacity'); }, 300);
+				setTimeout(() => {
+					$('.block-jump-to-match').removeClass('d-none').hide().fadeIn(400);
+				}, 500);
 			}, 300);
 		}, delayAtlet);
 	},
 	animateOut: function() {
-		$('.block-informasi, .block-atlet, .block-stopwatch, .block-end-match').addClass('animated fadeOut');
-		setTimeout(() => { $('.block-informasi, .block-atlet, .block-stopwatch, .block-end-match').addClass('d-none'); }, 1000);
+		$('.block-informasi, .block-atlet, .block-stopwatch, .block-end-match, .block-jump-to-match').addClass('animated fadeOut');
+		setTimeout(() => { $('.block-informasi, .block-atlet, .block-stopwatch, .block-end-match, .block-jump-to-match').addClass('d-none').removeClass('animated fadeOut'); }, 1000);
 	},
 	animateInNavigasiPartai: function() {
 		const container = document.querySelector('.block-navigasi-partai');

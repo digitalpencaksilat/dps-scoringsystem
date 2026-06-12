@@ -3,7 +3,7 @@
 use CodeIgniter\Router\RouteCollection;
 
 /** @var RouteCollection $routes */
-$routes->get('/', 'Home::index');
+$routes->get('/', 'Pertandingan\PerangkatPertandingan::index');
 
 /*
  * ------------------------------------------------------------------
@@ -53,6 +53,10 @@ $routes->group('ketua-pertandingan', ['filter' => 'perangkat:ketua_pertandingan'
     $routes->get('home', 'Pertandingan\KetuaPertandingan::index');
 
     // Tanding
+    $routes->get('tanding/monitoring', 'Pertandingan\KetuaPertandingan::monitoringTanding');
+    $routes->get('tanding/monitoring/(:segment)', 'Pertandingan\KetuaPertandingan::monitoringTanding/$1');
+    $routes->get('tanding/dewan', 'Pertandingan\KetuaPertandingan::dewanTanding');
+    $routes->get('tanding/dewan/(:segment)', 'Pertandingan\KetuaPertandingan::dewanTanding/$1');
     $routes->get('tanding', 'Pertandingan\KetuaPertandingan::tanding');
     $routes->get('tanding/(:segment)', 'Pertandingan\KetuaPertandingan::tanding/$1');
     $routes->post('edit-penilaian-tanding/(:num)', 'Pertandingan\KetuaPertandingan::editPenilaianTanding/$1');
@@ -62,6 +66,8 @@ $routes->group('ketua-pertandingan', ['filter' => 'perangkat:ketua_pertandingan'
     // Seni
     $routes->get('seni', 'Pertandingan\KetuaPertandingan::seni');
     $routes->get('seni/(:segment)', 'Pertandingan\KetuaPertandingan::seni/$1');
+    $routes->get('dewan-seni', 'Pertandingan\KetuaPertandingan::dewanSeni');
+    $routes->get('dewan-seni/(:segment)', 'Pertandingan\KetuaPertandingan::dewanSeni/$1');
     $routes->post('edit-penilaian-seni/(:num)', 'Pertandingan\KetuaPertandingan::editPenilaianSeni/$1');
     $routes->post('refresh-status-seni/(:num)', 'Pertandingan\KetuaPertandingan::refreshStatusSeni/$1');
     $routes->post('refresh-status-seni', 'Pertandingan\KetuaPertandingan::refreshStatusSeni');
@@ -70,8 +76,13 @@ $routes->group('ketua-pertandingan', ['filter' => 'perangkat:ketua_pertandingan'
     $routes->post('batalkan-diskualifikasi-seni/(:num)', 'Pertandingan\KetuaPertandingan::batalkanDiskualifikasi/$1');
 
     // Daftar Nilai
-    $routes->get('daftar-nilai-tanding', 'Pertandingan\KetuaPertandingan::daftarNilaiTanding');
-    $routes->get('daftar-nilai-seni', 'Pertandingan\KetuaPertandingan::daftarNilaiSeni');
+    $routes->get('daftar-nilai-tanding', 'Pertandingan\\KetuaPertandingan::daftarNilaiTanding');
+    $routes->get('daftar-nilai-seni', 'Pertandingan\\KetuaPertandingan::daftarNilaiSeni');
+
+    // Verifikasi Pertandingan (jatuhan / pelanggaran)
+    $routes->post('verifikasi-pertandingan/create/(:num)', 'Pertandingan\\KetuaPertandingan::createVerifikasi/$1');
+    $routes->post('verifikasi-pertandingan/update/(:num)', 'Pertandingan\\KetuaPertandingan::updateVerifikasi/$1');
+    $routes->get('verifikasi-pertandingan/get-jawaban/(:num)', 'Pertandingan\\KetuaPertandingan::getJawabanVerifikasi/$1');
 });
 $routes->get('sekretaris-pertandingan', 'Pertandingan\SekretarisPertandingan::index', ['filter' => 'perangkat:sekretaris,timer']);
 $routes->group('sekretaris-pertandingan', ['filter' => 'perangkat:sekretaris,timer'], static function ($routes) {
@@ -82,7 +93,7 @@ $routes->group('sekretaris-pertandingan', ['filter' => 'perangkat:sekretaris,tim
     $routes->get('timer-tanding', 'Pertandingan\SekretarisPertandingan::timerTanding');
     $routes->get('timer-seni', 'Pertandingan\SekretarisPertandingan::timerSeni');
     $routes->get('mulai-pertandingan/(:num)', 'Pertandingan\SekretarisPertandingan::mulaiPertandingan/$1');
-    $routes->get('pindah-partai-tanding/(:num)', 'Pertandingan\SekretarisPertandingan::pindahPartaiTanding/$1');
+    $routes->post('pindah-partai-tanding/(:num)', 'Pertandingan\SekretarisPertandingan::pindahPartaiTanding/$1');
     $routes->post('ubah-waktu-tanding/(:num)', 'Pertandingan\SekretarisPertandingan::ubahWaktuTanding/$1');
     $routes->post('toggle-timer-tanding/(:num)', 'Pertandingan\SekretarisPertandingan::toggleTimerTanding/$1');
     $routes->post('pindah-ronde-tanding/(:num)', 'Pertandingan\SekretarisPertandingan::pindahRondeTanding/$1');
