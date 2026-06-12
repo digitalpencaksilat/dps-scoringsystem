@@ -942,42 +942,36 @@ class SekretarisPertandingan extends BaseController
     }
 
     /**
-     * Hitung nilai akhir seni: rata-rata nilai_akhir_per_juri dari penilaian_seni yang terpilih.
+     * Hitung nilai akhir seni menggunakan PersilatSeniService.
+     * Service sudah handle update terpilih flag dan catatan_nilai_sama.
      */
     private function hitungNilaiAkhirSeni(int $idPenampilanSeni): string
     {
-        $penilaianJuri = $this->penilaianSeniModel->getByPenampilan($idPenampilanSeni);
+        $db = \Config\Database::connect();
+        
+        // Get penampilan object
+        $penampilan = $db->table('penampilan_seni')->where('id_penampilan_seni', $idPenampilanSeni)->get()->getRow();
+        if ($penampilan === null) {
+            return '0';
+        }
 
+        // Get penilaian juri
+        $penilaianJuri = $this->penilaianSeniModel->getByPenampilan($idPenampilanSeni);
         if (empty($penilaianJuri)) {
             return '0';
         }
 
-        $result = $this->seniService->hitungNilaiAkhir($penilaianJuri);
+        // Service sudah handle:
+        // - hitung median, standar_deviasi, median_kebenaran, hukuman
+        // - update terpilih flag (0/1) untuk juri yang dipilih
+        // - save catatan_nilai_sama JSON ke penampilan_seni
+        $nilaiAkhir = $this->seniService->hitungNilaiAkhir($penampilan, $penilaianJuri);
 
-        // Update terpilih flags di database
-        $db = \Config\Database::connect();
-        $db->table('penilaian_seni')
-            ->where('id_penampilan_seni', $idPenampilanSeni)
-            ->update(['terpilih' => 0]);
-
-        foreach ($result['terpilih_ids'] as $ppId) {
-            $db->table('penilaian_seni')
-                ->where('id_penampilan_seni', $idPenampilanSeni)
-                ->where('id_perangkat_pertandingan', $ppId)
-                ->update(['terpilih' => 1]);
+        if ($nilaiAkhir === false) {
+            return '0';
         }
 
-        // Save catatan_nilai_sama (median, hukuman, standar_deviasi)
-        $db->table('penampilan_seni')
-            ->where('id_penampilan_seni', $idPenampilanSeni)
-            ->update(['catatan_nilai_sama' => json_encode([
-                'median'           => $result['median'],
-                'hukuman'          => $result['hukuman'],
-                'standar_deviasi'  => $result['standar_deviasi'],
-                'nilai_akhir'      => $result['nilai_akhir'],
-            ])]);
-
-        return number_format($result['nilai_akhir'], 3, '.', '');
+        return number_format($nilaiAkhir, 3, '.', '');
     }
 
     /**

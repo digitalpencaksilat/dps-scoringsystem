@@ -213,10 +213,6 @@ const ui = {
                 total_nilai: totalNilai,
                 terpilih: juriObj.terpilih
             });
-            
-            // DEBUG: Log terpilih value
-            console.log('Juri', idx + 1, 'id_perangkat:', juriObj.id_perangkat_pertandingan, 
-                        'total_nilai:', totalNilai, 'terpilih:', juriObj.terpilih, 'type:', typeof juriObj.terpilih);
         }
 
         // Sort by total_nilai ascending (for display order parity)
