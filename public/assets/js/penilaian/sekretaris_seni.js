@@ -43,13 +43,16 @@ const sekretaris_pertandingan = {
 		this.is_playing = shared_timer.toggle();
 		this._update_play_button();
 
-		// AJAX sync
+		var statusPenampilan = this.is_playing ? 'sedang_tampil' : 'berhenti';
+
+		// AJAX sync — server simpan status_penampilan + waktu_tampil + emit KONTROL_WAKTU_SENI
 		$.post(window.location.origin + '/sekretaris-pertandingan/toggle-timer-seni/' + this.penampilan_seni.id_penampilan_seni, {
-			status: this.is_playing ? 'playing' : 'paused',
-			waktu: shared_timer.time_seconds
+			status_penampilan: statusPenampilan,
+			waktu_tampil: shared_timer.time_seconds
 		});
 
-		this._emit_waktu('TOGGLE', shared_timer.time_seconds);
+		// Emit langsung ke socket supaya layar/juri update instan (sebelum polling)
+		this._emit_waktu(statusPenampilan, shared_timer.time_seconds);
 	},
 
 	/**
@@ -68,7 +71,14 @@ const sekretaris_pertandingan = {
 				shared_timer.reset(0);
 				this.is_playing = false;
 				this._update_play_button();
-				this._emit_waktu('RESET', 0);
+
+				// AJAX sync ke server (status berhenti, waktu 0)
+				$.post(window.location.origin + '/sekretaris-pertandingan/toggle-timer-seni/' + this.penampilan_seni.id_penampilan_seni, {
+					status_penampilan: 'berhenti',
+					waktu_tampil: 0
+				});
+
+				this._emit_waktu('berhenti', 0);
 			}
 		});
 	},
@@ -111,7 +121,16 @@ const sekretaris_pertandingan = {
 
 		const totalSeconds = ((puluhMenit * 10) + satuanMenit) * 60 + (puluhDetik * 10) + satuanDetik;
 		shared_timer.set_time(totalSeconds);
-		this._emit_waktu('SET', totalSeconds);
+
+		var statusPenampilan = this.is_playing ? 'sedang_tampil' : 'berhenti';
+
+		// AJAX sync ke server
+		$.post(window.location.origin + '/sekretaris-pertandingan/toggle-timer-seni/' + this.penampilan_seni.id_penampilan_seni, {
+			status_penampilan: statusPenampilan,
+			waktu_tampil: totalSeconds
+		});
+
+		this._emit_waktu(statusPenampilan, totalSeconds);
 
 		$('#modalManualAturWaktu').modal('hide');
 	},
@@ -284,7 +303,8 @@ const sekretaris_pertandingan = {
 	// ===================== Private Methods =====================
 
 	_on_tick: function(seconds) {
-		this._emit_waktu('TICK', seconds);
+		// Tidak emit per-tick — server-authoritative, layar punya local tick + drift compensation
+		// via KONTROL_WAKTU_SENI saat status berubah. Emit per-detik = bandwidth waste.
 	},
 
 	_update_play_button: function() {
@@ -298,12 +318,12 @@ const sekretaris_pertandingan = {
 		}
 	},
 
-	_emit_waktu: function(action, waktu) {
+	_emit_waktu: function(statusPenampilan, waktuTampil) {
 		if (this.socket && this.penampilan_seni) {
-			this.socket.emit('KONTROL_WAKTU', {
+			this.socket.emit('KONTROL_WAKTU_SENI', {
 				id_penampilan_seni: this.penampilan_seni.id_penampilan_seni,
-				action: action,
-				waktu: waktu
+				status_penampilan: statusPenampilan,
+				waktu_tampil: waktuTampil
 			});
 		}
 	},

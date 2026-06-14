@@ -24,9 +24,50 @@ const layar = {
         if (typeof io !== 'undefined' && typeof SOCKET_URL !== 'undefined') {
             layar.socket = io(SOCKET_URL, { reconnection: true, reconnectionDelay: 1000 });
 
-            layar.socket.emit('JOIN_ROOM', layar.id_penampilan_seni);
+            // FIX: JOIN_ROOM dengan object {id_penampilan_seni} supaya server buat room 'seni_<id>'
+            layar.socket.emit('JOIN_ROOM', { id_penampilan_seni: layar.id_penampilan_seni });
 
+            // FIX: Listen KONTROL_WAKTU_SENI (bukan UPDATE_WAKTU) — emitted by PHP + sekretaris
+            layar.socket.on('KONTROL_WAKTU_SENI', function (data) {
+                if (!data || String(data.id_penampilan_seni) !== String(layar.id_penampilan_seni)) return;
+
+                var seconds = parseInt(data.waktu_tampil) || 0;
+
+                if (data.status_penampilan === 'sedang_tampil') {
+                    layar.penampilan_seni_berlangsung.status_penampilan = 'sedang_tampil';
+                    layar.penampilan_seni_berlangsung.waktu_tampil = seconds;
+                    layar.stopwatch.timer("remove");
+                    if (seconds > 0) {
+                        layar.stopwatch.timer({
+                            format: "%M:%S",
+                            seconds: 0,
+                            duration: seconds,
+                            countdown: false,
+                            action: 'start'
+                        });
+                    }
+                } else {
+                    layar.penampilan_seni_berlangsung.status_penampilan = data.status_penampilan || 'berhenti';
+                    layar.penampilan_seni_berlangsung.waktu_tampil = seconds;
+                    layar.stopwatch.timer("remove");
+                    if (seconds > 0) {
+                        layar.stopwatch.timer({
+                            format: "%M:%S",
+                            seconds: seconds,
+                            countdown: false
+                        });
+                        layar.stopwatch.timer("pause");
+                    } else {
+                        layar.stopwatch.html("00:00");
+                    }
+                }
+            });
+
+            // Legacy: UPDATE_WAKTU (keep for backward compat, but filter seni only)
             layar.socket.on('UPDATE_WAKTU', function (data) {
+                if (!data || !data.id_penampilan_seni) return;
+                if (String(data.id_penampilan_seni) !== String(layar.id_penampilan_seni)) return;
+
                 var waktu = data.waktu;
                 var seconds = Math.floor(waktu / 1000);
 
