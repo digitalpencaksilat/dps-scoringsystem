@@ -949,6 +949,38 @@
         socket.on('connect', function () {
             socketConnected = true;
             socket.emit('JOIN_ROOM', { id_pertandingan: config.idPertandingan });
+            
+            // CRITICAL #4: Fetch fresh state immediately on reconnect to prevent UI staleness
+            postJSON(config.endpointRefresh, {})
+                .then(function (data) {
+                    if (!data) return;
+                    if (data.status === true && data.reload === true) { window.location.reload(); return; }
+                    
+                    if (data.status === false) {
+                        if (data.pertandingan) pertandingan = data.pertandingan;
+                        else {
+                            pertandingan.skor_merah = data.skor_merah;
+                            pertandingan.skor_biru = data.skor_biru;
+                        }
+                        
+                        if (data.ronde && String(data.ronde) !== config.ronde) {
+                            config.ronde = String(data.ronde);
+                            pertandingan.ronde_pertandingan = data.ronde;
+                            els('.kp-ronde').forEach(function (e) { e.textContent = 'Ronde ' + config.ronde; });
+                            els('.ronde_pertandingan').forEach(function (e) { e.textContent = 'Round ' + config.ronde; });
+                        }
+                        
+                        if (data.data_nilai) {
+                            dataNilai = data.data_nilai;
+                            if (data.data_nilai.ringkasan) ringkasan = data.data_nilai.ringkasan;
+                            updateTampilanNilai(data.data_nilai);
+                        }
+                        
+                        updateSkor(pertandingan.skor_merah, pertandingan.skor_biru);
+                    }
+                })
+                .catch(function () { /* silent fail — polling will retry */ });
+            
             if (pollTimer) { clearInterval(pollTimer); startPolling(); }
         });
 
@@ -1050,6 +1082,116 @@
 
         startPolling();
         initSocket();
+        initDeveloperOption();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  DEVELOPER OPTION
+    // ═══════════════════════════════════════════════════════════════════════
+
+    function initDeveloperOption() {
+        var btnOpen = document.getElementById('btn-open-developer-option');
+        if (!btnOpen) return;
+
+        var passcode = wrapper.dataset.developerPasscode || '4321';
+        var modalEl = document.getElementById('modalDeveloperOption');
+        var devModal = modalEl ? new bootstrap.Modal(modalEl, { keyboard: false }) : null;
+
+        // Open button: prompt passcode
+        btnOpen.addEventListener('click', function () {
+            if (typeof Swal === 'undefined') {
+                // Fallback jika SweetAlert tidak tersedia
+                var input = prompt('Enter PIN Code:');
+                if (input === String(passcode)) {
+                    if (devModal) devModal.show();
+                } else {
+                    alert('Wrong Passcode!');
+                }
+                return;
+            }
+            Swal.fire({
+                title: 'Attention!',
+                text: 'Please Enter Your PIN Code',
+                input: 'password',
+                inputAttributes: { autocomplete: 'off' },
+                showCancelButton: true,
+                confirmButtonText: 'Submit',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#c60000',
+            }).then(function (result) {
+                if (result.isConfirmed) {
+                    if (String(result.value) === String(passcode)) {
+                        if (devModal) devModal.show();
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'Oops...', text: 'Wrong Passcode!' });
+                    }
+                }
+            });
+        });
+
+        if (!modalEl) return;
+
+        // Sync skor display saat modal dibuka
+        modalEl.addEventListener('show.bs.modal', function () {
+            var skorBiruEl = document.getElementById('dev-skor-biru');
+            var skorMerahEl = document.getElementById('dev-skor-merah');
+            var rondeEl = document.getElementById('dev-ronde');
+            if (skorBiruEl) skorBiruEl.textContent = document.getElementById('skor-biru') ? document.getElementById('skor-biru').textContent : '0';
+            if (skorMerahEl) skorMerahEl.textContent = document.getElementById('skor-merah') ? document.getElementById('skor-merah').textContent : '0';
+            if (rondeEl) rondeEl.textContent = config.ronde || '1';
+        });
+
+        // Input buttons
+        modalEl.querySelectorAll('.dev-btn-input, .dev-btn-delete').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var sudut  = this.dataset.sudut;
+                var mode   = this.dataset.mode;
+                var jumlah = this.dataset.jumlah;
+                if (!sudut || !mode) return;
+
+                var self = this;
+                self.disabled = true;
+                self.style.opacity = '0.5';
+
+                postJSON(config.endpointEdit, { sudut: sudut, mode: mode, jumlah: jumlah })
+                    .then(function (data) {
+                        if (data && data.status === true) {
+                            pertandingan.skor_merah = data.skor_merah;
+                            pertandingan.skor_biru  = data.skor_biru;
+                            if (data.ringkasan) ringkasan = data.ringkasan;
+                            updateSkor(data.skor_merah, data.skor_biru);
+                            if (data.ringkasan) {
+                                updateButtonStates(data.ringkasan);
+                                highlightNilaiAkhir(data.ringkasan);
+                                updateTampilanRingkasanNilai(data.ringkasan);
+                            }
+                            // Sync skor di dalam modal
+                            var skorBiruEl  = document.getElementById('dev-skor-biru');
+                            var skorMerahEl = document.getElementById('dev-skor-merah');
+                            if (skorBiruEl)  skorBiruEl.textContent  = data.skor_biru  ?? 0;
+                            if (skorMerahEl) skorMerahEl.textContent = data.skor_merah ?? 0;
+
+                            // Pulse green
+                            self.style.transition = 'box-shadow 0.3s';
+                            self.style.boxShadow = '0 0 0 3px rgba(40,167,69,0.7)';
+                            setTimeout(function () { self.style.boxShadow = ''; }, 500);
+
+                            if (typeof Toastr !== 'undefined') {
+                                toastr.success('Input berhasil diterapkan');
+                            }
+                        } else {
+                            self.style.boxShadow = '0 0 0 3px rgba(220,53,69,0.7)';
+                            setTimeout(function () { self.style.boxShadow = ''; }, 500);
+                            showError(data && data.message ? data.message : 'Gagal menyimpan');
+                        }
+                    })
+                    .catch(function () { showError('Koneksi gagal'); })
+                    .finally(function () {
+                        self.disabled = false;
+                        self.style.opacity = '';
+                    });
+            });
+        });
     }
 
     // Run on DOM ready

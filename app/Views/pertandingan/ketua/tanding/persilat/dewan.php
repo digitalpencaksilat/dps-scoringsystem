@@ -130,7 +130,8 @@
      data-endpoint-verifikasi-jawaban="<?= base_url('ketua-pertandingan/verifikasi-pertandingan/get-jawaban/' . $idP) ?>"
      data-csrf-name="<?= csrf_token() ?>"
      data-csrf-hash="<?= csrf_hash() ?>"
-     data-jumlah-juri="<?= $jumlahJuri ?>">
+     data-jumlah-juri="<?= $jumlahJuri ?>"
+     data-developer-passcode="<?= esc(config('Scoring')->developerPasscode, 'attr') ?>">
 
     <!-- ═══ Top Bar ═══ -->
     <div class="kp-dewan-topbar">
@@ -434,6 +435,9 @@
         </div>
     </div>
 </div>
+
+<!-- ═══ Modal Developer Option ═══ -->
+<?= view('pertandingan/ketua/components/developer_option') ?>
 
 <?= $this->endSection() ?>
 
