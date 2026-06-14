@@ -643,7 +643,7 @@ class Layar extends BaseController
 
         $grouped = [];
         foreach ($rows as $row) {
-            $grouped[$idPenampilanSeni][] = (object) [
+            $grouped[(string) $idPenampilanSeni][] = (object) [
                 'id_perangkat_pertandingan' => (int) $row->id_perangkat_pertandingan,
                 'penilaian'                 => $row->penilaian ?? '{}',
                 'terpilih'                  => (int) ($row->terpilih ?? 0), // Default 0 = not selected

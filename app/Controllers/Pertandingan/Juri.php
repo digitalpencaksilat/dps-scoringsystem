@@ -493,6 +493,10 @@ class Juri extends BaseController
         // Recalculate nilai_akhir penampilan (median across all juri)
         $this->recalculateNilaiAkhirPenampilan($idPenampilanSeni);
 
+        // Broadcast real-time ke Layar agar nilai juri ter-update live
+        helper('realtime');
+        realtime_emit_update_nilai_seni($idPenampilanSeni);
+
         return $this->jsonResponse(['status' => true, 'new_nilai' => $finalJson]);
     }
 
