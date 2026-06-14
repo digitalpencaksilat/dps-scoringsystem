@@ -25,10 +25,10 @@
         </div>
         <div class="row justify-content-around py-1">
             <?php
-                $_left   = isset($info_left)   && $info_left   !== '' ? $info_left   : '-';
-                $_center = isset($info_center) && $info_center !== '' ? $info_center : '-';
-                $_right  = isset($info_right)  && $info_right  !== '' ? $info_right  : '-';
-                $infoCols = [$_left, $_center, $_right];
+                $info_left   = $info_left   ?? '-';
+                $info_center = $info_center ?? '-';
+                $info_right  = $info_right  ?? '-';
+                $infoCols = [$info_left, $info_center, $info_right];
             ?>
             <?php foreach ($infoCols as $info): ?>
                 <div class="col-4">

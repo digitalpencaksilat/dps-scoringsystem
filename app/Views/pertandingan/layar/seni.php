@@ -110,23 +110,18 @@
 
     <!-- HEADER COMPETITION TITLE - shared component (parity tanding) -->
     <?php
-        $_il = strtoupper(esc(($partai_seni_berlangsung->nama_gelanggang ?? 'GELANGGANG') . ' - ' . ($partai_seni_berlangsung->nomor_partai ?? '-')));
+        $info_left = strtoupper(esc(($partai_seni_berlangsung->nama_gelanggang ?? 'GELANGGANG') . ' - ' . ($partai_seni_berlangsung->nomor_partai ?? '-')));
         $_kat = strtoupper(esc($kompetisi_seni->nama_kategori_usia ?? '-'));
         $_jen = strtoupper(esc($kompetisi_seni->jenis_seni ?? '-'));
         if ($isBattle) {
-            $_ic = strtoupper(esc($partai_seni_berlangsung->babak_battle ?? '-'));
-            $_ir = $_kat . ' / ' . $_jen;
+            $info_center = strtoupper(esc($partai_seni_berlangsung->babak_battle ?? '-'));
+            $info_right = $_kat . ' / ' . $_jen;
         } else {
-            $_ic = $_kat;
-            $_ir = $_jen;
+            $info_center = $_kat;
+            $info_right = $_jen;
         }
+        include APPPATH . 'Views/pertandingan/layar/components/competition_title.php';
     ?>
-    <?= $this->include('pertandingan/layar/components/competition_title', [
-        'event_name'  => $event_name ?? 'Pencak Silat Championship',
-        'info_left'   => $_il,
-        'info_center' => $_ic,
-        'info_right'  => $_ir,
-    ]) ?>
 
     <!-- ═══ PESERTA — no bendera ═══ -->
     <?php
