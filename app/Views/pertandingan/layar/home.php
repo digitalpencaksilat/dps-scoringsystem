@@ -122,10 +122,8 @@
             </a>
         </div>
 
-        <!-- Auto-detect status -->
         <div class="layar-auto-status">
-            <span class="status-dot"></span>
-            <span class="text-white-50 small">Auto-detect aktif — akan pindah otomatis saat pertandingan dimulai</span>
+            <span class="text-white-50 small">Pilih mode papan skor untuk melanjutkan</span>
         </div>
     </div>
 </div>
@@ -133,54 +131,7 @@
 
 <?= $this->section('scripts') ?>
 <script>
-(function () {
-    'use strict';
-    const csrfName = '<?= csrf_token() ?>';
-    let csrfHash = '<?= csrf_hash() ?>';
-
-    function checkActive() {
-        const body = new URLSearchParams();
-        body.append(csrfName, csrfHash);
-
-        fetch('<?= base_url('layar/refresh-status-pertandingan') ?>', {
-            method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: body
-        })
-        .then(r => r.json())
-        .then(d => {
-            if (d && d.csrf_hash) csrfHash = d.csrf_hash;
-            if (d && d.status === false) {
-                window.location.href = '<?= base_url('layar/tanding') ?>';
-                return;
-            }
-        })
-        .catch(() => {});
-
-        const body2 = new URLSearchParams();
-        body2.append(csrfName, csrfHash);
-        fetch('<?= base_url('layar/refresh-status-seni') ?>', {
-            method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: body2
-        })
-        .then(r => r.json())
-        .then(d => {
-            if (d && d.csrf_hash) csrfHash = d.csrf_hash;
-            if (d && d.status === false) {
-                window.location.href = '<?= base_url('layar/seni') ?>';
-            }
-        })
-        .catch(() => {});
-    }
-
-    setInterval(checkActive, 3000);
-    checkActive();
-
-    // Socket.IO auto-redirect
-    if (typeof io !== 'undefined') {
-        const rtUrl = '<?= env('RT_PUBLIC_URL', 'http://localhost:3000') ?>';
-        const socket = io(rtUrl, { reconnection: true, reconnectionDelay: 1000 });
-        socket.emit('JOIN_ROOM', { id_gelanggang: '<?= (int) session()->get('id_gelanggang') ?>' });
-        socket.on('TANDING_BERLANGSUNG', () => { window.location.href = '<?= base_url('layar/tanding') ?>'; });
-        socket.on('SENI_BERLANGSUNG', () => { window.location.href = '<?= base_url('layar/seni') ?>'; });
-    }
-})();
+// Dashboard layar — pilih mode manual. Tidak ada auto-redirect ke layar
+// pertandingan/seni yang sedang berlangsung; user bebas memilih lewat kartu.
 </script>
 <?= $this->endSection() ?>
