@@ -104,19 +104,15 @@ final class BracketAdvancementServiceTest extends CIUnitTestCase
     {
         $this->requireRealDb();
 
-        $kompetisi = $this->conn->table('kompetisi_tanding')
-            ->where('perhitungan_medali', 1)
-            ->get()->getRow();
-
-        if ($kompetisi === null) {
-            $this->markTestSkipped('No kompetisi_tanding with perhitungan_medali=1.');
-        }
-
-        $partai = $this->conn->table('pertandingan')
-            ->where('id_kompetisi_tanding', $kompetisi->id_kompetisi_tanding)
-            ->where('babak', 'Semi Final')
-            ->where('id_atlet_merah IS NOT NULL')
-            ->where('id_atlet_biru IS NOT NULL')
+        // Cari Semi Final di kompetisi MANA SAJA yang perhitungan_medali=1
+        $partai = $this->conn->table('pertandingan p')
+            ->select('p.*')
+            ->join('kompetisi_tanding k', 'k.id_kompetisi_tanding = p.id_kompetisi_tanding')
+            ->where('k.perhitungan_medali', 1)
+            ->where('p.babak', 'Semi Final')
+            ->where('p.id_atlet_merah IS NOT NULL')
+            ->where('p.id_atlet_biru IS NOT NULL')
+            ->limit(1)
             ->get()->getRow();
 
         if ($partai === null) {
@@ -150,21 +146,16 @@ final class BracketAdvancementServiceTest extends CIUnitTestCase
     {
         $this->requireRealDb();
 
-        $kompetisi = $this->conn->table('kompetisi_tanding')
-            ->where('perhitungan_medali', 1)
-            ->get()->getRow();
-
-        if ($kompetisi === null) {
-            $this->markTestSkipped('No kompetisi_tanding available.');
-        }
-
-        // Find a non-Final match with nomor_pertandingan_selanjutnya set
-        $partai = $this->conn->table('pertandingan')
-            ->where('id_kompetisi_tanding', $kompetisi->id_kompetisi_tanding)
-            ->where('babak !=', 'Final')
-            ->where('nomor_pertandingan_selanjutnya IS NOT NULL')
-            ->where('id_atlet_merah IS NOT NULL')
-            ->where('id_atlet_biru IS NOT NULL')
+        // Cari non-Final match LANGSUNG dari seluruh kompetisi yang perhitungan_medali=1
+        $partai = $this->conn->table('pertandingan p')
+            ->select('p.*')
+            ->join('kompetisi_tanding k', 'k.id_kompetisi_tanding = p.id_kompetisi_tanding')
+            ->where('k.perhitungan_medali', 1)
+            ->where('p.babak !=', 'Final')
+            ->where('p.nomor_pertandingan_selanjutnya IS NOT NULL')
+            ->where('p.id_atlet_merah IS NOT NULL')
+            ->where('p.id_atlet_biru IS NOT NULL')
+            ->limit(1)
             ->get()->getRow();
 
         if ($partai === null) {
@@ -180,7 +171,7 @@ final class BracketAdvancementServiceTest extends CIUnitTestCase
 
         // Save original value in next match
         $nextMatch = $this->conn->table('pertandingan')
-            ->where('id_kompetisi_tanding', $kompetisi->id_kompetisi_tanding)
+            ->where('id_kompetisi_tanding', $partai->id_kompetisi_tanding)
             ->where('nomor_pertandingan', $nomorSelanjutnya)
             ->get()->getRow();
 
@@ -215,19 +206,15 @@ final class BracketAdvancementServiceTest extends CIUnitTestCase
     {
         $this->requireRealDb();
 
-        $kompetisi = $this->conn->table('kompetisi_seni')
-            ->where('perhitungan_medali', 1)
-            ->get()->getRow();
-
-        if ($kompetisi === null) {
-            $this->markTestSkipped('No kompetisi_seni with perhitungan_medali=1.');
-        }
-
-        $battle = $this->conn->table('battle_seni')
-            ->where('id_kompetisi_seni', $kompetisi->id_kompetisi_seni)
-            ->where('babak', 'Final')
-            ->where('id_penampilan_seni_biru IS NOT NULL')
-            ->where('id_penampilan_seni_merah IS NOT NULL')
+        // Cari Final battle LANGSUNG dari seluruh kompetisi seni yang perhitungan_medali=1
+        $battle = $this->conn->table('battle_seni b')
+            ->select('b.*')
+            ->join('kompetisi_seni k', 'k.id_kompetisi_seni = b.id_kompetisi_seni')
+            ->where('k.perhitungan_medali', 1)
+            ->where('b.babak', 'Final')
+            ->where('b.id_penampilan_seni_biru IS NOT NULL')
+            ->where('b.id_penampilan_seni_merah IS NOT NULL')
+            ->limit(1)
             ->get()->getRow();
 
         if ($battle === null) {
