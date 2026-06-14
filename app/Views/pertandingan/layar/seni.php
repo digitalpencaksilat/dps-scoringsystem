@@ -89,13 +89,7 @@
     .layar-seni-wrapper .nilai_akhir { color: #fff; }
     .layar-seni-wrapper .waktu_tampil { color: #212529; }
 
-    /* Header competition_title — parity tanding */
-    .layar-seni-wrapper #competition-title img { max-height: 70px; object-fit: contain; }
-    .layar-seni-wrapper #competition-title .event-name {
-        font-family: 'Oswald', sans-serif;
-        font-weight: 700;
-        letter-spacing: 1px;
-    }
+    /* Header competition_title — parity tanding (no extra overrides, match tanding exactly) */
 </style>
 <?= $this->endSection() ?>
 

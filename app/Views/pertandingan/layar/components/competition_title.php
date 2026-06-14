@@ -25,14 +25,13 @@
         </div>
         <div class="row justify-content-around py-1">
             <?php
-                $_left   = isset($info_left)   ? $info_left   : null;
-                $_center = isset($info_center) ? $info_center : null;
-                $_right  = isset($info_right)  ? $info_right  : null;
-                $infoCols = array_filter([$_left, $_center, $_right], function($v) { return $v !== null; });
-                $colSize = 'col-' . (12 / max(count($infoCols), 1));
+                $_left   = isset($info_left)   && $info_left   !== '' ? $info_left   : '-';
+                $_center = isset($info_center) && $info_center !== '' ? $info_center : '-';
+                $_right  = isset($info_right)  && $info_right  !== '' ? $info_right  : '-';
+                $infoCols = [$_left, $_center, $_right];
             ?>
             <?php foreach ($infoCols as $info): ?>
-                <div class="<?= $colSize ?>">
+                <div class="col-4">
                     <p class="h3 m-0 py-1 text-center bg-gradient-180-gray-dark text-white d-block text-truncate">
                         <?php
                             if (is_array($info)) {
