@@ -848,6 +848,37 @@
 
     function handleTimerData(dataWaktu) {
         if (!dataWaktu) return;
+
+        // NEW: Server-authoritative drift-compensated timer
+        // Format baru: { state, sisa_waktu_at_save, started_at_ms, server_now_ms, ronde, sisa_waktu }
+        if (dataWaktu.state !== undefined && dataWaktu.sisa_waktu_at_save !== undefined) {
+            var sisaAtSave = parseInt(dataWaktu.sisa_waktu_at_save) || 0;
+            var startedAtMs = parseInt(dataWaktu.started_at_ms) || 0;
+            var serverNowMs = parseInt(dataWaktu.server_now_ms) || 0;
+            var state = dataWaktu.state || 'paused';
+
+            var sisaSekarang = sisaAtSave;
+            if (state === 'running' && startedAtMs > 0 && serverNowMs > 0) {
+                var clientNowMs = Date.now();
+                var elapsedMs = (serverNowMs - startedAtMs) + (clientNowMs - serverNowMs);
+                var elapsedSeconds = Math.floor(elapsedMs / 1000);
+                sisaSekarang = Math.max(0, sisaAtSave - elapsedSeconds);
+            }
+
+            updateTimerDisplay(sisaSekarang);
+            if (state === 'running') startTimer(sisaSekarang);
+            else { stopTimer(); updateTimerDisplay(sisaSekarang); }
+
+            if (dataWaktu.ronde && String(dataWaktu.ronde) !== config.ronde) {
+                config.ronde = String(dataWaktu.ronde);
+                els('.kp-ronde').forEach(function (e) { e.textContent = 'Ronde ' + config.ronde; });
+                els('.ronde_pertandingan').forEach(function (e) { e.textContent = 'Round ' + config.ronde; });
+                updateButtonStates(ringkasan);
+            }
+            return;
+        }
+
+        // LEGACY fallback: old format dari polling response
         if (dataWaktu.data_waktu) {
             var dw = dataWaktu.data_waktu;
             var sisa = parseInt(dw.sisa_waktu) || 0;
@@ -856,6 +887,8 @@
             else { stopTimer(); updateTimerDisplay(sisa); }
             return;
         }
+
+        // LEGACY fallback: socket event format
         if (dataWaktu.action || dataWaktu.aksi) {
             var action = dataWaktu.action || dataWaktu.aksi;
             var waktu = parseInt(dataWaktu.waktu) || 0;

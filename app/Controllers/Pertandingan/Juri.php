@@ -232,6 +232,16 @@ class Juri extends BaseController
             );
         }
 
+        // Inject server_now_ms ke data_waktu untuk drift compensation di client
+        helper('timer');
+        $dataWaktu = null;
+        if (! empty($pertandingan->data_waktu)) {
+            $decoded = is_string($pertandingan->data_waktu)
+                ? json_decode($pertandingan->data_waktu, true)
+                : (array) $pertandingan->data_waktu;
+            $dataWaktu = inject_server_now_ms($decoded);
+        }
+
         return $this->jsonResponse([
             'status'                          => false,
             'pertandingan'                    => $pertandingan,
@@ -240,6 +250,8 @@ class Juri extends BaseController
                 'merah' => json_decode($dataNilai->penilaian_merah),
                 'biru'  => json_decode($dataNilai->penilaian_biru),
             ] : null,
+            'data_waktu'                      => $dataWaktu,
+            'server_now_ms'                   => (int) round(microtime(true) * 1000),
             'verifikasi_pertandingan'         => $verifikasiPertandingan,
             'jawaban_verifikasi_pertandingan' => $jawabanVerifikasi,
         ]);

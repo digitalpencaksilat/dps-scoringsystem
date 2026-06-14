@@ -318,11 +318,21 @@ const sekretaris_pertandingan = {
 
 	_emit_waktu: function(action, waktu) {
 		if (this.socket && this.pertandingan) {
+			// Build enriched payload supaya client subscriber dapat drift-compensate langsung
+			// tanpa nunggu polling response berikutnya.
+			var nowMs = Date.now();
+			var isRunning = (action === 'START' || action === 'RESUME' || (action === 'TOGGLE' && this.is_playing));
+
 			this.socket.emit('KONTROL_WAKTU', {
 				id_pertandingan: this.pertandingan.id_pertandingan,
 				action: action,
 				waktu: waktu,
-				ronde: this.ronde_aktif
+				ronde: this.ronde_aktif,
+				// Enriched: server-authoritative state hint untuk drift compensation
+				state: isRunning ? 'running' : 'paused',
+				sisa_waktu_at_save: waktu,
+				started_at_ms: isRunning ? nowMs : null,
+				server_now_ms: nowMs
 			});
 		}
 	},

@@ -190,5 +190,69 @@ const shared_timer = {
 	set_sound: function(gong_type, beep_enabled) {
 		this.gong_type = gong_type || 'gong_1';
 		this.beep_enabled = beep_enabled !== false;
+	},
+
+	/**
+	 * Apply server-authoritative timer state with drift compensation.
+	 *
+	 * Server sends:
+	 *   - state: 'running' | 'paused'
+	 *   - sisa_waktu_at_save: sisa detik saat server save (snapshot)
+	 *   - started_at_ms: Unix epoch ms saat START ditekan (null jika paused)
+	 *   - server_now_ms: Unix epoch ms server "sekarang" saat response
+	 *
+	 * Client menghitung:
+	 *   if (state === 'running') {
+	 *       elapsed_ms = (server_now_ms - started_at_ms) + (client_now - response_arrival_ms);
+	 *       sisa = sisa_waktu_at_save - elapsed_ms / 1000;
+	 *   } else {
+	 *       sisa = sisa_waktu_at_save;
+	 *   }
+	 *
+	 * Hasilnya: smooth timer antar polling, sinkron dengan server state.
+	 *
+	 * @param {object} serverState data_waktu dari server (decoded JSON)
+	 * @param {number} responseReceivedAtMs client timestamp saat response datang (optional, default: now)
+	 */
+	apply_server_state: function(serverState, responseReceivedAtMs) {
+		if (!serverState || typeof serverState !== 'object') {
+			return; // Invalid state, ignore
+		}
+
+		const state = serverState.state || 'paused';
+		const sisaAtSave = Math.max(0, parseInt(serverState.sisa_waktu_at_save) || 0);
+		const startedAtMs = parseInt(serverState.started_at_ms) || 0;
+		const serverNowMs = parseInt(serverState.server_now_ms) || 0;
+		const responseTime = responseReceivedAtMs || performance.now();
+		const clientNowMs = Date.now();
+
+		if (state === 'running' && startedAtMs > 0 && serverNowMs > 0) {
+			// Timer is running server-side
+			// Hitung elapsed time sejak server mulai
+			const serverElapsedMs = serverNowMs - startedAtMs;
+			// Tambah network jitter: delay dari response diterima hingga sekarang
+			const clientJitterMs = clientNowMs - (responseTime / 1000) * 1000;
+			const totalElapsedMs = serverElapsedMs + clientJitterMs;
+			const totalElapsedSeconds = Math.floor(totalElapsedMs / 1000);
+
+			const sisaSekarang = Math.max(0, sisaAtSave - totalElapsedSeconds);
+			this.time_seconds = sisaSekarang;
+
+			// Resume timer if not already running
+			if (!this.is_running) {
+				this.start();
+			}
+		} else {
+			// Timer is paused or idle server-side
+			this.time_seconds = sisaAtSave;
+			if (this.is_running) {
+				this.pause();
+			}
+		}
+
+		this.render();
+		if (this.on_tick) {
+			this.on_tick(this.time_seconds);
+		}
 	}
 };

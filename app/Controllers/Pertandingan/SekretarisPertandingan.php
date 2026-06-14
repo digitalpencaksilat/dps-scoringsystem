@@ -479,27 +479,51 @@ class SekretarisPertandingan extends BaseController
 
     /**
      * Simpan status + data_waktu timer (AJAX). Parity legacy toggle_timer_tanding().
+     *
+     * Server-authoritative timer: bangun ulang data_waktu pakai build_data_waktu_state()
+     * supaya semua client (layar, juri, KP) bisa drift-compensate via started_at_ms +
+     * server_now_ms — sinkron walau hanya polling tanpa socket.
      */
     public function toggleTimerTanding(int $idPertandingan)
     {
-        $status    = (string) $this->request->getPost('status_pertandingan');
-        $dataWaktu = $this->request->getPost('data_waktu');
+        $status     = (string) $this->request->getPost('status_pertandingan');
+        $rawWaktu   = $this->request->getPost('data_waktu');
 
         $statusLegal = ['berlangsung', 'berhenti', 'istirahat', 'standby', 'selesai'];
         if (! in_array($status, $statusLegal, true)) {
             return $this->response->setJSON(['status' => false, 'message' => 'Status tidak valid.']);
         }
 
-        $this->pertandinganModel->setStatusDanWaktu($idPertandingan, $status, $dataWaktu !== null ? (string) $dataWaktu : null);
+        // Parse client-side data_waktu (untuk ambil sisa_waktu + ronde + extra fields)
+        $clientWaktu = null;
+        if ($rawWaktu !== null) {
+            $decoded = is_string($rawWaktu) ? json_decode((string) $rawWaktu, true) : (array) $rawWaktu;
+            if (is_array($decoded)) {
+                $clientWaktu = $decoded;
+            }
+        }
+
+        // Build server-authoritative state
+        helper('timer');
+        $sisaWaktu = isset($clientWaktu['sisa_waktu']) ? (int) $clientWaktu['sisa_waktu'] : 0;
+        $ronde     = isset($clientWaktu['ronde']) ? (int) $clientWaktu['ronde'] : 1;
+        $authoritativeState = build_data_waktu_state($status, $sisaWaktu, $ronde, $clientWaktu);
+        $authoritativeJson  = json_encode($authoritativeState);
+
+        $this->pertandinganModel->setStatusDanWaktu($idPertandingan, $status, $authoritativeJson);
 
         // Push real-time timer ke room (Layar/Juri/KP).
         helper('realtime');
-        realtime_emit_waktu($idPertandingan, $status, $dataWaktu !== null ? json_decode((string) $dataWaktu) : null);
+        realtime_emit_waktu($idPertandingan, $status, $authoritativeState);
         realtime_emit_match_status_change($idPertandingan, $status);
 
         return $this->response
             ->setHeader('X-CSRF-TOKEN', csrf_hash())
-            ->setJSON(['status' => true, 'csrf_hash' => csrf_hash()]);
+            ->setJSON([
+                'status'     => true,
+                'data_waktu' => $authoritativeState,
+                'csrf_hash'  => csrf_hash(),
+            ]);
     }
 
     /**
@@ -591,11 +615,23 @@ class SekretarisPertandingan extends BaseController
             return $this->response->setJSON(['status' => true, 'reload' => true]);
         }
 
+        // Inject server_now_ms ke data_waktu untuk drift compensation di client
+        helper('timer');
+        $dataWaktu = null;
+        if (! empty($pertandingan->data_waktu)) {
+            $decoded = is_string($pertandingan->data_waktu)
+                ? json_decode($pertandingan->data_waktu, true)
+                : (array) $pertandingan->data_waktu;
+            $dataWaktu = inject_server_now_ms($decoded);
+        }
+
         return $this->response->setJSON([
-            'status'       => false,
-            'pertandingan' => $pertandingan,
-            'skor_merah'   => (int) $pertandingan->skor_merah,
-            'skor_biru'    => (int) $pertandingan->skor_biru,
+            'status'        => false,
+            'pertandingan'  => $pertandingan,
+            'data_waktu'    => $dataWaktu,
+            'server_now_ms' => (int) round(microtime(true) * 1000),
+            'skor_merah'    => (int) $pertandingan->skor_merah,
+            'skor_biru'     => (int) $pertandingan->skor_biru,
         ]);
     }
 

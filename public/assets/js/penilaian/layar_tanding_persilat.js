@@ -139,10 +139,53 @@ const layar = {
         layar.stopwatch = $(".stopwatch");
         layar.ronde_sekarang = $pertandingan.ronde_pertandingan;
 
-        // data_waktu: { "1": [total, remaining], "2": [...], "3": [...] }
-        if ($pertandingan.data_waktu && $pertandingan.data_waktu[layar.ronde_sekarang]) {
-            layar.waktu_sekarang = $pertandingan.data_waktu[layar.ronde_sekarang][1];
+        // NEW: Server-authoritative drift compensation
+        // Format baru data_waktu: { state, sisa_waktu_at_save, started_at_ms, server_now_ms, ronde, sisa_waktu }
+        // Format legacy: { sisa_waktu, ronde } atau { "1": [total, remaining], ... }
+        if ($pertandingan.data_waktu) {
+            var dw = $pertandingan.data_waktu;
+
+            // Format BARU (drift-compensated)
+            if (dw.state !== undefined && dw.sisa_waktu_at_save !== undefined) {
+                var sisa = layar.compute_sisa_waktu_with_drift(dw);
+                layar.waktu_sekarang = sisa * 1000; // convert to ms
+            }
+            // Format LEGACY (per-ronde array)
+            else if (dw[layar.ronde_sekarang]) {
+                layar.waktu_sekarang = dw[layar.ronde_sekarang][1];
+            }
+            // Format LEGACY (sisa_waktu only)
+            else if (dw.sisa_waktu !== undefined) {
+                layar.waktu_sekarang = dw.sisa_waktu * 1000;
+            }
         }
+    },
+
+    /**
+     * Hitung sisa waktu sekarang berdasarkan server-authoritative state.
+     * Mengkompensasi:
+     *  - Elapsed time sejak server start (server_now_ms - started_at_ms)
+     *  - Network jitter dari response sampai sekarang (Date.now() - response_arrival_ms)
+     */
+    compute_sisa_waktu_with_drift: function (dataWaktu) {
+        if (!dataWaktu || typeof dataWaktu !== 'object') return 0;
+
+        var sisaAtSave = parseInt(dataWaktu.sisa_waktu_at_save) || 0;
+        var startedAtMs = parseInt(dataWaktu.started_at_ms) || 0;
+        var serverNowMs = parseInt(dataWaktu.server_now_ms) || 0;
+        var state = dataWaktu.state || 'paused';
+
+        if (state !== 'running' || startedAtMs <= 0 || serverNowMs <= 0) {
+            return Math.max(0, sisaAtSave);
+        }
+
+        var clientNowMs = Date.now();
+        // serverNowMs adalah saat response di-build, clientNowMs sekarang
+        // Asumsi clock skew dianggap nol (sesuaikan dengan elapsed sejak save)
+        var elapsedMs = (serverNowMs - startedAtMs) + (clientNowMs - serverNowMs);
+        var elapsedSeconds = Math.floor(elapsedMs / 1000);
+
+        return Math.max(0, sisaAtSave - elapsedSeconds);
     },
 
     setup_modals: function () {
@@ -290,9 +333,11 @@ const layar = {
                     );
                     ui.update_tampilan_nilai();
 
-                    if (typeof layar.socket === 'undefined' || !layar.socket || !layar.socket.connected) {
-                        layar.update_timer();
-                    }
+                    // FIX: Always call update_timer after set_variable to apply drift-compensated time.
+                    // Previously this was skipped when socket was active, but polling still arrives —
+                    // and without re-render, the timer plugin keeps stale state from socket UPDATE_WAKTU.
+                    // The plugin internal countdown takes over after the call, so smooth tick is preserved.
+                    layar.update_timer();
 
                     setTimeout(function () {
                         layar.periksa_sistem_dialog();

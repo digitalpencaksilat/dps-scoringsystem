@@ -72,12 +72,52 @@ const juri = {
         juri.data_nilai = dataNilai;
         juri.pertandingan = pertandingan;
         juri.data_waktu = pertandingan.data_waktu ? (typeof pertandingan.data_waktu === 'string' ? JSON.parse(pertandingan.data_waktu) : pertandingan.data_waktu) : null;
-        juri.waktu_sekarang = juri.data_waktu ? juri.data_waktu[pertandingan.ronde_pertandingan]?.[1] ?? 0 : 0;
+
+        // NEW: Server-authoritative drift compensation
+        // Format baru: { state, sisa_waktu_at_save, started_at_ms, server_now_ms, ronde, sisa_waktu }
+        // Format legacy per-ronde: { "1": [start, total, remaining], ... }
+        if (juri.data_waktu) {
+            if (juri.data_waktu.state !== undefined && juri.data_waktu.sisa_waktu_at_save !== undefined) {
+                juri.waktu_sekarang = juri.compute_sisa_waktu_with_drift(juri.data_waktu);
+            } else if (juri.data_waktu[pertandingan.ronde_pertandingan]) {
+                juri.waktu_sekarang = juri.data_waktu[pertandingan.ronde_pertandingan]?.[1] ?? 0;
+            } else if (juri.data_waktu.sisa_waktu !== undefined) {
+                juri.waktu_sekarang = parseInt(juri.data_waktu.sisa_waktu) || 0;
+            } else {
+                juri.waktu_sekarang = 0;
+            }
+        } else {
+            juri.waktu_sekarang = 0;
+        }
+
         juri.id_pertandingan = pertandingan.id_pertandingan;
         juri.ronde_pertandingan = pertandingan.ronde_pertandingan;
         juri.pemenang = pemenang;
         juri.verifikasi_pertandingan = verifikasi;
         juri.jawaban_verifikasi_pertandingan = jawaban;
+    },
+
+    /**
+     * Hitung sisa waktu sekarang berdasarkan server-authoritative state.
+     * Compensate for elapsed time since server save + network jitter.
+     */
+    compute_sisa_waktu_with_drift(dataWaktu) {
+        if (!dataWaktu || typeof dataWaktu !== 'object') return 0;
+
+        const sisaAtSave = parseInt(dataWaktu.sisa_waktu_at_save) || 0;
+        const startedAtMs = parseInt(dataWaktu.started_at_ms) || 0;
+        const serverNowMs = parseInt(dataWaktu.server_now_ms) || 0;
+        const state = dataWaktu.state || 'paused';
+
+        if (state !== 'running' || startedAtMs <= 0 || serverNowMs <= 0) {
+            return Math.max(0, sisaAtSave);
+        }
+
+        const clientNowMs = Date.now();
+        const elapsedMs = (serverNowMs - startedAtMs) + (clientNowMs - serverNowMs);
+        const elapsedSeconds = Math.floor(elapsedMs / 1000);
+
+        return Math.max(0, sisaAtSave - elapsedSeconds);
     },
 
     // ─── ANIMATION (parity legacy) ─────────────────────────────────────────

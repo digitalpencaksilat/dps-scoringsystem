@@ -185,10 +185,8 @@ const layar = {
                     layar.set_variable(data.penampilan_seni_berlangsung, data.data_nilai);
                     ui.update_tampilan_nilai();
 
-                    // Only update timer if no socket connected
-                    if (!layar.socket || !layar.socket.connected) {
-                        layar.update_timer();
-                    }
+                    // Always update timer (server-authoritative waktu_tampil)
+                    layar.update_timer();
                 }
             },
             "json"
