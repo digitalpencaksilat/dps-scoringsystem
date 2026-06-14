@@ -82,7 +82,12 @@
         $info_center = strtoupper(esc($pertandingan->jenis_kelamin ?? ''));
         $info_right = strtoupper(esc($pertandingan->label ?? ''));
     ?>
-    <?= $this->include('pertandingan/layar/components/competition_title') ?>
+    <?= $this->include('pertandingan/layar/components/competition_title', [
+        'event_name' => $event_name ?? 'Pencak Silat Championship',
+        'info_left' => $info_left,
+        'info_center' => $info_center,
+        'info_right' => $info_right,
+    ]) ?>
 
     <!-- Header: Athletes + Babak -->
     <?= $this->include('pertandingan/layar/tanding/persilat/components/header') ?>

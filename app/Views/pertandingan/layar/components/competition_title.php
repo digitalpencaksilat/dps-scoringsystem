@@ -25,8 +25,11 @@
         </div>
         <div class="row justify-content-around py-1">
             <?php
-                $infoCols = array_filter([$info_left, $info_center, $info_right], function($v) { return $v !== null; });
-                $colSize = 'col-' . (12 / count($infoCols));
+                $_left   = isset($info_left)   ? $info_left   : null;
+                $_center = isset($info_center) ? $info_center : null;
+                $_right  = isset($info_right)  ? $info_right  : null;
+                $infoCols = array_filter([$_left, $_center, $_right], function($v) { return $v !== null; });
+                $colSize = 'col-' . (12 / max(count($infoCols), 1));
             ?>
             <?php foreach ($infoCols as $info): ?>
                 <div class="<?= $colSize ?>">

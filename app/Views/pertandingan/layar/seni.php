@@ -114,21 +114,25 @@
      data-status-penampilan="<?= esc($statusPenampilan) ?>"
      data-waktu-tampil="<?= $waktuTampil ?>">
 
-    <!-- ═══ HEADER COMPETITION TITLE — shared component (parity tanding) ═══ -->
+    <!-- HEADER COMPETITION TITLE - shared component (parity tanding) -->
     <?php
-        $info_left = strtoupper(esc(($partai_seni_berlangsung->nama_gelanggang ?? 'GELANGGANG') . ' - ' . ($partai_seni_berlangsung->nomor_partai ?? '-')));
-        $info_center = $isBattle ? strtoupper(esc($partai_seni_berlangsung->babak_battle ?? '-')) : null;
-        $info_right_kategori = strtoupper(esc($kompetisi_seni->nama_kategori_usia ?? '-'));
-        $info_right_jenis = strtoupper(esc($kompetisi_seni->jenis_seni ?? '-'));
-        // Gabung kategori usia + jenis seni jika tidak battle, agar tetap 3 kolom konsisten
+        $_il = strtoupper(esc(($partai_seni_berlangsung->nama_gelanggang ?? 'GELANGGANG') . ' - ' . ($partai_seni_berlangsung->nomor_partai ?? '-')));
+        $_kat = strtoupper(esc($kompetisi_seni->nama_kategori_usia ?? '-'));
+        $_jen = strtoupper(esc($kompetisi_seni->jenis_seni ?? '-'));
         if ($isBattle) {
-            $info_right = $info_right_kategori . ' / ' . $info_right_jenis;
+            $_ic = strtoupper(esc($partai_seni_berlangsung->babak_battle ?? '-'));
+            $_ir = $_kat . ' / ' . $_jen;
         } else {
-            $info_center = $info_right_kategori;
-            $info_right = $info_right_jenis;
+            $_ic = $_kat;
+            $_ir = $_jen;
         }
     ?>
-    <?= $this->include('pertandingan/layar/components/competition_title') ?>
+    <?= $this->include('pertandingan/layar/components/competition_title', [
+        'event_name'  => $event_name ?? 'Pencak Silat Championship',
+        'info_left'   => $_il,
+        'info_center' => $_ic,
+        'info_right'  => $_ir,
+    ]) ?>
 
     <!-- ═══ PESERTA — no bendera ═══ -->
     <?php
