@@ -192,25 +192,25 @@
     <div class="row mt-2 g-2">
         <div class="col-3 fade-up">
             <div class="summary-box bg-gradient-180-gray-dark rounded kolom-median-kebenaran">
-                <span class="summary-value median_kebenaran">-</span>
+                <span class="summary-value median_kebenaran">0</span>
                 <span class="summary-label">Median Kebenaran</span>
             </div>
         </div>
         <div class="col-3 fade-up">
             <div class="summary-box bg-gradient-180-gray-dark rounded kolom-standar-deviasi">
-                <span class="summary-value standar_deviasi">-</span>
+                <span class="summary-value standar_deviasi">0</span>
                 <span class="summary-label">Standard Deviation</span>
             </div>
         </div>
         <div class="col-3 fade-up">
             <div class="summary-box bg-gradient-180-gray-dark rounded kolom-median">
-                <span class="summary-value median">-</span>
+                <span class="summary-value median">0</span>
                 <span class="summary-label">Median</span>
             </div>
         </div>
         <div class="col-3 fade-up">
             <div class="summary-box bg-gradient-180-gray-dark rounded kolom-hukuman">
-                <span class="summary-value hukuman">-</span>
+                <span class="summary-value hukuman">0</span>
                 <span class="summary-label">Penalty</span>
             </div>
         </div>
