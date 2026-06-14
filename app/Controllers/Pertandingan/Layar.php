@@ -274,7 +274,7 @@ class Layar extends BaseController
 
         $theme = in_array($theme, ['light', 'dark'], true) ? $theme : 'dark';
 
-        return view("pertandingan/layar/seni/persilat/{$theme}", [
+        return view('pertandingan/layar/seni', [
             'title'                        => 'Papan Skor Seni',
             'penampilan_seni_berlangsung'   => $penampilan,
             'kompetisi_seni'               => $kompetisiSeni,
