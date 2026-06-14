@@ -258,7 +258,20 @@ class Juri extends BaseController
             return $this->jsonResponse(['status' => false, 'message' => 'Partai tidak aktif.']);
         }
 
-        $jawaban = (string) $this->request->getPost('jawaban'); // 'biru' | 'merah' | 'invalid'
+        // FIX #7: Accept legacy field name 'jawaban_sistem_dialog' (CI3 compat) AND new 'jawaban'.
+        // Legacy juga pakai 'sah'/'tidak_sah' untuk verifikasi jatuhan — map ke biru/merah/invalid.
+        $jawaban = (string) ($this->request->getPost('jawaban')
+            ?? $this->request->getPost('jawaban_sistem_dialog') ?? '');
+
+        // Map legacy values to new vocabulary
+        $legacyMap = [
+            'sah'         => 'biru',     // Legacy "sah" = jatuhan biru valid
+            'tidak_sah'   => 'invalid',  // Legacy "tidak_sah" = invalid
+            'null'        => '',
+        ];
+        if (isset($legacyMap[$jawaban])) {
+            $jawaban = $legacyMap[$jawaban];
+        }
 
         if (! in_array($jawaban, ['biru', 'merah', 'invalid'], true)) {
             return $this->jsonResponse(['status' => false, 'message' => 'Jawaban tidak valid.']);

@@ -428,6 +428,9 @@ class SekretarisPertandingan extends BaseController
 
         helper('realtime');
         realtime_emit_tanding_berlangsung($this->idGelanggang(), $idPertandingan);
+        
+        // FIX #10: Emit ROOM_RESET agar juri/layar/kp reload state
+        realtime_reset_room($idPertandingan);
 
         return $this->response->setJSON(['status' => true, 'csrf_hash' => csrf_hash()]);
     }
@@ -553,6 +556,12 @@ class SekretarisPertandingan extends BaseController
         };
 
         $this->pertandinganModel->selesaikanPertandingan($idPertandingan, $idPemenang !== null ? (int) $idPemenang : null, $jenis);
+
+        // FIX #1: Advance bracket (medali + next-partai atlet + bagan JSON update)
+        if ($idPemenang !== null) {
+            $service = new \App\Services\BracketAdvancementService();
+            $service->advanceTanding($partai, (int) $idPemenang, $jenis);
+        }
 
         // Reset room real-time (bersihkan snapshot; klien akan reload via polling).
         helper('realtime');
@@ -994,6 +1003,27 @@ class SekretarisPertandingan extends BaseController
 
         $this->battleSeniModel->setPemenang((int) $battle->id_battle_seni, $idPemenang, $jenisKemenangan);
 
+        // FIX #2: Advance bracket (medali + bagan_battle_seni JSON update)
+        // Note: BattleSeniModel::setPemenang() already places winner into next battle slot;
+        // BracketAdvancementService menangani medali + JSON bracket display.
+        if ($idPemenang > 0) {
+            $service = new \App\Services\BracketAdvancementService();
+            $service->advanceBattleSeni($battle, $idPemenang);
+        }
+
+        // Realtime: kasih tahu klien (juri/layar) bahwa penampilan + battle selesai
+        helper('realtime');
+        realtime_emit_penampilan_selesai($idPenampilanSeni, [
+            'id_battle_seni'    => $battle->id_battle_seni,
+            'id_pemenang'       => $idPemenang,
+            'jenis_kemenangan'  => $jenisKemenangan,
+        ]);
+        realtime_emit_seni_selesai($idPenampilanSeni, [
+            'id_battle_seni'    => $battle->id_battle_seni,
+            'id_pemenang'       => $idPemenang,
+            'jenis_kemenangan'  => $jenisKemenangan,
+        ]);
+
         return $this->response
             ->setHeader('X-CSRF-TOKEN', csrf_hash())
             ->setJSON(['status' => true, 'csrf_hash' => csrf_hash()]);
@@ -1016,6 +1046,10 @@ class SekretarisPertandingan extends BaseController
         // Set target ke standby
         $db->table('penampilan_seni')->where('id_penampilan_seni', $idPenampilanSeni)
             ->update(['status_penampilan' => 'standby']);
+
+        // FIX #10: Emit ROOM_RESET agar klien reload
+        helper('realtime');
+        realtime_reset_room($idPenampilanSeni);
 
         return redirect()->to('/sekretaris-pertandingan/timer-seni');
     }
@@ -1044,6 +1078,11 @@ class SekretarisPertandingan extends BaseController
                 ->countAllResults();
             $inputMedali = ($belumTampil === 0);
         }
+
+        // FIX #10: Emit realtime event saat DQ agar klien refresh display
+        helper('realtime');
+        realtime_emit_hukuman_update($idPenampilanSeni, ['diskualifikasi' => 1]);
+        realtime_emit_update_nilai_seni($idPenampilanSeni);
 
         return $this->response
             ->setHeader('X-CSRF-TOKEN', csrf_hash())
@@ -1104,6 +1143,10 @@ class SekretarisPertandingan extends BaseController
                     ->update(['jenis_medali' => $medali]);
             }
         }
+
+        // FIX #10: Emit realtime update agar layar refresh medali display
+        helper('realtime');
+        realtime_emit_update_nilai_seni($idPenampilanSeni);
 
         return $this->response
             ->setHeader('X-CSRF-TOKEN', csrf_hash())

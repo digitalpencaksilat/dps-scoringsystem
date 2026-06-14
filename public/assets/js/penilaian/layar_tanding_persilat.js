@@ -71,6 +71,38 @@ const layar = {
                     }
                 }
             });
+
+            // FIX #3: Add PERTANDINGAN_SELESAI listener (auto-redirect to hasil page)
+            layar.socket.on('PERTANDINGAN_SELESAI', function (data) {
+                if (data && String(data.id_pertandingan) === String(layar.id_pertandingan)) {
+                    window.location = '/layar/hasil-tanding/' + data.id_pertandingan;
+                }
+            });
+
+            // FIX #6: Add NILAI_UPDATE listener (live score updates instead of polling)
+            layar.socket.on('NILAI_UPDATE', function (data) {
+                if (data && String(data.id_pertandingan) === String(layar.id_pertandingan)) {
+                    if (data.skor_merah !== undefined) layar.pertandingan.skor_merah = data.skor_merah;
+                    if (data.skor_biru !== undefined) layar.pertandingan.skor_biru = data.skor_biru;
+                    ui.update_tampilan_nilai();
+                }
+            });
+
+            // FIX #6: Add UPDATE_SKOR listener (aggregate score updates)
+            layar.socket.on('UPDATE_SKOR', function (data) {
+                if (data && String(data.id_pertandingan) === String(layar.id_pertandingan)) {
+                    if (data.skor_merah !== undefined) layar.pertandingan.skor_merah = data.skor_merah;
+                    if (data.skor_biru !== undefined) layar.pertandingan.skor_biru = data.skor_biru;
+                    ui.update_tampilan_nilai();
+                }
+            });
+
+            // FIX #3: Add ROOM_RESET listener (redirect on error/abort)
+            layar.socket.on('ROOM_RESET', function (data) {
+                if (data && String(data.id_pertandingan) === String(layar.id_pertandingan)) {
+                    window.location = '/layar/standby';
+                }
+            });
         }
 
         ui.update_tampilan_nilai();

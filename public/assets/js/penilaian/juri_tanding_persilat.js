@@ -470,6 +470,28 @@ const juri = {
                 }
             }
         });
+
+        // FIX #4: Add UPDATE_WAKTU listener for accurate per-tick timer sync
+        // (was missing — waktu_sekarang previously only refreshed via 3s polling,
+        //  causing waktu_pertandingan stamps on score entries to lag up to 3s).
+        socket.on('UPDATE_WAKTU', data => {
+            if (data && String(data.id_pertandingan) === String(juri.id_pertandingan)) {
+                if (data.data_waktu && juri.ronde_pertandingan && data.data_waktu[juri.ronde_pertandingan]) {
+                    // data_waktu structure: { ronde: [start_ms, total_ms, remaining_ms] }
+                    juri.waktu_sekarang = data.data_waktu[juri.ronde_pertandingan][2];
+                }
+                if (data.status_pertandingan) {
+                    juri.status_pertandingan = data.status_pertandingan;
+                }
+            }
+        });
+
+        // FIX #4: Add ROOM_RESET listener (match/round reset → reload to recover state)
+        socket.on('ROOM_RESET', data => {
+            if (data && String(data.id_pertandingan) === String(juri.id_pertandingan)) {
+                window.location.reload();
+            }
+        });
     }
 };
 

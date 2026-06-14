@@ -53,6 +53,52 @@ const layar = {
                     layar.stopwatch.timer("pause");
                 }
             });
+
+            // FIX #3: Auto-redirect ke hasil page saat penampilan selesai
+            layar.socket.on('PENAMPILAN_SELESAI', function (data) {
+                if (data && String(data.id_penampilan_seni) === String(layar.id_penampilan_seni)) {
+                    // Layar perlu reload supaya status_penampilan terbaca dari DB
+                    setTimeout(function () { window.location.reload(); }, 500);
+                }
+            });
+
+            layar.socket.on('SENI_SELESAI', function (data) {
+                if (data && String(data.id_penampilan_seni) === String(layar.id_penampilan_seni)) {
+                    window.location = '/layar/standby';
+                }
+            });
+
+            // FIX #6: Live nilai update saat juri/KP edit penilaian
+            layar.socket.on('UPDATE_NILAI_SENI', function (data) {
+                if (data && String(data.id_penampilan_seni) === String(layar.id_penampilan_seni)) {
+                    layar.refresh_status_seni();
+                }
+            });
+
+            // Hukuman update dari KP (juri yang lihat angka berubah)
+            layar.socket.on('HUKUMAN_UPDATE', function (data) {
+                if (data && String(data.id_penampilan_seni) === String(layar.id_penampilan_seni)) {
+                    layar.refresh_status_seni();
+                }
+            });
+
+            // Akses penilaian dibuka/ditutup oleh KP
+            layar.socket.on('AKSES_PENILAIAN', function (data) {
+                if (data && String(data.id_penampilan_seni) === String(layar.id_penampilan_seni)) {
+                    layar.refresh_status_seni();
+                }
+            });
+
+            layar.socket.on('SENI_AKSES_DITUTUP', function (data) {
+                if (data && String(data.id_penampilan_seni) === String(layar.id_penampilan_seni)) {
+                    layar.refresh_status_seni();
+                }
+            });
+
+            // Room reset (mis. ganti partai / batalkan)
+            layar.socket.on('ROOM_RESET', function (data) {
+                window.location = '/layar/standby';
+            });
         }
 
         ui.update_tampilan_nilai();

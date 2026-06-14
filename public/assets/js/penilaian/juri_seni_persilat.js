@@ -63,6 +63,77 @@ const juri = {
     juri.refresh_status_seni();
     var $data_pointer = juri.pointer.get_data_pointer();
     juri.pointer.update_tampilan_pointer($data_pointer);
+    juri.init_socket();
+  },
+
+  // FIX #5: Init socket subscription (was missing — juri seni operated polling-only)
+  // Tanpa ini akses gating, hukuman, penampilan-selesai, timer hanya update tiap 2s polling.
+  init_socket: function() {
+    if (typeof io === 'undefined') return;
+    var rtUrl = (typeof SOCKET_URL !== 'undefined' && SOCKET_URL)
+        ? SOCKET_URL
+        : (window.REALTIME_URL || 'http://localhost:3000');
+    juri.socket = io(rtUrl, { reconnection: true, reconnectionDelay: 1000 });
+    juri.socket.emit('JOIN_ROOM', { id_penampilan_seni: juri.id_penampilan_seni });
+
+    // Akses penilaian dibuka/ditutup oleh KP — instant lock/unlock
+    juri.socket.on('AKSES_PENILAIAN', function(data) {
+      if (data && String(data.id_penampilan_seni) === String(juri.id_penampilan_seni)) {
+        if (typeof juri.update_akses_penilaian === 'function') {
+          juri.update_akses_penilaian(data.akses_penilaian);
+        } else {
+          juri.refresh_status_seni();
+        }
+      }
+    });
+
+    juri.socket.on('SENI_AKSES_DITUTUP', function(data) {
+      if (data && String(data.id_penampilan_seni) === String(juri.id_penampilan_seni)) {
+        if (typeof juri.update_akses_penilaian === 'function') {
+          juri.update_akses_penilaian('ditutup');
+        } else {
+          juri.refresh_status_seni();
+        }
+      }
+    });
+
+    // KP applied hukuman — refresh ringkasan dari server
+    juri.socket.on('HUKUMAN_UPDATE', function(data) {
+      if (data && String(data.id_penampilan_seni) === String(juri.id_penampilan_seni)) {
+        juri.refresh_status_seni();
+      }
+    });
+
+    // Penampilan selesai — hard cut: reload supaya UI selesai konsisten
+    juri.socket.on('PENAMPILAN_SELESAI', function(data) {
+      if (data && String(data.id_penampilan_seni) === String(juri.id_penampilan_seni)) {
+        window.location.reload();
+      }
+    });
+
+    // Timer seni — sync count-up display saat sekretaris start/pause
+    juri.socket.on('UPDATE_WAKTU', function(data) {
+      if (data && String(data.id_penampilan_seni) === String(juri.id_penampilan_seni)) {
+        juri.waktu_tampil = data.waktu;
+        juri.status_penampilan = data.action;
+      }
+    });
+
+    juri.socket.on('KONTROL_WAKTU_SENI', function(data) {
+      if (data && String(data.id_penampilan_seni) === String(juri.id_penampilan_seni)) {
+        if (data.waktu_tampil !== undefined) juri.waktu_tampil = data.waktu_tampil;
+        if (data.status_penampilan) juri.status_penampilan = data.status_penampilan;
+      }
+    });
+
+    // Room reset (ganti partai/batalkan) — reload untuk recover state
+    juri.socket.on('ROOM_RESET', function(data) {
+      window.location.reload();
+    });
+
+    // Connection status indicator
+    juri.socket.on('connect', function() { juri.set_online_status(true); });
+    juri.socket.on('disconnect', function() { juri.set_online_status(false); });
   },
 
   set_variable: function($penampilan_seni, $data_nilai, $mode, $kelas_aksen_warna) {
