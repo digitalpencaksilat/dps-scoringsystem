@@ -676,7 +676,8 @@ class SekretarisPertandingan extends BaseController
         }
 
         // Step 2: Cari penampilan battle yang aktif (via battle_seni)
-        $battle = $db->table('battle_seni bs')
+        // Cek penampilan BIRU terlebih dahulu
+        $battleBiru = $db->table('battle_seni bs')
             ->select('ps.*, djs.nomor_partai, djs.id_jadwal_seni, bs.id_battle_seni,
                 kps.id_kompetisi_seni, kps.id_kontingen,
                 k.nama_kontingen, ks.nomor_pool,
@@ -687,12 +688,7 @@ class SekretarisPertandingan extends BaseController
             ->join('detail_jadwal_seni djs', 'djs.id_battle_seni = bs.id_battle_seni')
             ->join('jadwal_seni js', 'js.id_jadwal_seni = djs.id_jadwal_seni')
             ->join('gelanggang g', 'g.id_gelanggang = js.id_gelanggang')
-            ->groupStart()
-                ->join('penampilan_seni ps', 'ps.id_penampilan_seni = bs.id_penampilan_seni_biru')
-                ->orGroupStart()
-                    ->join('penampilan_seni ps', 'ps.id_penampilan_seni = bs.id_penampilan_seni_merah')
-                ->groupEnd()
-            ->groupEnd()
+            ->join('penampilan_seni ps', 'ps.id_penampilan_seni = bs.id_penampilan_seni_biru')
             ->join('kelompok_peserta_seni kps', 'kps.id_kelompok_peserta_seni = ps.id_kelompok_peserta_seni')
             ->join('kontingen k', 'k.id_kontingen = kps.id_kontingen', 'left')
             ->join('kompetisi_seni ks', 'ks.id_kompetisi_seni = kps.id_kompetisi_seni')
@@ -703,7 +699,34 @@ class SekretarisPertandingan extends BaseController
             ->whereNotIn('ps.status_penampilan', ['belum_tampil', 'sudah_tampil'])
             ->get()->getRow();
 
-        return $battle;
+        if ($battleBiru !== null) {
+            return $battleBiru;
+        }
+
+        // Jika biru tidak aktif, cek penampilan MERAH
+        $battleMerah = $db->table('battle_seni bs')
+            ->select('ps.*, djs.nomor_partai, djs.id_jadwal_seni, bs.id_battle_seni,
+                kps.id_kompetisi_seni, kps.id_kontingen,
+                k.nama_kontingen, ks.nomor_pool,
+                sks.jenis_seni, sks.nama_seni, sks.sistem_penampilan, sks.id_sub_kategori_seni,
+                sks.format_penilaian as format_penilaian_sks,
+                ku.nama_kategori_usia, ku.jenis_kelamin,
+                js.id_gelanggang, g.nama_gelanggang')
+            ->join('detail_jadwal_seni djs', 'djs.id_battle_seni = bs.id_battle_seni')
+            ->join('jadwal_seni js', 'js.id_jadwal_seni = djs.id_jadwal_seni')
+            ->join('gelanggang g', 'g.id_gelanggang = js.id_gelanggang')
+            ->join('penampilan_seni ps', 'ps.id_penampilan_seni = bs.id_penampilan_seni_merah')
+            ->join('kelompok_peserta_seni kps', 'kps.id_kelompok_peserta_seni = ps.id_kelompok_peserta_seni')
+            ->join('kontingen k', 'k.id_kontingen = kps.id_kontingen', 'left')
+            ->join('kompetisi_seni ks', 'ks.id_kompetisi_seni = kps.id_kompetisi_seni')
+            ->join('sub_kategori_seni sks', 'sks.id_sub_kategori_seni = ks.id_sub_kategori_seni')
+            ->join('kategori_lomba kl', 'kl.id_kategori_lomba = sks.id_kategori_lomba')
+            ->join('kategori_usia ku', 'ku.id_kategori_usia = kl.id_kategori_usia')
+            ->where('js.id_gelanggang', $idG)
+            ->whereNotIn('ps.status_penampilan', ['belum_tampil', 'sudah_tampil'])
+            ->get()->getRow();
+
+        return $battleMerah;
     }
 
     /**
