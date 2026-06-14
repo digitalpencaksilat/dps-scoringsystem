@@ -443,8 +443,8 @@
             if (!d || String(d.id_penampilan_seni) !== String(idPenampilan)) return;
             setTimeout(() => window.location.reload(), 500);
         });
-        socket.on('SENI_SELESAI', () => { window.location = '<?= base_url('layar/standby') ?>'; });
-        socket.on('ROOM_RESET', () => { window.location = '<?= base_url('layar/standby') ?>'; });
+        socket.on('SENI_SELESAI', () => { window.location = '<?= base_url('layar/standby?mode=seni') ?>'; });
+        socket.on('ROOM_RESET', () => { window.location = '<?= base_url('layar/standby?mode=seni') ?>'; });
     }
 
     // ── HTTP polling ──
