@@ -28,13 +28,15 @@ class PenampilanSeniModel extends Model
         // Cari detail_jadwal_seni yang aktif di gelanggang ini
         // Case 1: Pool — id_penampilan_seni langsung (status_penampilan di penampilan_seni)
         $poolRow = $db->table('detail_jadwal_seni djs')
-            ->select('djs.id_penampilan_seni, djs.id_battle_seni')
+            ->select('djs.id_penampilan_seni, djs.id_battle_seni, djs.nomor_partai')
             ->join('jadwal_seni js', 'js.id_jadwal_seni = djs.id_jadwal_seni')
             ->join('penampilan_seni ps', 'ps.id_penampilan_seni = djs.id_penampilan_seni')
             ->where('js.id_gelanggang', $idGelanggang)
             ->where('djs.id_penampilan_seni IS NOT NULL')
             ->whereNotIn('ps.status_penampilan', ['belum_tampil', 'sudah_tampil'])
-            ->get(1)->getRow();
+            ->orderBy('djs.nomor_partai', 'ASC')
+            ->limit(1)
+            ->get()->getRow();
 
         if ($poolRow !== null) {
             return $this->getFullPenampilan((int) $poolRow->id_penampilan_seni);

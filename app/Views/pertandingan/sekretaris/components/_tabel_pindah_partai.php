@@ -22,8 +22,10 @@
                         <?php if ((int) ($s->id_penampilan_seni ?? 0) === $idPS) : ?>
                             <span class="badge bg-warning text-dark">Aktif</span>
                         <?php elseif (in_array($s->status_penampilan ?? '', ['belum_tampil', 'standby'], true)) : ?>
-                            <a href="<?= base_url('sekretaris-pertandingan/pindah-partai-seni/' . $s->id_penampilan_seni) ?>"
-                               class="btn btn-sm btn-danger rounded-pill px-3"><i class="fas fa-play me-1"></i>Pilih</a>
+                            <button type="button" class="btn btn-sm btn-danger rounded-pill px-3"
+                                    onclick="sekretaris_pertandingan.pindah_partai(<?= (int) ($s->nomor_partai ?? 0) ?>)">
+                                <i class="fas fa-play me-1"></i>Pilih
+                            </button>
                         <?php else : ?>
                             <span class="text-muted small">—</span>
                         <?php endif; ?>

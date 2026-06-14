@@ -1091,27 +1091,108 @@ class SekretarisPertandingan extends BaseController
 
     /**
      * Pindah Partai Seni (jump to another performance). Parity legacy pindah_partai_seni().
+     * Accept POST partai_selanjutnya (nomor_partai) and return JSON for AJAX.
      */
-    public function pindahPartaiSeni(int $idPenampilanSeni)
+    public function pindahPartaiSeni()
     {
         $db = \Config\Database::connect();
+        $nomorPartaiSelanjutnya = (int) $this->request->getPost('partai_selanjutnya');
+        
+        if ($nomorPartaiSelanjutnya <= 0) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Nomor partai tidak valid.']);
+        }
+
+        // Cari detail_jadwal_seni dengan nomor_partai di gelanggang ini
+        $detailJadwalSeni = $db->table('detail_jadwal_seni djs')
+            ->join('jadwal_seni js', 'js.id_jadwal_seni = djs.id_jadwal_seni')
+            ->where('js.id_gelanggang', $this->idGelanggang())
+            ->where('djs.nomor_partai', $nomorPartaiSelanjutnya)
+            ->get()->getRow();
+
+        if ($detailJadwalSeni === null) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Partai tidak ditemukan.']);
+        }
+
+        // Tentukan id_penampilan_seni dari detail_jadwal_seni
+        $idPenampilanSeni = null;
+        if (!empty($detailJadwalSeni->id_penampilan_seni)) {
+            // Pool mode
+            $idPenampilanSeni = (int) $detailJadwalSeni->id_penampilan_seni;
+            
+            // Verify penampilan exists
+            $penampilanExists = $db->table('penampilan_seni')
+                ->where('id_penampilan_seni', $idPenampilanSeni)
+                ->countAllResults();
+            if ($penampilanExists === 0) {
+                return $this->response->setJSON(['status' => false, 'message' => 'Data penampilan tidak ditemukan di database.']);
+            }
+        } elseif (!empty($detailJadwalSeni->id_battle_seni)) {
+            // Battle mode — set biru performance to standby (akan dimulai first)
+            $battle = $db->table('battle_seni')
+                ->where('id_battle_seni', (int) $detailJadwalSeni->id_battle_seni)
+                ->get()->getRow();
+            
+            if (!$battle) {
+                return $this->response->setJSON(['status' => false, 'message' => 'Data battle tidak ditemukan.']);
+            }
+            
+            // Verify biru penampilan exists dan bukan null
+            if (empty($battle->id_penampilan_seni_biru)) {
+                return $this->response->setJSON(['status' => false, 'message' => 'Data penampilan battle tidak lengkap (sudut biru kosong).']);
+            }
+            
+            $penampilanBiruExists = $db->table('penampilan_seni')
+                ->where('id_penampilan_seni', (int) $battle->id_penampilan_seni_biru)
+                ->countAllResults();
+            if ($penampilanBiruExists === 0) {
+                return $this->response->setJSON(['status' => false, 'message' => 'Data penampilan sudut biru tidak ditemukan di database.']);
+            }
+            
+            $idPenampilanSeni = (int) $battle->id_penampilan_seni_biru;
+        }
+
+        if ($idPenampilanSeni === null) {
+            return $this->response->setJSON(['status' => false, 'message' => 'Data penampilan seni tidak lengkap - partai tidak punya penampilan pool maupun battle.']);
+        }
 
         // Pastikan tidak ada penampilan aktif lain
         $aktif = $this->getPenampilanSeniAktif();
         if ($aktif !== null && (int) $aktif->id_penampilan_seni !== $idPenampilanSeni) {
-            return redirect()->to('/sekretaris-pertandingan/timer-seni')
-                ->with('error', 'Masih ada penampilan yang berlangsung.');
+            return $this->response->setJSON(['status' => false, 'message' => 'Masih ada penampilan yang berlangsung.']);
         }
 
         // Set target ke standby
-        $db->table('penampilan_seni')->where('id_penampilan_seni', $idPenampilanSeni)
+        $updated = $db->table('penampilan_seni')->where('id_penampilan_seni', $idPenampilanSeni)
             ->update(['status_penampilan' => 'standby']);
 
-        // FIX #10: Emit ROOM_RESET agar klien reload
+        // DEBUG: verify update sukses
+        if (!$updated) {
+            log_message('error', "[pindahPartaiSeni] Gagal update status_penampilan ke standby untuk id_penampilan_seni={$idPenampilanSeni}");
+            return $this->response->setJSON(['status' => false, 'message' => 'Gagal mengupdate status penampilan.']);
+        }
+
+        // Verify penampilan exists in detail_jadwal_seni untuk gelanggang ini
+        $verify = $db->table('detail_jadwal_seni djs')
+            ->join('jadwal_seni js', 'js.id_jadwal_seni = djs.id_jadwal_seni')
+            ->where('js.id_gelanggang', $this->idGelanggang())
+            ->where('djs.nomor_partai', $nomorPartaiSelanjutnya)
+            ->countAllResults();
+
+        if ($verify === 0) {
+            log_message('error', "[pindahPartaiSeni] Partai {$nomorPartaiSelanjutnya} tidak ditemukan di gelanggang {$this->idGelanggang()} setelah update");
+        }
+
+        // Emit SENI_BERLANGSUNG ke room gelanggang → layar standby auto-redirect ke /layar/seni.
+        // (RESET_ROOM saja tidak cukup: layar standby dengar event SENI_BERLANGSUNG, bukan ROOM_RESET.)
         helper('realtime');
         realtime_reset_room($idPenampilanSeni);
+        realtime_emit_seni_berlangsung($this->idGelanggang(), $idPenampilanSeni);
 
-        return redirect()->to('/sekretaris-pertandingan/timer-seni');
+        log_message('info', "[pindahPartaiSeni] Sukses pindah ke partai {$nomorPartaiSelanjutnya}, id_penampilan_seni={$idPenampilanSeni}, id_gelanggang={$this->idGelanggang()}");
+
+        return $this->response
+            ->setHeader('X-CSRF-TOKEN', csrf_hash())
+            ->setJSON(['status' => true, 'csrf_hash' => csrf_hash()]);
     }
 
     /**

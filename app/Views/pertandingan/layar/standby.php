@@ -55,6 +55,8 @@
         const endpoint = mode === 'seni'
             ? '<?= base_url('layar/refresh-status-seni') ?>'
             : '<?= base_url('layar/refresh-status-pertandingan') ?>';
+        
+        console.log('[Standby] Polling ' + mode + ' status...');
 
         const body = new URLSearchParams();
         body.append(csrfName, csrfHash);
@@ -65,11 +67,19 @@
         .then(r => r.json())
         .then(d => {
             if (d && d.csrf_hash) csrfHash = d.csrf_hash;
+            console.log('[Standby] Response:', JSON.stringify(d));
             if (d && d.status === false) {
-                window.location.reload();
+                // Ada pertandingan/penampilan aktif → redirect ke halaman scoreboard
+                if (mode === 'seni') {
+                    console.log('[Standby] Redirect to layar/seni');
+                    window.location.href = '<?= base_url('layar/seni') ?>';
+                } else {
+                    console.log('[Standby] Redirect to layar/tanding');
+                    window.location.href = '<?= base_url('layar/tanding') ?>';
+                }
             }
         })
-        .catch(() => {});
+        .catch(e => { console.warn('[Standby] Poll error:', e); });
     }
 
     setInterval(checkReload, 3000);
@@ -82,13 +92,20 @@
         const idGelanggang = '<?= (int) session()->get('id_gelanggang') ?>';
 
         socket.on('connect', () => {
+            console.log('[Standby] Socket connected, joining room:', idGelanggang);
             socket.emit('JOIN_ROOM', { id_gelanggang: idGelanggang });
         });
 
         if (mode === 'tanding') {
-            socket.on('TANDING_BERLANGSUNG', () => { window.location.reload(); });
+            socket.on('TANDING_BERLANGSUNG', () => {
+                console.log('[Standby] Socket event TANDING_BERLANGSUNG received');
+                window.location.href = '<?= base_url('layar/tanding') ?>';
+            });
         } else {
-            socket.on('SENI_BERLANGSUNG', () => { window.location.reload(); });
+            socket.on('SENI_BERLANGSUNG', () => {
+                console.log('[Standby] Socket event SENI_BERLANGSUNG received');
+                window.location.href = '<?= base_url('layar/seni') ?>';
+            });
         }
     }
 })();

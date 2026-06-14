@@ -71,8 +71,10 @@
 												<span class="badge <?= $badgeClass ?>"><?= $statusLabel ?></span>
 											</td>
 											<td>
-												<a href="<?= base_url('sekretaris-pertandingan/pindah-partai-seni/' . ($row->id_penampilan_seni ?? '')) ?>"
-													class="btn btn-sm btn-primary">Pilih</a>
+												<button type="button" class="btn btn-sm btn-primary"
+													onclick="sekretaris_pertandingan.pindah_partai(<?= (int) ($row->nomor_partai ?? 0) ?>)">
+													Pilih
+												</button>
 											</td>
 										</tr>
 									<?php endforeach; ?>
@@ -121,8 +123,10 @@
 												<span class="badge <?= $badgeClass ?>"><?= $statusLabel ?></span>
 											</td>
 											<td>
-												<a href="<?= base_url('sekretaris-pertandingan/pindah-partai-seni/' . ($row->id_penampilan_seni ?? '')) ?>"
-													class="btn btn-sm btn-primary">Pilih</a>
+												<button type="button" class="btn btn-sm btn-primary"
+													onclick="sekretaris_pertandingan.pindah_partai(<?= (int) ($row->nomor_partai ?? 0) ?>)">
+													Pilih
+												</button>
 											</td>
 										</tr>
 									<?php endforeach; ?>

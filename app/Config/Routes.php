@@ -105,7 +105,7 @@ $routes->group('sekretaris-pertandingan', ['filter' => 'perangkat:sekretaris,tim
     $routes->post('timer-reset-seni/(:num)', 'Pertandingan\SekretarisPertandingan::timerResetSeni/$1');
     $routes->post('selesaikan-penampilan-seni/(:num)', 'Pertandingan\SekretarisPertandingan::selesaikanPenampilanSeni/$1');
     $routes->post('pilih-pemenang-battle-seni/(:num)', 'Pertandingan\SekretarisPertandingan::pilihPemenangBattleSeni/$1');
-    $routes->get('pindah-partai-seni/(:num)', 'Pertandingan\SekretarisPertandingan::pindahPartaiSeni/$1');
+    $routes->post('pindah-partai-seni', 'Pertandingan\SekretarisPertandingan::pindahPartaiSeni');
     $routes->post('diskualifikasi-penampilan-seni/(:num)', 'Pertandingan\SekretarisPertandingan::diskualifikasiPenampilanSeni/$1');
     $routes->post('batalkan-diskualifikasi-seni/(:num)', 'Pertandingan\SekretarisPertandingan::batalkanDiskualifikasiSeni/$1');
     $routes->post('input-manual-juara-seni', 'Pertandingan\SekretarisPertandingan::inputManualJuaraSeni');
@@ -120,6 +120,7 @@ $routes->group('sekretaris-pertandingan', ['filter' => 'perangkat:sekretaris,tim
 $routes->get('layar', 'Pertandingan\Layar::index', ['filter' => 'perangkat:layar']);
 $routes->group('layar', ['filter' => 'perangkat:layar'], static function ($routes) {
     $routes->get('home', 'Pertandingan\Layar::index');
+    $routes->get('standby', 'Pertandingan\Layar::standby');
 
     // Tanding
     $routes->get('tanding', 'Pertandingan\Layar::tanding');

@@ -57,6 +57,22 @@ class Layar extends BaseController
         ]);
     }
 
+    /**
+     * Halaman standby layar — menunggu pertandingan/penampilan berikutnya.
+     * Bisa dipanggil langsung via /layar/standby dengan query ?mode=tanding|seni.
+     */
+    public function standby()
+    {
+        $mode = $this->request->getGet('mode') ?? 'tanding';
+        $mode = in_array($mode, ['tanding', 'seni'], true) ? $mode : 'tanding';
+
+        return view('pertandingan/layar/standby', [
+            'title'           => 'Layar — Standby',
+            'nama_gelanggang' => session()->get('nama_gelanggang') ?? 'Gelanggang',
+            'mode'            => $mode,
+        ]);
+    }
+
     // ═══════════════════════════════════════════════════════════════════════
     //  TANDING
     // ═══════════════════════════════════════════════════════════════════════
@@ -295,6 +311,8 @@ class Layar extends BaseController
     {
         $db = \Config\Database::connect();
         $penampilan = $this->penampilanSeniModel->getAktif($this->idGelanggang());
+
+        log_message('debug', "[Layar::refreshStatusSeni] id_gelanggang={$this->idGelanggang()}, idPenampilanSeni param=" . ($idPenampilanSeni ?? 'null') . ", penampilan aktif=" . ($penampilan ? $penampilan->id_penampilan_seni . ' (status: ' . $penampilan->status_penampilan . ')' : 'null'));
 
         if ($penampilan === null) {
             // No active performance — check if there's a completed pool/battle to show results

@@ -274,14 +274,18 @@ const sekretaris_pertandingan = {
 	 * Jump to different match/performance
 	 */
 	pindah_partai: function(nomor_partai) {
-		$.post(window.location.origin + '/sekretaris-pertandingan/pindah-partai-seni/' + nomor_partai, function(response) {
-			if (response.status) {
-				window.location.reload();
-			} else {
-				Swal.fire('Info', response.message || 'Partai tidak ditemukan', 'info');
-			}
-		}, 'json').fail(function() {
-			window.location.href = window.location.origin + '/sekretaris-pertandingan/pindah-partai-seni/' + nomor_partai;
+		$.post(window.location.origin + '/sekretaris-pertandingan/pindah-partai-seni',
+			{ partai_selanjutnya: nomor_partai },
+			function(response) {
+				if (response.status) {
+					// Redirect explicit ke timer-seni, bukan reload halaman saat ini
+					window.location.href = window.location.origin + '/sekretaris-pertandingan/timer-seni';
+				} else {
+					Swal.fire('Info', response.message || 'Partai tidak ditemukan', 'info');
+				}
+			}, 'json'
+		).fail(function(xhr) {
+			Swal.fire('Error', 'Gagal pindah partai. Status: ' + xhr.status, 'error');
 		});
 	},
 

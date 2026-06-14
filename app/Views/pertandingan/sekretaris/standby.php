@@ -55,7 +55,7 @@
 <div class="standby-wrapper" style="min-height: calc(100vh - 70px);">
     <!-- Icon -->
     <div class="standby-icon">
-        <?php if (($tipe_standby ?? '') === 'tanding'): ?>
+        <?php if (($mode_standby ?? 'tanding') === 'tanding'): ?>
             <i class="fa-solid fa-hand-fist"></i>
         <?php else: ?>
             <i class="fa-solid fa-masks-theater"></i>
@@ -70,7 +70,7 @@
 
     <!-- Title -->
     <div class="standby-title">
-        <?php if (($tipe_standby ?? '') === 'tanding'): ?>
+        <?php if (($mode_standby ?? 'tanding') === 'tanding'): ?>
             Standby — No Match Playing
         <?php else: ?>
             Standby — No Performance Playing
@@ -79,7 +79,7 @@
 
     <!-- Subtitle -->
     <p class="standby-subtitle">
-        <?php if (($tipe_standby ?? '') === 'tanding'): ?>
+        <?php if (($mode_standby ?? 'tanding') === 'tanding'): ?>
             Pilih partai tanding untuk memulai pertandingan
         <?php else: ?>
             Pilih penampilan seni untuk memulai penilaian
@@ -88,7 +88,7 @@
 
     <!-- Action: pindah partai -->
     <div class="mt-3 position-relative" style="z-index: 1;">
-        <?php if (($tipe_standby ?? '') === 'tanding'): ?>
+        <?php if (($mode_standby ?? 'tanding') === 'tanding'): ?>
             <?= $this->include('pertandingan/sekretaris/components/_offcanvas_pindah_partai_tanding') ?>
         <?php else: ?>
             <?= $this->include('pertandingan/sekretaris/components/_offcanvas_pindah_partai_seni') ?>
@@ -102,6 +102,26 @@
 </div>
 
 <script>
+const sekretaris_pertandingan = {
+	// Dipakai oleh tombol "Pilih" pada offcanvas/tabel pindah partai di halaman standby.
+	pindah_partai: function(nomor_partai) {
+		$.post("<?= base_url('sekretaris-pertandingan/pindah-partai-seni') ?>",
+			{ partai_selanjutnya: nomor_partai },
+			function(response) {
+				if (response.status) {
+					// Redirect explicit ke timer-seni
+					window.location.href = "<?= base_url('sekretaris-pertandingan/timer-seni') ?>";
+				} else {
+					Swal.fire('Info', response.message || 'Partai tidak ditemukan', 'info');
+				}
+			},
+			"json"
+		).fail(function(xhr) {
+			Swal.fire('Error', 'Gagal pindah partai. Status: ' + xhr.status, 'error');
+		});
+	}
+};
+
 const perangkat_pertandingan = {
 	refresh_status_seni_standby: () => {
 		$.post("<?= base_url('sekretaris-pertandingan/refresh-status-seni') ?>",
@@ -134,7 +154,7 @@ const perangkat_pertandingan = {
 };
 
 $(document).ready(function() {
-	const tipe = "<?= esc($tipe_standby ?? 'tanding') ?>";
+	const tipe = "<?= esc($mode_standby ?? 'tanding') ?>";
 	if (tipe == "tanding") {
 		perangkat_pertandingan.refresh_status_pertandingan_standby();
 	} else {
