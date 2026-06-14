@@ -2,180 +2,100 @@
 /**
  * Layar Seni — Scoreboard penampilan seni (PERSILAT).
  *
- * Visual: parity header tanding (competition_title), no rounded cards,
- *   no bendera/gambar, kontingen font gelap, label juri/ringkasan lebih besar.
- *
+ * Visual: parity layout & header dari tanding (edge-to-edge, no margins).
  * Real-time: requestAnimationFrame timer + Socket.IO + HTTP polling fallback.
  */
 ?>
 <?= $this->extend('layouts/penilaian') ?>
 
 <?= $this->section('styles') ?>
-<link rel="stylesheet" href="<?= base_url('assets/css/penilaian/layar.css') ?>">
-<link rel="stylesheet" href="<?= base_url('assets/css/penilaian/layar-seni.css') ?>">
 <style>
-/* ═══ Override: no rounded, presisi, label besar ═══ */
-.layar-seni-legacy * { border-radius: 0 !important; }
+    /* Gradient utilities — parity tanding */
+    .bg-gradient-180-black     { background: linear-gradient(180deg, #111 0%, #000 100%); }
+    .bg-gradient-180-gray-dark { background: linear-gradient(180deg, #2c2c2c 0%, #1a1a1a 100%); }
+    .bg-gradient-180-blue      { background: linear-gradient(180deg, #1565c0 0%, #0d47a1 100%); }
+    .bg-gradient-180-red       { background: linear-gradient(180deg, #c62828 0%, #b71c1c 100%); }
+    .bg-gradient-180-white     { background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%); }
 
-.layar-seni-legacy {
-    background: #000 !important;
-    min-height: 100vh;
-    padding: 1rem 2rem;
-}
+    /* Override: tidak ada border-radius di seluruh layar seni */
+    .layar-seni-wrapper * { border-radius: 0 !important; }
 
-/* Header competition_title — parity tanding */
-.layar-seni-legacy #competition-title {
-    background: #fff !important;
-    margin-bottom: 0.75rem;
-}
-.layar-seni-legacy #competition-title img {
-    max-height: 70px;
-    object-fit: contain;
-}
-.layar-seni-legacy #competition-title .event-name {
-    font-family: 'Oswald', sans-serif;
-    font-size: 1.6rem;
-    font-weight: 700;
-    letter-spacing: 1px;
-}
-.layar-seni-legacy #competition-title .info-pill {
-    font-size: 1.1rem;
-    font-weight: 600;
-    padding: 0.4rem 0.75rem;
-}
+    /* Animation hooks */
+    .layar-seni-wrapper .opacity { opacity: 0; }
+    .layar-seni-wrapper .animated { animation-duration: 0.5s; animation-fill-mode: both; }
+    @keyframes seniFadeInDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes seniFadeInLeft { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes seniFadeInRight { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+    .layar-seni-wrapper .fadeInDown  { animation-name: seniFadeInDown; }
+    .layar-seni-wrapper .fadeInLeft  { animation-name: seniFadeInLeft; }
+    .layar-seni-wrapper .fadeInRight { animation-name: seniFadeInRight; }
 
-/* Peserta section — no bendera, kontingen dark text */
-.layar-seni-legacy #daftar-peserta {
-    margin: 0.75rem 0;
-}
-.layar-seni-legacy #daftar-peserta .nama-peserta {
-    font-family: 'Oswald', sans-serif;
-    font-size: 1.8rem;
-    font-weight: 700;
-    letter-spacing: 1px;
-}
-.layar-seni-legacy #daftar-peserta .nama-kontingen {
-    font-size: 1.3rem;
-    font-weight: 600;
-    color: #212529 !important;
-}
+    /* Peserta — kontingen text gelap, no bendera */
+    .layar-seni-wrapper .nama-peserta {
+        font-family: 'Oswald', sans-serif;
+        font-size: clamp(1.5rem, 3vw, 2.4rem);
+        font-weight: 700;
+        letter-spacing: 1px;
+    }
+    .layar-seni-wrapper .nama-kontingen {
+        font-size: clamp(1rem, 2vw, 1.5rem);
+        font-weight: 600;
+        color: #212529 !important;
+    }
 
-/* Kolom juri — label lebih besar & visible */
-.layar-seni-legacy .urutan_total_nilai_juri {
-    display: flex;
-    gap: 0.5rem;
-    margin: 0;
-    padding: 0;
-}
-.layar-seni-legacy .kolom_total_nilai {
-    flex: 1;
-    min-width: 0;
-    padding: 0;
-}
-.layar-seni-legacy .kolom_total_nilai .label-juri {
-    font-size: 1.1rem !important;
-    font-weight: 700;
-    letter-spacing: 1px;
-    padding: 0.5rem 0;
-}
-.layar-seni-legacy .kolom_total_nilai .nilai-juri {
-    font-size: 2rem !important;
-    font-weight: 800;
-    color: #212529;
-    padding: 0.75rem 0;
-}
-.layar-seni-legacy .kolom_total_nilai.terpilih .nilai-juri {
-    background: linear-gradient(180deg, #ffc107, #ff9800) !important;
-    color: #fff !important;
-}
-.layar-seni-legacy .kolom_total_nilai.tidak-terpilih .nilai-juri {
-    text-decoration: line-through;
-    opacity: 0.5;
-}
+    /* Kolom juri — label & nilai besar */
+    .layar-seni-wrapper .label-juri {
+        font-size: clamp(0.95rem, 1.4vw, 1.25rem) !important;
+        font-weight: 700;
+        letter-spacing: 1px;
+    }
+    .layar-seni-wrapper .nilai-juri {
+        font-size: clamp(1.6rem, 3vw, 2.4rem) !important;
+        font-weight: 800;
+        color: #212529;
+    }
+    .layar-seni-wrapper .kolom_total_nilai.terpilih .nilai-juri {
+        background: linear-gradient(180deg, #ffc107, #ff9800) !important;
+        color: #fff !important;
+    }
+    .layar-seni-wrapper .kolom_total_nilai.tidak-terpilih .nilai-juri {
+        text-decoration: line-through;
+        opacity: 0.5;
+    }
 
-/* Ringkasan 4 kolom — label lebih besar */
-.layar-seni-legacy .ringkasan-row {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 0.75rem;
-}
-.layar-seni-legacy .ringkasan-col {
-    flex: 1;
-    background: #fff;
-    overflow: hidden;
-}
-.layar-seni-legacy .ringkasan-col .ringkasan-label {
-    font-size: 1rem;
-    font-weight: 700;
-    letter-spacing: 1px;
-    padding: 0.6rem 0.5rem;
-    text-transform: uppercase;
-}
-.layar-seni-legacy .ringkasan-col .ringkasan-value {
-    font-size: 2.5rem;
-    font-weight: 800;
-    color: #212529;
-    padding: 0.5rem;
-    line-height: 1.1;
-}
+    /* Ringkasan — label besar */
+    .layar-seni-wrapper .ringkasan-label {
+        font-size: clamp(0.95rem, 1.3vw, 1.2rem) !important;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+    .layar-seni-wrapper .ringkasan-value {
+        font-size: clamp(2rem, 4vw, 3.2rem) !important;
+        font-weight: 800;
+        color: #212529;
+        line-height: 1.1;
+    }
 
-/* Nilai akhir & waktu — 2 kolom hero */
-.layar-seni-legacy .hero-row {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 0.75rem;
-}
-.layar-seni-legacy .hero-col {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 180px;
-}
-.layar-seni-legacy .nilai_akhir {
-    font-family: 'Oswald', sans-serif;
-    font-size: clamp(4rem, 10vw, 8rem);
-    font-weight: 900;
-    color: #fff;
-    line-height: 1;
-}
-.layar-seni-legacy .waktu_tampil {
-    font-family: 'Oswald', sans-serif;
-    font-size: clamp(4rem, 10vw, 8rem);
-    font-weight: 900;
-    color: #212529;
-    line-height: 1;
-}
+    /* Hero: nilai akhir & waktu */
+    .layar-seni-wrapper .nilai_akhir,
+    .layar-seni-wrapper .waktu_tampil {
+        font-family: 'Oswald', sans-serif;
+        font-size: clamp(4rem, 12vw, 9rem);
+        font-weight: 900;
+        line-height: 1;
+        margin: 0;
+    }
+    .layar-seni-wrapper .nilai_akhir { color: #fff; }
+    .layar-seni-wrapper .waktu_tampil { color: #212529; }
 
-/* Animation */
-.layar-seni-legacy .opacity { opacity: 0; }
-.layar-seni-legacy .animated { animation-duration: 0.5s; animation-fill-mode: both; }
-@keyframes layarFadeInDown {
-    from { opacity: 0; transform: translateY(-30px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-@keyframes layarFadeInLeft {
-    from { opacity: 0; transform: translateX(-30px); }
-    to { opacity: 1; transform: translateX(0); }
-}
-@keyframes layarFadeInRight {
-    from { opacity: 0; transform: translateX(30px); }
-    to { opacity: 1; transform: translateX(0); }
-}
-.layar-seni-legacy .fadeInDown { animation-name: layarFadeInDown; }
-.layar-seni-legacy .fadeInLeft { animation-name: layarFadeInLeft; }
-.layar-seni-legacy .fadeInRight { animation-name: layarFadeInRight; }
-
-/* Gradient utilities */
-.layar-seni-legacy .bg-gradient-180-gray-dark {
-    background: linear-gradient(180deg, #2d3436 0%, #27242c 100%) !important;
-}
-.layar-seni-legacy .bg-gradient-180-red {
-    background: linear-gradient(180deg, #e63946 0%, #c62828 100%) !important;
-}
-.layar-seni-legacy .bg-gradient-180-blue {
-    background: linear-gradient(180deg, #1e88e5 0%, #1565c0 100%) !important;
-}
+    /* Header competition_title — parity tanding */
+    .layar-seni-wrapper #competition-title img { max-height: 70px; object-fit: contain; }
+    .layar-seni-wrapper #competition-title .event-name {
+        font-family: 'Oswald', sans-serif;
+        font-weight: 700;
+        letter-spacing: 1px;
+    }
 </style>
 <?= $this->endSection() ?>
 
@@ -189,57 +109,57 @@
     $idBiru           = $partai_seni_berlangsung->id_penampilan_seni_biru ?? null;
     $isSudutBiru      = $isBattle && $idBiru && (int)$idBiru === $idPenampilan;
 ?>
-<div class="container-fluid layar-seni-legacy"
+<div class="container-fluid min-vh-100 bg-gradient-180-black overflow-hidden layar-seni-wrapper"
      data-id-penampilan="<?= $idPenampilan ?>"
      data-status-penampilan="<?= esc($statusPenampilan) ?>"
      data-waktu-tampil="<?= $waktuTampil ?>">
 
-    <!-- ═══ HEADER — parity tanding competition_title ═══ -->
-    <div class="row bg-white justify-content-around opacity" id="competition-title">
-        <div class="col-1 px-0 py-2 d-flex justify-content-center align-items-center">
+    <!-- ═══ HEADER COMPETITION TITLE — parity tanding ═══ -->
+    <div class="row bg-white bg-gradient-180-white mb-2 justify-content-around opacity" id="competition-title">
+        <div class="col-1 col-xxl-1 px-0 py-2 d-flex justify-content-center align-items-center">
             <img src="<?= base_url('assets/images/brand/dps/logo-international-federation.png') ?>"
                  alt="Persilat" class="img-fluid" onerror="this.style.display='none'">
         </div>
         <div class="col-8 col-xxl-9">
             <div class="row mb-1">
                 <div class="col-12 bg-gradient-180-gray-dark">
-                    <p class="event-name text-center m-0 text-white my-2">
+                    <p class="event-name h2 text-center m-0 text-white my-2">
                         <?= esc($event_name ?? 'Pencak Silat Championship') ?>
                     </p>
                 </div>
             </div>
             <div class="row justify-content-around py-1">
-                <div class="col-3">
-                    <p class="info-pill m-0 py-1 text-center bg-gradient-180-gray-dark text-white d-block text-truncate">
-                        <?= esc($partai_seni_berlangsung->nama_gelanggang ?? 'Gelanggang') ?> - <?= esc($partai_seni_berlangsung->nomor_partai ?? '-') ?>
+                <div class="<?= $isBattle ? 'col-3' : 'col-4' ?>">
+                    <p class="h3 m-0 py-1 text-center bg-gradient-180-gray-dark text-white d-block text-truncate">
+                        <?= strtoupper(esc($partai_seni_berlangsung->nama_gelanggang ?? 'GELANGGANG')) ?> - <?= esc($partai_seni_berlangsung->nomor_partai ?? '-') ?>
                     </p>
                 </div>
                 <?php if ($isBattle): ?>
                 <div class="col-3">
-                    <p class="info-pill m-0 py-1 text-center bg-gradient-180-gray-dark text-white d-block text-truncate">
+                    <p class="h3 m-0 py-1 text-center bg-gradient-180-gray-dark text-white d-block text-truncate">
                         <?= strtoupper(esc($partai_seni_berlangsung->babak_battle ?? '-')) ?>
                     </p>
                 </div>
                 <?php endif; ?>
-                <div class="col-3">
-                    <p class="info-pill m-0 py-1 text-center bg-gradient-180-gray-dark text-white d-block text-truncate">
+                <div class="<?= $isBattle ? 'col-3' : 'col-4' ?>">
+                    <p class="h3 m-0 py-1 text-center bg-gradient-180-gray-dark text-white d-block text-truncate">
                         <?= strtoupper(esc($kompetisi_seni->nama_kategori_usia ?? '-')) ?>
                     </p>
                 </div>
-                <div class="col-3">
-                    <p class="info-pill m-0 py-1 text-center bg-gradient-180-gray-dark text-white d-block text-truncate">
+                <div class="<?= $isBattle ? 'col-3' : 'col-4' ?>">
+                    <p class="h3 m-0 py-1 text-center bg-gradient-180-gray-dark text-white d-block text-truncate">
                         <?= strtoupper(esc($kompetisi_seni->jenis_seni ?? '-')) ?>
                     </p>
                 </div>
             </div>
         </div>
-        <div class="col-1 px-0 py-2 d-flex justify-content-center align-items-center">
+        <div class="col-1 col-xxl-1 px-0 py-2 d-flex justify-content-center align-items-center">
             <img src="<?= base_url('assets/images/brand/dps/logo-federation.png') ?>"
                  alt="Federation" class="img-fluid" onerror="this.style.display='none'">
         </div>
     </div>
 
-    <!-- ═══ PESERTA SENI (no bendera, kontingen dark) ═══ -->
+    <!-- ═══ PESERTA — no bendera ═══ -->
     <?php
         $peserta = $peserta_seni ?? [];
         $namaKontingen = !empty($peserta) ? ($peserta[0]->nama_kontingen ?? '-') : '-';
@@ -249,17 +169,17 @@
             ? implode(' - ', $namaPesertaArr)
             : ($penampilan_seni_berlangsung->nama_kelompok ?? $penampilan_seni_berlangsung->nama_pendaftar ?? 'Peserta');
     ?>
-    <div class="row opacity" id="daftar-peserta">
-        <div class="col-12">
-            <div class="row">
-                <div class="col-12 bg-gradient-180-gray-dark py-2">
+    <div class="row mb-1 opacity" id="daftar-peserta">
+        <div class="col-12 px-0">
+            <div class="row mx-0">
+                <div class="col-12 bg-gradient-180-gray-dark py-2 px-3">
                     <p class="nama-peserta text-center text-truncate text-uppercase m-0 text-white">
                         <?= esc($namaPesertaStr) ?>
                     </p>
                 </div>
             </div>
-            <div class="row">
-                <div class="col-12 bg-white py-2">
+            <div class="row mx-0">
+                <div class="col-12 bg-gradient-180-white py-2 px-3">
                     <p class="nama-kontingen text-center text-truncate text-uppercase m-0">
                         <?= esc($namaKontingen) ?>
                     </p>
@@ -274,9 +194,9 @@
             ? count($data_nilai[$idPenampilan])
             : 5;
     ?>
-    <div class="row mt-2" id="juri-grid">
-        <div class="col-12">
-            <div class="urutan_total_nilai_juri">
+    <div class="row mb-1" id="juri-grid">
+        <div class="col-12 px-0">
+            <div class="row mx-0 urutan_total_nilai_juri">
                 <?php for ($i = 0; $i < $jumlahJuri; $i++):
                     $juriRow = $data_nilai[$idPenampilan][$i] ?? null;
                     $juriId  = $juriRow->id_perangkat_pertandingan ?? 0;
@@ -289,12 +209,12 @@
                         }
                     }
                 ?>
-                    <div class="kolom_total_nilai opacity <?= $terpilih ? 'terpilih' : 'tidak-terpilih' ?>"
+                    <div class="col px-1 kolom_total_nilai opacity <?= $terpilih ? 'terpilih' : 'tidak-terpilih' ?>"
                          data-id-perangkat="<?= (int) $juriId ?>">
-                        <div class="bg-gradient-180-gray-dark text-center">
+                        <div class="bg-gradient-180-gray-dark text-center py-2">
                             <p class="label-juri text-white text-uppercase m-0">Juri <?= $i + 1 ?></p>
                         </div>
-                        <div class="bg-white text-center">
+                        <div class="bg-gradient-180-white text-center py-3">
                             <p class="nilai-juri m-0"><?= $nilaiJuri > 0 ? number_format($nilaiJuri, 3) : '-' ?></p>
                         </div>
                     </div>
@@ -313,37 +233,41 @@
         $median          = $cat->median ?? 0;
         $hukuman         = $cat->hukuman ?? 0;
     ?>
-    <div class="ringkasan-row">
-        <div class="ringkasan-col opacity">
-            <div class="bg-gradient-180-gray-dark text-center">
-                <p class="ringkasan-label text-white m-0">Median Kebenaran</p>
-            </div>
-            <div class="text-center">
-                <p class="ringkasan-value m-0 median_kebenaran"><?= number_format((float)$medianKebenaran, 3) ?></p>
-            </div>
-        </div>
-        <div class="ringkasan-col opacity">
-            <div class="bg-gradient-180-gray-dark text-center">
-                <p class="ringkasan-label text-white m-0">Standard Deviation</p>
-            </div>
-            <div class="text-center">
-                <p class="ringkasan-value m-0 standar_deviasi"><?= number_format((float)$stdDev, 6) ?></p>
-            </div>
-        </div>
-        <div class="ringkasan-col opacity">
-            <div class="bg-gradient-180-gray-dark text-center">
-                <p class="ringkasan-label text-white m-0">Median</p>
-            </div>
-            <div class="text-center">
-                <p class="ringkasan-value m-0 median"><?= number_format((float)$median, 3) ?></p>
-            </div>
-        </div>
-        <div class="ringkasan-col opacity">
-            <div class="bg-gradient-180-gray-dark text-center">
-                <p class="ringkasan-label text-white m-0">Penalty</p>
-            </div>
-            <div class="text-center">
-                <p class="ringkasan-value m-0 hukuman"><?= (float)$hukuman > 0 ? '-' . number_format((float)$hukuman, 1) : '0' ?></p>
+    <div class="row mb-1">
+        <div class="col-12 px-0">
+            <div class="row mx-0">
+                <div class="col-3 px-1 opacity">
+                    <div class="bg-gradient-180-gray-dark text-center py-2">
+                        <p class="ringkasan-label text-white m-0">Median Kebenaran</p>
+                    </div>
+                    <div class="bg-gradient-180-white text-center py-3">
+                        <p class="ringkasan-value m-0 median_kebenaran"><?= number_format((float)$medianKebenaran, 3) ?></p>
+                    </div>
+                </div>
+                <div class="col-3 px-1 opacity">
+                    <div class="bg-gradient-180-gray-dark text-center py-2">
+                        <p class="ringkasan-label text-white m-0">Standard Deviation</p>
+                    </div>
+                    <div class="bg-gradient-180-white text-center py-3">
+                        <p class="ringkasan-value m-0 standar_deviasi"><?= number_format((float)$stdDev, 6) ?></p>
+                    </div>
+                </div>
+                <div class="col-3 px-1 opacity">
+                    <div class="bg-gradient-180-gray-dark text-center py-2">
+                        <p class="ringkasan-label text-white m-0">Median</p>
+                    </div>
+                    <div class="bg-gradient-180-white text-center py-3">
+                        <p class="ringkasan-value m-0 median"><?= number_format((float)$median, 3) ?></p>
+                    </div>
+                </div>
+                <div class="col-3 px-1 opacity">
+                    <div class="bg-gradient-180-gray-dark text-center py-2">
+                        <p class="ringkasan-label text-white m-0">Penalty</p>
+                    </div>
+                    <div class="bg-gradient-180-white text-center py-3">
+                        <p class="ringkasan-value m-0 hukuman"><?= (float)$hukuman > 0 ? '-' . number_format((float)$hukuman, 1) : '0' ?></p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -356,26 +280,33 @@
             $bgFinal = $isSudutBiru ? 'bg-gradient-180-blue' : 'bg-gradient-180-red';
         }
     ?>
-    <div class="hero-row">
-        <div class="hero-col <?= $bgFinal ?> opacity" id="hero-nilai-akhir">
-            <p class="nilai_akhir m-0" id="nilai-akhir-display"><?= number_format($nilaiAkhir, 3) ?></p>
-        </div>
-        <div class="hero-col bg-white opacity" id="hero-waktu">
-            <p class="waktu_tampil m-0" id="timer-seni">
-                <?= sprintf('%02d:%02d', floor($waktuTampil / 60), $waktuTampil % 60) ?>
-            </p>
+    <div class="row mb-1">
+        <div class="col-12 px-0">
+            <div class="row mx-0">
+                <div class="col-6 px-1 opacity" id="hero-nilai-akhir">
+                    <div class="<?= $bgFinal ?> d-flex align-items-center justify-content-center" style="min-height: 200px;">
+                        <p class="nilai_akhir text-center" id="nilai-akhir-display"><?= number_format($nilaiAkhir, 3) ?></p>
+                    </div>
+                </div>
+                <div class="col-6 px-1 opacity" id="hero-waktu">
+                    <div class="bg-gradient-180-white d-flex align-items-center justify-content-center" style="min-height: 200px;">
+                        <p class="waktu_tampil text-center" id="timer-seni">
+                            <?= sprintf('%02d:%02d', floor($waktuTampil / 60), $waktuTampil % 60) ?>
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
 <script>
 (function () {
     'use strict';
 
-    const root = document.querySelector('.layar-seni-legacy');
+    const root = document.querySelector('.layar-seni-wrapper');
     const idPenampilan = root.dataset.idPenampilan;
     const csrfName = '<?= csrf_token() ?>';
     let csrfHash = '<?= csrf_hash() ?>';
@@ -407,7 +338,7 @@
         });
 
         const ringkasanDelay = 800 + juriCols.length * 150;
-        document.querySelectorAll('.ringkasan-col').forEach((el, i) => {
+        document.querySelectorAll('.row .col-3.opacity').forEach((el, i) => {
             setTimeout(() => {
                 el.classList.add('animated', 'fadeInDown');
                 el.classList.remove('opacity');
@@ -415,14 +346,14 @@
         });
 
         setTimeout(() => {
-            document.getElementById('hero-nilai-akhir').classList.add('animated', 'fadeInLeft');
-            document.getElementById('hero-nilai-akhir').classList.remove('opacity');
-            document.getElementById('hero-waktu').classList.add('animated', 'fadeInRight');
-            document.getElementById('hero-waktu').classList.remove('opacity');
+            const heroL = document.getElementById('hero-nilai-akhir');
+            const heroR = document.getElementById('hero-waktu');
+            if (heroL) { heroL.classList.add('animated', 'fadeInLeft'); heroL.classList.remove('opacity'); }
+            if (heroR) { heroR.classList.add('animated', 'fadeInRight'); heroR.classList.remove('opacity'); }
         }, ringkasanDelay + 4 * 150);
     }
 
-    // ── Timer (requestAnimationFrame, no jQuery plugin) ──
+    // ── Timer (requestAnimationFrame) ──
     let timerRunning = false, lastTs = null;
     let elapsedMs = (parseInt(root.dataset.waktuTampil, 10) || 0) * 1000;
 
@@ -452,7 +383,6 @@
     // ── Update juri columns (sort ascending + terpilih) ──
     function updateJuriColumns(dataNilai) {
         if (!dataNilai || !Array.isArray(dataNilai)) return;
-
         const juriScores = dataNilai.map((j, idx) => {
             let parsed = j.penilaian;
             if (typeof parsed === 'string') { try { parsed = JSON.parse(parsed); } catch (e) { parsed = null; } }
