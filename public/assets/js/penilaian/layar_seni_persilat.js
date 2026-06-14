@@ -37,15 +37,13 @@ const layar = {
                     layar.penampilan_seni_berlangsung.status_penampilan = 'sedang_tampil';
                     layar.penampilan_seni_berlangsung.waktu_tampil = seconds;
                     layar.stopwatch.timer("remove");
-                    if (seconds > 0) {
-                        layar.stopwatch.timer({
-                            format: "%M:%S",
-                            seconds: 0,
-                            duration: seconds,
-                            countdown: false,
-                            action: 'start'
-                        });
-                    }
+                    // Count-up dari posisi tersimpan (bukan 0). Resume dari pause juga lanjut.
+                    layar.stopwatch.timer({
+                        format: "%M:%S",
+                        seconds: seconds,
+                        countdown: false,
+                        action: 'start'
+                    });
                 } else {
                     layar.penampilan_seni_berlangsung.status_penampilan = data.status_penampilan || 'berhenti';
                     layar.penampilan_seni_berlangsung.waktu_tampil = seconds;
@@ -157,25 +155,27 @@ const layar = {
 
     update_timer: function () {
         var waktuTampil = parseInt(layar.penampilan_seni_berlangsung.waktu_tampil) || 0;
+        var status = layar.penampilan_seni_berlangsung.status_penampilan;
 
-        if (waktuTampil <= 0) {
-            layar.stopwatch.html("00:00");
-            return;
-        }
-
-        if (layar.penampilan_seni_berlangsung.status_penampilan === 'sedang_tampil') {
+        if (status === 'sedang_tampil') {
+            // Count-up mode: start dari waktu_tampil dan biarkan jalan.
+            // PENTING: jika sudah running, JANGAN restart — biarkan local tick lanjut.
+            // Ini menghindari stutter/restart setiap polling response.
             var state = layar.stopwatch.data("state");
-            if (state !== "running") {
-                layar.stopwatch.timer("remove");
-                layar.stopwatch.timer({
-                    format: "%M:%S",
-                    seconds: 0,
-                    duration: waktuTampil,
-                    countdown: false,
-                    action: 'start'
-                });
+            if (state === "running") {
+                // Timer sudah jalan — skip, biarkan local tick continue
+                return;
             }
+            // Belum running — (re)start dari posisi terakhir
+            layar.stopwatch.timer("remove");
+            layar.stopwatch.timer({
+                format: "%M:%S",
+                seconds: waktuTampil,
+                countdown: false,
+                action: 'start'
+            });
         } else {
+            // Pause/berhenti/standby: tampilkan waktu statis di posisi terakhir.
             layar.stopwatch.timer("remove");
             if (waktuTampil > 0) {
                 layar.stopwatch.timer({
@@ -184,6 +184,8 @@ const layar = {
                     countdown: false
                 });
                 layar.stopwatch.timer("pause");
+            } else {
+                layar.stopwatch.html("00:00");
             }
         }
     },

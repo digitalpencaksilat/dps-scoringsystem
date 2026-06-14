@@ -906,6 +906,7 @@ class SekretarisPertandingan extends BaseController
             'id_penampilan_seni' => $idPenampilanSeni,
             'status_penampilan'  => $status,
             'waktu_tampil'       => $waktu !== null ? (int) $waktu : null,
+            'server_now_ms'      => (int) (microtime(true) * 1000),
         ]);
 
         return $this->response
