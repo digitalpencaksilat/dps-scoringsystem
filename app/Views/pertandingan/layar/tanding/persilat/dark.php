@@ -76,8 +76,13 @@
 <?= $this->section('content') ?>
 <div class="container-fluid min-vh-100 bg-gradient-180-black overflow-hidden">
 
-    <!-- Competition Title -->
-    <?= $this->include('pertandingan/layar/tanding/persilat/components/competition_title') ?>
+    <!-- Competition Title (shared component) -->
+    <?php
+        $info_left = strtoupper(esc($pertandingan->nama_kategori_usia ?? ''));
+        $info_center = strtoupper(esc($pertandingan->jenis_kelamin ?? ''));
+        $info_right = strtoupper(esc($pertandingan->label ?? ''));
+    ?>
+    <?= $this->include('pertandingan/layar/components/competition_title') ?>
 
     <!-- Header: Athletes + Babak -->
     <?= $this->include('pertandingan/layar/tanding/persilat/components/header') ?>

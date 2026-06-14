@@ -114,50 +114,21 @@
      data-status-penampilan="<?= esc($statusPenampilan) ?>"
      data-waktu-tampil="<?= $waktuTampil ?>">
 
-    <!-- ═══ HEADER COMPETITION TITLE — parity tanding ═══ -->
-    <div class="row bg-white bg-gradient-180-white mb-2 justify-content-around opacity" id="competition-title">
-        <div class="col-1 col-xxl-1 px-0 py-2 d-flex justify-content-center align-items-center">
-            <img src="<?= base_url('assets/images/brand/dps/logo-international-federation.png') ?>"
-                 alt="Persilat" class="img-fluid" onerror="this.style.display='none'">
-        </div>
-        <div class="col-8 col-xxl-9">
-            <div class="row mb-1">
-                <div class="col-12 bg-gradient-180-gray-dark">
-                    <p class="event-name h2 text-center m-0 text-white my-2">
-                        <?= esc($event_name ?? 'Pencak Silat Championship') ?>
-                    </p>
-                </div>
-            </div>
-            <div class="row justify-content-around py-1">
-                <div class="<?= $isBattle ? 'col-3' : 'col-4' ?>">
-                    <p class="h3 m-0 py-1 text-center bg-gradient-180-gray-dark text-white d-block text-truncate">
-                        <?= strtoupper(esc($partai_seni_berlangsung->nama_gelanggang ?? 'GELANGGANG')) ?> - <?= esc($partai_seni_berlangsung->nomor_partai ?? '-') ?>
-                    </p>
-                </div>
-                <?php if ($isBattle): ?>
-                <div class="col-3">
-                    <p class="h3 m-0 py-1 text-center bg-gradient-180-gray-dark text-white d-block text-truncate">
-                        <?= strtoupper(esc($partai_seni_berlangsung->babak_battle ?? '-')) ?>
-                    </p>
-                </div>
-                <?php endif; ?>
-                <div class="<?= $isBattle ? 'col-3' : 'col-4' ?>">
-                    <p class="h3 m-0 py-1 text-center bg-gradient-180-gray-dark text-white d-block text-truncate">
-                        <?= strtoupper(esc($kompetisi_seni->nama_kategori_usia ?? '-')) ?>
-                    </p>
-                </div>
-                <div class="<?= $isBattle ? 'col-3' : 'col-4' ?>">
-                    <p class="h3 m-0 py-1 text-center bg-gradient-180-gray-dark text-white d-block text-truncate">
-                        <?= strtoupper(esc($kompetisi_seni->jenis_seni ?? '-')) ?>
-                    </p>
-                </div>
-            </div>
-        </div>
-        <div class="col-1 col-xxl-1 px-0 py-2 d-flex justify-content-center align-items-center">
-            <img src="<?= base_url('assets/images/brand/dps/logo-federation.png') ?>"
-                 alt="Federation" class="img-fluid" onerror="this.style.display='none'">
-        </div>
-    </div>
+    <!-- ═══ HEADER COMPETITION TITLE — shared component (parity tanding) ═══ -->
+    <?php
+        $info_left = strtoupper(esc(($partai_seni_berlangsung->nama_gelanggang ?? 'GELANGGANG') . ' - ' . ($partai_seni_berlangsung->nomor_partai ?? '-')));
+        $info_center = $isBattle ? strtoupper(esc($partai_seni_berlangsung->babak_battle ?? '-')) : null;
+        $info_right_kategori = strtoupper(esc($kompetisi_seni->nama_kategori_usia ?? '-'));
+        $info_right_jenis = strtoupper(esc($kompetisi_seni->jenis_seni ?? '-'));
+        // Gabung kategori usia + jenis seni jika tidak battle, agar tetap 3 kolom konsisten
+        if ($isBattle) {
+            $info_right = $info_right_kategori . ' / ' . $info_right_jenis;
+        } else {
+            $info_center = $info_right_kategori;
+            $info_right = $info_right_jenis;
+        }
+    ?>
+    <?= $this->include('pertandingan/layar/components/competition_title') ?>
 
     <!-- ═══ PESERTA — no bendera ═══ -->
     <?php
