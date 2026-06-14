@@ -125,6 +125,7 @@
                 <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#sub-ronde<?= $i ?>" type="button">Ronde <?= $i ?></button></li>
                 <?php endfor; ?>
                 <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#sub-hukuman" type="button">Hukuman</button></li>
+                <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#sub-striking" type="button">Striking</button></li>
                 <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#sub-verifikasi" type="button">Verifikasi</button></li>
             </ul>
 
@@ -135,27 +136,51 @@
                         <table class="table table-dark table-sm table-borderless kp-nilai-table">
                             <thead>
                                 <tr>
-                                    <th>Juri</th>
                                     <th class="text-primary">Biru</th>
+                                    <th class="text-muted">Label</th>
                                     <th class="text-danger">Merah</th>
                                 </tr>
                             </thead>
                             <tbody id="tabel-allround-body">
+                                <!-- Juri Scores -->
                                 <?php foreach ($dataJuri as $idx => $juri): ?>
                                 <tr>
-                                    <td>Juri <?= $idx + 1 ?></td>
                                     <td class="text-primary fw-bold juri-<?= $juri->id_perangkat_pertandingan ?>-nilai-biru">0</td>
+                                    <td class="text-muted small">Juri <?= $idx + 1 ?></td>
                                     <td class="text-danger fw-bold juri-<?= $juri->id_perangkat_pertandingan ?>-nilai-merah">0</td>
                                 </tr>
                                 <?php endforeach; ?>
-                            </tbody>
-                            <tfoot>
-                                <tr class="kp-total-row">
-                                    <td class="fw-bold">Total</td>
-                                    <td class="text-primary fw-bold" id="total-biru-allround">0</td>
-                                    <td class="text-danger fw-bold" id="total-merah-allround">0</td>
+                                <!-- Valid Score -->
+                                <tr>
+                                    <td class="text-primary val-cell semua-ronde-biru-nilai-verified">-</td>
+                                    <td class="text-muted small">Valid Score</td>
+                                    <td class="text-danger val-cell semua-ronde-merah-nilai-verified">-</td>
                                 </tr>
-                            </tfoot>
+                                <!-- Dropping -->
+                                <tr>
+                                    <td class="text-primary val-cell semua-ronde-biru-rincian-nilai-jatuhan">-</td>
+                                    <td class="text-muted small">Dropping</td>
+                                    <td class="text-danger val-cell semua-ronde-merah-rincian-nilai-jatuhan">-</td>
+                                </tr>
+                                <!-- Verbal Warning -->
+                                <tr>
+                                    <td class="text-primary val-cell semua-ronde-biru-binaan">-</td>
+                                    <td class="text-muted small">Verbal Warning</td>
+                                    <td class="text-danger val-cell semua-ronde-merah-binaan">-</td>
+                                </tr>
+                                <!-- Penalty -->
+                                <tr>
+                                    <td class="text-primary val-cell semua-ronde-biru-rincian-nilai-hukuman">-</td>
+                                    <td class="text-muted small">Penalty</td>
+                                    <td class="text-danger val-cell semua-ronde-merah-rincian-nilai-hukuman">-</td>
+                                </tr>
+                                <!-- Final Score -->
+                                <tr class="final-row border-top border-secondary">
+                                    <td class="text-primary fw-bolder text-center" id="total-biru-allround" style="font-size:1.1rem;">0</td>
+                                    <td class="text-white fw-bold small">Final Score</td>
+                                    <td class="text-danger fw-bolder text-center" id="total-merah-allround" style="font-size:1.1rem;">0</td>
+                                </tr>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -186,32 +211,69 @@
                 </div>
                 <?php endfor; ?>
 
-                <!-- Hukuman Summary -->
+                <!-- Hukuman Summary (Dinamis dari ringkasan_nilai JSON) -->
                 <div class="tab-pane fade" id="sub-hukuman">
                     <div class="table-responsive">
                         <table class="table table-dark table-sm table-borderless kp-nilai-table">
                             <thead>
                                 <tr>
                                     <th>Jenis</th>
-                                    <th class="text-primary">Biru</th>
-                                    <th class="text-danger">Merah</th>
+                                    <th class="text-primary text-center">Biru</th>
+                                    <th class="text-danger text-center">Merah</th>
                                 </tr>
                             </thead>
                             <tbody id="tabel-hukuman-body">
-                                <tr><td>Teguran 1</td><td class="text-primary ringkasan-biru-teguran_1">0</td><td class="text-danger ringkasan-merah-teguran_1">0</td></tr>
-                                <tr><td>Teguran 2</td><td class="text-primary ringkasan-biru-teguran_2">0</td><td class="text-danger ringkasan-merah-teguran_2">0</td></tr>
-                                <tr><td>Peringatan 1</td><td class="text-primary ringkasan-biru-peringatan_1">0</td><td class="text-danger ringkasan-merah-peringatan_1">0</td></tr>
-                                <tr><td>Peringatan 2</td><td class="text-primary ringkasan-biru-peringatan_2">0</td><td class="text-danger ringkasan-merah-peringatan_2">0</td></tr>
-                                <tr><td>Jatuhan Sah</td><td class="text-primary ringkasan-biru-jatuhan">0</td><td class="text-danger ringkasan-merah-jatuhan">0</td></tr>
-                                <tr><td>Binaan</td><td class="text-primary ringkasan-biru-binaan_1">0</td><td class="text-danger ringkasan-merah-binaan_1">0</td></tr>
+                                <?php if (isset($semua) && isset($semua->biru)): ?>
+                                    <?php foreach ($semua->biru as $jenis => $nilai): ?>
+                                        <?php if (!in_array($jenis, ['pukulan','tendangan','jatuhan','nilai_akhir'], true)): ?>
+                                        <tr>
+                                            <td><?= esc(ucwords(str_replace('_', ' ', $jenis))) ?></td>
+                                            <td class="text-primary text-center ringkasan-biru-<?= esc($jenis) ?>"><?= (int) $nilai ?></td>
+                                            <td class="text-danger text-center ringkasan-merah-<?= esc($jenis) ?>"><?= (int) ($semua->merah->{$jenis} ?? 0) ?></td>
+                                        </tr>
+                                        <?php endif; ?>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <tr><td colspan="3" class="text-center text-muted py-3">Belum ada data hukuman</td></tr>
+                                <?php endif; ?>
                             </tbody>
                             <tfoot>
-                                <tr class="kp-total-row">
+                                <tr class="kp-total-row border-top border-secondary">
                                     <td class="fw-bold">Total Hukuman</td>
-                                    <td class="text-primary fw-bold ringkasan-biru-total_hukuman">0</td>
-                                    <td class="text-danger fw-bold ringkasan-merah-total_hukuman">0</td>
+                                    <td class="text-primary text-center fw-bold ringkasan-biru-total_hukuman">0</td>
+                                    <td class="text-danger text-center fw-bold ringkasan-merah-total_hukuman">0</td>
                                 </tr>
                             </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Striking Summary (Dinamis: pukulan/tendangan/jatuhan) -->
+                <div class="tab-pane fade" id="sub-striking">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-sm table-borderless kp-nilai-table">
+                            <thead>
+                                <tr>
+                                    <th>Teknik</th>
+                                    <th class="text-primary text-center">Biru</th>
+                                    <th class="text-danger text-center">Merah</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabel-striking-body">
+                                <?php if (isset($semua) && isset($semua->biru)): ?>
+                                    <?php foreach ($semua->biru as $jenis => $nilai): ?>
+                                        <?php if (in_array($jenis, ['pukulan','tendangan','jatuhan'], true)): ?>
+                                        <tr>
+                                            <td><?= esc(ucwords($jenis)) ?></td>
+                                            <td class="text-primary text-center ringkasan-biru-<?= esc($jenis) ?>"><?= (int) $nilai ?></td>
+                                            <td class="text-danger text-center ringkasan-merah-<?= esc($jenis) ?>"><?= (int) ($semua->merah->{$jenis} ?? 0) ?></td>
+                                        </tr>
+                                        <?php endif; ?>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <tr><td colspan="3" class="text-center text-muted py-3">Belum ada data teknik</td></tr>
+                                <?php endif; ?>
+                            </tbody>
                         </table>
                     </div>
                 </div>

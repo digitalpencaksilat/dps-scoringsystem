@@ -40,6 +40,9 @@
 <body>
 	<?= $this->renderSection('navbar') ?>
 
+	<!-- Toast Container untuk notification (parity CI3 notification component) -->
+	<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 11000;" id="dps-toast-container"></div>
+
 	<?= $this->renderSection('content') ?>
 
 	<!-- Bootstrap Bundle JS -->
@@ -64,6 +67,60 @@
 		const BASE_URL = "<?= base_url() ?>";
 		var CSRF_NAME = "<?= csrf_token() ?>";
 		var CSRF_HASH = "<?= csrf_hash() ?>";
+	</script>
+
+	<!-- DPS Notification helper (parity CI3 notification component) -->
+	<script>
+		window.DPSNotify = (function() {
+			function showBootstrap(type, message, title) {
+				var bgClass = {
+					'success': 'bg-success', 'error': 'bg-danger',
+					'warning': 'bg-warning text-dark', 'info': 'bg-info text-dark'
+				}[type] || 'bg-secondary';
+				var iconClass = {
+					'success': 'fa-check-circle', 'error': 'fa-times-circle',
+					'warning': 'fa-exclamation-triangle', 'info': 'fa-info-circle'
+				}[type] || 'fa-bell';
+				var toastId = 'toast-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+				var html = '<div id="' + toastId + '" class="toast align-items-center text-white ' + bgClass + ' border-0 shadow" role="alert" aria-live="assertive" aria-atomic="true">' +
+					'<div class="d-flex">' +
+						'<div class="toast-body fw-bold">' +
+							'<i class="fas ' + iconClass + ' me-2"></i>' +
+							(title ? '<strong>' + title + '</strong> — ' : '') + message +
+						'</div>' +
+						'<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>' +
+					'</div></div>';
+				var $container = document.getElementById('dps-toast-container');
+				if (!$container) return;
+				$container.insertAdjacentHTML('beforeend', html);
+				var el = document.getElementById(toastId);
+				if (window.bootstrap && bootstrap.Toast) {
+					var toast = new bootstrap.Toast(el, { delay: type === 'error' ? 6000 : 3500 });
+					toast.show();
+					el.addEventListener('hidden.bs.toast', function() { el.remove(); });
+				}
+			}
+			return {
+				success: function(msg, title) { showBootstrap('success', msg, title); },
+				error:   function(msg, title) { showBootstrap('error', msg, title); },
+				warning: function(msg, title) { showBootstrap('warning', msg, title); },
+				info:    function(msg, title) { showBootstrap('info', msg, title); }
+			};
+		})();
+
+		// Auto-display flash messages from CI4 session
+		<?php
+			$flashKeys = ['success', 'error', 'warning', 'info', 'message'];
+			foreach ($flashKeys as $key):
+				$msg = session()->getFlashdata($key);
+				if ($msg):
+					$type = $key === 'message' ? 'info' : $key;
+		?>
+		DPSNotify.<?= $type ?>(<?= json_encode($msg) ?>);
+		<?php
+				endif;
+			endforeach;
+		?>
 	</script>
 
 	<?= $this->renderSection('scripts') ?>

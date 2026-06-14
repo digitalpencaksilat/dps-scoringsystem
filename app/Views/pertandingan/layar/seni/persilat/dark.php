@@ -1,233 +1,204 @@
+<?php
+/**
+ * Layar Seni PERSILAT — Dark Mode (parity CI3 layar/seni/persilat/dark.php)
+ *
+ * Tampilan visual copy 1:1 dari legacy. Fungsi real-time (Socket.IO, polling,
+ * timer, redirect) tetap ditangani oleh layar_seni_persilat.js yang sudah proven.
+ */
+?>
 <?= $this->extend('layouts/penilaian') ?>
 
 <?= $this->section('styles') ?>
-<style>
-    body { background: #000 !important; overflow: hidden; }
-
-    .fade-down { opacity: 0; transform: translateY(-30px); transition: opacity 0.5s ease, transform 0.5s ease; }
-    .fade-up { opacity: 0; transform: translateY(30px); transition: opacity 0.5s ease, transform 0.5s ease; }
-    .fade-left { opacity: 0; transform: translateX(-30px); transition: opacity 0.5s ease, transform 0.5s ease; }
-    .fade-right { opacity: 0; transform: translateX(30px); transition: opacity 0.5s ease, transform 0.5s ease; }
-    .fade-down.show, .fade-up.show, .fade-left.show, .fade-right.show { opacity: 1; transform: translate(0); }
-
-    .bg-gradient-180-black { background: linear-gradient(180deg, #111 0%, #000 100%); }
-    .bg-gradient-180-gray-dark { background: linear-gradient(180deg, #2c2c2c 0%, #1a1a1a 100%); }
-    .bg-gradient-180-white { background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%); }
-    .bg-gradient-180-warning { background: linear-gradient(180deg, #ffc107 0%, #e0a800 100%); }
-
-    .kolom_total_nilai {
-        min-height: 22vh;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        transition: all 0.3s ease;
-        background: linear-gradient(180deg, #2c2c2c 0%, #1a1a1a 100%);
-    }
-    .kolom_total_nilai .nilai-juri {
-        font-size: clamp(3rem, 8vw, 5rem);
-        font-weight: 900;
-        line-height: 1;
-        color: #fff;
-        transition: all 0.3s ease;
-    }
-    .kolom_total_nilai .label-juri {
-        font-size: 1rem;
-        color: #aaa;
-        margin-top: 0.25rem;
-        transition: all 0.3s ease;
-    }
-    /* Terpilih: yellow/warning gradient (parity legacy bg-gradient-180-warning) */
-    .urutan_total_nilai_juri .kolom_total_nilai.terpilih {
-        background: linear-gradient(180deg, #ffc107 0%, #e0a800 100%) !important;
-    }
-    .urutan_total_nilai_juri .kolom_total_nilai.terpilih .nilai-juri {
-        color: #000 !important;
-        text-decoration: none !important;
-        opacity: 1 !important;
-    }
-    .urutan_total_nilai_juri .kolom_total_nilai.terpilih .label-juri {
-        color: #333 !important;
-        opacity: 1 !important;
-    }
-    /* Tidak terpilih: strikethrough + opacity */
-    .urutan_total_nilai_juri .kolom_total_nilai.tidak-terpilih .nilai-juri {
-        text-decoration: line-through;
-        opacity: 0.4;
-    }
-    .urutan_total_nilai_juri .kolom_total_nilai.tidak-terpilih .label-juri {
-        opacity: 0.4;
-    }
-
-    .summary-box {
-        min-height: 10vh;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        padding: 0.5rem;
-    }
-    .summary-box .summary-value {
-        font-size: clamp(2rem, 5vw, 3.5rem);
-        font-weight: 800;
-        line-height: 1;
-        color: #fff;
-    }
-    .summary-box .summary-label {
-        font-size: 0.85rem;
-        color: #aaa;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-
-    .kolom-nilai-akhir {
-        min-height: 14vh;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-    }
-    .kolom-nilai-akhir .nilai_akhir {
-        font-size: clamp(4rem, 12vw, 8rem);
-        font-weight: 900;
-        line-height: 1;
-        color: #fff;
-    }
-    .kolom-nilai-akhir .label-nilai-akhir {
-        font-size: 1rem;
-        color: #ccc;
-    }
-
-    .kolom-waktu {
-        min-height: 14vh;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-    }
-    .kolom-waktu .waktu_tampil {
-        font-size: clamp(3.5rem, 10vw, 7rem);
-        font-weight: 800;
-        line-height: 1;
-        color: #fff;
-    }
-    .kolom-waktu .label-waktu {
-        font-size: 1rem;
-        color: #ccc;
-    }
-
-    #daftar-peserta {
-        min-height: 10vh;
-    }
-    #daftar-peserta .nama-peserta {
-        font-size: clamp(1.5rem, 4vw, 2.5rem);
-        font-weight: 700;
-        color: #fff;
-    }
-    #daftar-peserta .nama-kontingen {
-        font-size: clamp(1rem, 2.5vw, 1.5rem);
-        font-weight: 400;
-        color: #ccc;
-    }
-</style>
+<link rel="stylesheet" href="<?= base_url('assets/css/penilaian/layar-seni.css') ?>">
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
-<div class="container-fluid min-vh-100 bg-gradient-180-black overflow-hidden px-3 py-2">
+<?php
+    // Variabel dari controller (Layar::seni)
+    $idPenampilan  = (int) $penampilan_seni_berlangsung->id_penampilan_seni;
+    $sistemPenampilan = $kompetisi_seni->sistem_penampilan ?? 'pool';
+?>
+<div class="container-fluid layar-seni-legacy"
+     data-id-penampilan="<?= $idPenampilan ?>"
+     data-status-penampilan="<?= esc($penampilan_seni_berlangsung->status_penampilan ?? 'standby') ?>">
 
-    <!-- Competition Title -->
-    <?= $this->include('pertandingan/layar/seni/persilat/components/header') ?>
+    <!-- ═══ HEADER KOMPETISI (parity: components/header.php) ═══ -->
+    <div class="row bg-white bg-gradient-180-white mb-3 justify-content-around opacity" id="competition-title">
+        <div class="col-1 px-0 py-2 d-flex justify-content-center align-items-center">
+            <img src="<?= base_url('assets/images/brand/dps/logo-international-federation.png') ?>" alt="Persilat" class="img-fluid">
+        </div>
+        <div class="col-8 col-xxl-9">
+            <div class="row">
+                <div class="col-12 bg-gradient-180-gray-dark rounded-top rounded-3">
+                    <p class="h2 text-center m-0 text-white my-2">
+                        <?= esc($event_name ?? 'Pencak Silat Championship') ?>
+                    </p>
+                </div>
+            </div>
+            <div class="row justify-content-around py-1">
+                <div class="col">
+                    <p class="h4 my-1 text-center bg-gradient-180-gray-dark text-white">
+                        <?= esc($partai_seni_berlangsung->nama_gelanggang ?? 'Gelanggang') ?> - <?= esc($partai_seni_berlangsung->nomor_partai ?? '-') ?>
+                    </p>
+                </div>
+                <?php if ($sistemPenampilan === 'battle'): ?>
+                    <div class="col">
+                        <p class="h4 my-1 text-center bg-gradient-180-gray-dark text-white">
+                            <?= strtoupper(esc($partai_seni_berlangsung->babak_battle ?? '-')) ?>
+                        </p>
+                    </div>
+                <?php endif; ?>
+                <div class="col">
+                    <p class="h4 my-1 text-center bg-gradient-180-gray-dark text-white px-2">
+                        <?= strtoupper(esc($kompetisi_seni->nama_kategori_usia ?? '-')) ?>
+                    </p>
+                </div>
+                <div class="col">
+                    <p class="h4 my-1 text-center bg-gradient-180-gray-dark text-white px-2">
+                        <?= strtoupper(esc($kompetisi_seni->jenis_seni ?? '-')) ?>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-1 px-0 py-2 d-flex justify-content-center align-items-center">
+            <img src="<?= base_url('assets/images/brand/dps/logo-federation.png') ?>" alt="National Pencak Silat Federation" class="img-fluid">
+        </div>
+    </div>
 
-    <!-- Peserta Info -->
-    <div class="row mt-2 fade-down" id="daftar-peserta">
-        <div class="col-12 bg-gradient-180-gray-dark rounded py-3 px-4 d-flex align-items-center">
-            <div class="flex-grow-1">
-                <p class="nama-peserta m-0">
+    <!-- ═══ PESERTA SENI ═══ -->
+    <div class="row my-4 justify-content-center opacity" id="daftar-peserta">
+        <div class="<?= (count($peserta_seni) > 1) ? 'col-12' : 'col-6' ?>">
+            <div class="row">
+                <div class="col-3 d-flex justify-content-center align-items-center bg-dark bg-gradient">
                     <?php
-                        // Prefer anggota_kelompok_peserta_seni from penampilan query (via kps join)
-                        // Legacy parity: kps.anggota_kelompok_peserta_seni stores formatted display string
-                        $displayName = 'Peserta';
-                        if (!empty($penampilan_seni_berlangsung->anggota_kelompok_peserta_seni)) {
-                            $displayName = esc($penampilan_seni_berlangsung->anggota_kelompok_peserta_seni);
-                        } else {
-                            $namaPeserta = [];
-                            if (!empty($peserta_seni)) {
-                                foreach ($peserta_seni as $ps) {
-                                    $namaPeserta[] = esc($ps->nama_pendaftar ?? '');
-                                }
-                            }
-                            $displayName = implode(' &bull; ', $namaPeserta) ?: 'Peserta';
-                        }
-                        echo $displayName;
+                        // Bendera kontingen — gunakan helper bendera() jika ada, fallback ke placeholder
+                        $namaKontingen = $peserta_seni[0]->nama_kontingen ?? 'default';
                     ?>
-                </p>
-                <p class="nama-kontingen m-0">
-                    <?= strtoupper(esc($peserta_seni[0]->nama_kontingen ?? '')) ?>
-                </p>
+                    <img src="<?= base_url('assets/images/bendera/' . strtolower($namaKontingen) . '.png') ?>"
+                         class="img-fluid img-thumbnail"
+                         alt="<?= esc($namaKontingen) ?>"
+                         onerror="this.src='<?= base_url('assets/images/brand/dps/logo.png') ?>'">
+                </div>
+                <div class="col-9">
+                    <div class="row h-100">
+                        <div class="col-12 bg-gradient-180-gray-dark justify-content-center d-flex flex-column py-2">
+                            <p class="h3 text-center text-truncate text-uppercase m-0 fw-bolder text-white">
+                                <?php foreach ($peserta_seni as $key => $value): ?>
+                                    <?= esc($value->nama_pendaftar) ?><?= ($key < (count($peserta_seni) - 1)) ? ' - ' : '' ?>
+                                <?php endforeach; ?>
+                            </p>
+                        </div>
+                        <div class="col-12 bg-white">
+                            <div class="row h-100">
+                                <div class="col-12 justify-content-center d-flex flex-column">
+                                    <p class="text-truncate m-0 h3 text-center"><?= esc($namaKontingen) ?></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Juri Score Columns -->
-    <div class="row mt-2 g-2 urutan_total_nilai_juri">
-        <?php
-            $juriCount = 0;
-            $idPenampilan = $penampilan_seni_berlangsung->id_penampilan_seni ?? 0;
-            if (isset($data_nilai[$idPenampilan])) {
-                $juriCount = count($data_nilai[$idPenampilan]);
-            }
-            // Create placeholder columns
-            for ($idx = 0; $idx < max($juriCount, 5); $idx++):
-        ?>
-        <div class="col fade-down">
-            <div class="kolom_total_nilai bg-gradient-180-gray-dark rounded" data-index="<?= $idx ?>">
-                <span class="nilai-juri">-</span>
-                <span class="label-juri">Juri <?= $idx + 1 ?></span>
-            </div>
-        </div>
-        <?php endfor; ?>
-    </div>
-
-    <!-- Summary Row: Median Kebenaran | Std Dev | Median | Hukuman -->
-    <div class="row mt-2 g-2">
-        <div class="col-3 fade-up">
-            <div class="summary-box bg-gradient-180-gray-dark rounded kolom-median-kebenaran">
-                <span class="summary-value median_kebenaran">0</span>
-                <span class="summary-label">Median Kebenaran</span>
-            </div>
-        </div>
-        <div class="col-3 fade-up">
-            <div class="summary-box bg-gradient-180-gray-dark rounded kolom-standar-deviasi">
-                <span class="summary-value standar_deviasi">0</span>
-                <span class="summary-label">Standard Deviation</span>
-            </div>
-        </div>
-        <div class="col-3 fade-up">
-            <div class="summary-box bg-gradient-180-gray-dark rounded kolom-median">
-                <span class="summary-value median">0</span>
-                <span class="summary-label">Median</span>
-            </div>
-        </div>
-        <div class="col-3 fade-up">
-            <div class="summary-box bg-gradient-180-gray-dark rounded kolom-hukuman">
-                <span class="summary-value hukuman">0</span>
-                <span class="summary-label">Penalty</span>
+    <!-- ═══ URUTAN NILAI PER JURI ═══ -->
+    <div class="row shadow-lg">
+        <div class="col-12">
+            <div class="row urutan_total_nilai_juri">
+                <?php
+                $jumlahJuri = !empty($data_nilai[$idPenampilan])
+                    ? count($data_nilai[$idPenampilan])
+                    : 5;
+                for ($i = 0; $i < $jumlahJuri; $i++):
+                    $juriId = isset($data_nilai[$idPenampilan][$i])
+                        ? $data_nilai[$idPenampilan][$i]->id_perangkat_pertandingan
+                        : 0;
+                ?>
+                    <div class="col mb-3 kolom_total_nilai opacity">
+                        <div class="row bg-white">
+                            <div class="col-12 bg-gradient-180-gray-dark">
+                                <p class="h5 fw-bolder text-white text-center my-2 text-uppercase nomor_juri">&nbsp;</p>
+                            </div>
+                            <div class="col-12 kolom_bobot_total_nilai">
+                                <p class="fw-bolder text-center my-1 h6 total_nilai_juri_<?= $juriId ?> juri_<?= $juriId ?>">0</p>
+                            </div>
+                        </div>
+                    </div>
+                <?php endfor; ?>
             </div>
         </div>
     </div>
 
-    <!-- Final Score + Timer -->
-    <div class="row mt-2 g-2">
-        <div class="col-8 fade-left">
-            <div class="kolom-nilai-akhir bg-gradient-180-gray-dark rounded">
-                <span class="nilai_akhir">0.000</span>
-                <span class="label-nilai-akhir">Final Score</span>
+    <!-- ═══ RINGKASAN NILAI (4 kolom: Median Kebenaran, Std Dev, Median, Penalty) ═══ -->
+    <div class="row mt-3">
+        <div class="col-12 col-md-3 col-xl-3 mb-3 ps-md-0 kolom-median-kebenaran opacity">
+            <div class="bg-white shadow-lg h-100">
+                <div class="bg-gradient-180-gray-dark">
+                    <p class="h4 text-white text-center my-2 text-uppercase">Median Kebenaran</p>
+                </div>
+                <div class="col-12">
+                    <p class="fw-bolder text-center m-0 display-4 lh-1 median_kebenaran">0</p>
+                </div>
             </div>
         </div>
-        <div class="col-4 fade-right">
-            <div class="kolom-waktu bg-gradient-180-gray-dark rounded">
-                <span class="waktu_tampil">00:00</span>
-                <span class="label-waktu">Time</span>
+        <div class="col-12 col-md-3 col-xl-3 mb-3 kolom-standar-deviasi opacity">
+            <div class="bg-white shadow-lg h-100">
+                <div class="bg-gradient-180-gray-dark">
+                    <p class="h4 text-white text-center my-2 text-uppercase">Standard Deviation</p>
+                </div>
+                <div class="col-12">
+                    <p class="fw-bolder text-center m-0 display-4 lh-1 standar_deviasi">0</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-3 col-xl-3 mb-3 kolom-median opacity">
+            <div class="bg-white shadow-lg h-100">
+                <div class="bg-gradient-180-gray-dark">
+                    <p class="h4 text-white text-center my-2 text-uppercase">Median</p>
+                </div>
+                <div class="col-12">
+                    <p class="fw-bolder text-center m-0 display-4 lh-1 median">0</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-3 col-xl-3 mb-3 pe-md-0 kolom-hukuman opacity">
+            <div class="bg-white shadow-lg h-100">
+                <div class="bg-gradient-180-gray-dark">
+                    <p class="h4 text-white text-center my-2 text-uppercase">Penalty</p>
+                </div>
+                <div class="col-12">
+                    <p class="fw-bolder text-center m-0 display-4 lh-1 hukuman">0</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ NILAI AKHIR & WAKTU TAMPIL ═══ -->
+    <div class="row mb-2">
+        <div class="col-12 col-md-6 col-xl-6 opacity kolom-nilai-akhir">
+            <div class="row shadow-lg">
+                <?php if ($sistemPenampilan === 'battle'): ?>
+                    <?php if (isset($partai_seni_berlangsung->id_penampilan_seni_biru) && $partai_seni_berlangsung->id_penampilan_seni_biru == $idPenampilan): ?>
+                        <div class="col bg-gradient-180-blue col-12">
+                            <p class="lh-1 fw-bolder text-center my-1 text-white nilai_akhir">0</p>
+                        </div>
+                    <?php else: ?>
+                        <div class="col bg-gradient-180-red col-12">
+                            <p class="lh-1 fw-bolder text-center my-1 text-white nilai_akhir">0</p>
+                        </div>
+                    <?php endif; ?>
+                <?php else: ?>
+                    <div class="col bg-gradient-180-gray-dark col-12">
+                        <p class="lh-1 fw-bolder text-center my-1 text-white nilai_akhir">0</p>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 col-xl-6 opacity kolom-waktu">
+            <div class="row shadow-lg">
+                <div class="col-12 bg-white">
+                    <p class="lh-1 fw-bolder text-center my-1 text-dark waktu_tampil">00:00</p>
+                </div>
             </div>
         </div>
     </div>
@@ -235,15 +206,54 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
-<script src="<?= base_url('assets/js/penilaian/plugins/timer.jquery.js') ?>"></script>
-<script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
-<script src="<?= base_url('assets/js/penilaian/layar_seni_persilat.js?v=' . time()) ?>"></script>
+<!-- jQuery Timer plugin (dipakai oleh layar_seni_persilat.js) -->
+<script src="https://cdn.jsdelivr.net/npm/jquery.timer.js@0.1.1/jquery.timer.min.js"></script>
+<script src="<?= base_url('assets/js/penilaian/layar_seni_persilat.js') ?>"></script>
 <script>
-$(document).ready(function () {
-    var $data_nilai = <?= json_encode($data_nilai, JSON_NUMERIC_CHECK) ?>;
-    var $penampilan_seni_berlangsung = <?= json_encode($penampilan_seni_berlangsung, JSON_NUMERIC_CHECK) ?>;
+/**
+ * Inisialisasi layar seni — data dari controller diteruskan ke JS existing.
+ * ui.start_animation() menggerakkan fadeIn sequence parity legacy.
+ */
+var $data_nilai = <?= json_encode($data_nilai, JSON_NUMERIC_CHECK) ?>;
+var $penampilan_seni_berlangsung = <?= json_encode($penampilan_seni_berlangsung, JSON_NUMERIC_CHECK) ?>;
+
+$(document).ready(function() {
     layar.init($penampilan_seni_berlangsung, $data_nilai);
-    ui.start_animation();
+
+    // Override ui.start_animation dgn versi legacy (fadeInDown sequencing)
+    (function legacyAnimation() {
+        $('#competition-title').addClass('animated fadeInDown').removeClass('opacity');
+        setTimeout(function() {
+            $('#daftar-peserta').addClass('animated fadeInDown').removeClass('opacity');
+            setTimeout(function() {
+                $.each($('.kolom_total_nilai'), function(i, v) {
+                    setTimeout(function() {
+                        $(v).addClass('animated fadeInDown').removeClass('opacity');
+                    }, 200 * i);
+                });
+
+                setTimeout(function() {
+                    setTimeout(function() {
+                        $('.kolom-median-kebenaran').addClass('animated fadeInDown').removeClass('opacity');
+                    }, 200 * 1);
+                    setTimeout(function() {
+                        $('.kolom-standar-deviasi').addClass('animated fadeInDown').removeClass('opacity');
+                    }, 200 * 2);
+                    setTimeout(function() {
+                        $('.kolom-median').addClass('animated fadeInDown').removeClass('opacity');
+                    }, 200 * 3);
+                    setTimeout(function() {
+                        $('.kolom-hukuman').addClass('animated fadeInDown').removeClass('opacity');
+                    }, 200 * 4);
+
+                    setTimeout(function() {
+                        $('.kolom-nilai-akhir').addClass('animated fadeInLeft').removeClass('opacity');
+                        $('.kolom-waktu').addClass('animated fadeInRight').removeClass('opacity');
+                    }, 200 * 4);
+                }, 200 * $('.kolom_total_nilai').length);
+            }, 700);
+        }, 700);
+    })();
 });
 </script>
 <?= $this->endSection() ?>

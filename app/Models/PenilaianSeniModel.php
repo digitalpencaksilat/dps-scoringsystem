@@ -240,15 +240,22 @@ class PenilaianSeniModel extends Model
     {
         $db = \Config\Database::connect();
 
-        // Get all juri rows for this penampilan
-        $rows = $this->where('id_penampilan_seni', $idPenampilanSeni)->findAll();
-
-        if (empty($rows)) {
-            return false;
-        }
-
         try {
             $db->transStart();
+
+            // CRITICAL #5: Row lock untuk prevent race condition concurrent KP hukuman.
+            // SELECT ... FOR UPDATE harus berada di dalam transaksi agar lock berlaku.
+            $rowsRaw = $db->table($this->table)
+                ->where('id_penampilan_seni', $idPenampilanSeni)
+                ->select($this->table . '.*')
+                ->getCompiledSelect();
+            $query = $db->query($rowsRaw . ' FOR UPDATE');
+            $rows = $query->getResult();
+
+            if (empty($rows)) {
+                $db->transComplete();
+                return false;
+            }
 
             foreach ($rows as $row) {
                 $penilaian = json_decode($row->penilaian, true) ?: [];

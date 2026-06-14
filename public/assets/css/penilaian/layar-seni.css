@@ -263,3 +263,195 @@ tr.rank-gold .nilai-cell { color: #ffd700; }
     .layar-battle-center { order: -1; }
     .layar-hasil-table-container { font-size: 0.9rem; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   LAYAR SENI LEGACY (parity CI3 layar/seni/persilat/dark.php)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Gradient utilities — parity legacy CI3 */
+.layar-seni-legacy .bg-gradient-180-white {
+    background: linear-gradient(180deg, #f0f0f0 0%, #ffffff 100%) !important;
+}
+.layar-seni-legacy .bg-gradient-180-gray-dark {
+    background: linear-gradient(180deg, #2d3436 0%, #27242c 100%) !important;
+}
+.layar-seni-legacy .bg-gradient-180-red {
+    background: linear-gradient(180deg, #e63946 0%, #c62828 100%) !important;
+}
+.layar-seni-legacy .bg-gradient-180-blue {
+    background: linear-gradient(180deg, #1e88e5 0%, #1565c0 100%) !important;
+}
+.layar-seni-legacy .bg-gradient-180-warning {
+    background: linear-gradient(180deg, #ffc107 0%, #ff9800 100%) !important;
+}
+
+/* Wrapper */
+.layar-seni-legacy {
+    background: #000 !important;
+    min-height: 100vh;
+    color: #fff;
+    padding: 0.75rem;
+}
+
+/* Animation hooks */
+.layar-seni-legacy .opacity { opacity: 0; }
+.layar-seni-legacy .animated {
+    animation-duration: 0.6s;
+    animation-fill-mode: both;
+}
+@keyframes layarSeniFadeInDown {
+    from { opacity: 0; transform: translate3d(0, -40px, 0); }
+    to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes layarSeniFadeInLeft {
+    from { opacity: 0; transform: translate3d(-40px, 0, 0); }
+    to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes layarSeniFadeInRight {
+    from { opacity: 0; transform: translate3d(40px, 0, 0); }
+    to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+.layar-seni-legacy .fadeInDown { animation-name: layarSeniFadeInDown; }
+.layar-seni-legacy .fadeInLeft { animation-name: layarSeniFadeInLeft; }
+.layar-seni-legacy .fadeInRight { animation-name: layarSeniFadeInRight; }
+
+/* Header kompetisi */
+.layar-seni-legacy #competition-title {
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+.layar-seni-legacy #competition-title img {
+    max-height: 80px;
+    object-fit: contain;
+}
+.layar-seni-legacy #competition-title .h2 {
+    font-family: 'Oswald', 'Poppins', sans-serif;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+/* Daftar peserta */
+.layar-seni-legacy #daftar-peserta {
+    margin: 1rem 0 1.25rem;
+}
+.layar-seni-legacy #daftar-peserta .img-thumbnail {
+    background: #fff;
+    border: 4px solid #fff;
+    max-height: 130px;
+    object-fit: contain;
+}
+.layar-seni-legacy #daftar-peserta .h3 {
+    font-family: 'Oswald', 'Poppins', sans-serif;
+    letter-spacing: 1px;
+}
+
+/* Kolom nilai per juri */
+.layar-seni-legacy .urutan_total_nilai_juri {
+    margin: 0;
+}
+.layar-seni-legacy .kolom_total_nilai {
+    padding: 0 0.4rem;
+    flex: 1;
+    min-width: 0;
+}
+.layar-seni-legacy .kolom_total_nilai > .row {
+    background: #fff;
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 0;
+    height: 100%;
+}
+.layar-seni-legacy .kolom_total_nilai .nomor_juri {
+    font-size: 1.1rem !important;
+    color: #fff;
+    margin: 0.4rem 0 !important;
+    letter-spacing: 1px;
+}
+.layar-seni-legacy .kolom_bobot_total_nilai {
+    padding: 0.5rem;
+    background: #fff;
+}
+.layar-seni-legacy .kolom_bobot_total_nilai p {
+    font-size: 1.85rem !important;
+    color: #212529;
+    margin: 0.25rem 0 !important;
+    font-weight: 800;
+}
+/* Juri terpilih (median calculation) */
+.layar-seni-legacy .kolom_total_nilai.terpilih .kolom_bobot_total_nilai p,
+.layar-seni-legacy .kolom_bobot_total_nilai p.bg-gradient-180-warning {
+    background: linear-gradient(180deg, #ffc107 0%, #ff9800 100%) !important;
+    color: #fff !important;
+    border-radius: 4px;
+}
+.layar-seni-legacy .kolom_total_nilai.tidak-terpilih .kolom_bobot_total_nilai p,
+.layar-seni-legacy .kolom_bobot_total_nilai p.text-decoration-line-through {
+    text-decoration: line-through;
+    opacity: 0.6;
+}
+
+/* Ringkasan nilai (4 kolom) */
+.layar-seni-legacy .kolom-median-kebenaran > div,
+.layar-seni-legacy .kolom-standar-deviasi > div,
+.layar-seni-legacy .kolom-median > div,
+.layar-seni-legacy .kolom-hukuman > div {
+    background: #fff;
+    border-radius: 6px;
+    overflow: hidden;
+}
+.layar-seni-legacy .kolom-median-kebenaran .h4,
+.layar-seni-legacy .kolom-standar-deviasi .h4,
+.layar-seni-legacy .kolom-median .h4,
+.layar-seni-legacy .kolom-hukuman .h4 {
+    font-size: 1rem !important;
+    margin: 0.5rem 0 !important;
+    letter-spacing: 1px;
+}
+.layar-seni-legacy .kolom-median-kebenaran .display-4,
+.layar-seni-legacy .kolom-standar-deviasi .display-4,
+.layar-seni-legacy .kolom-median .display-4,
+.layar-seni-legacy .kolom-hukuman .display-4 {
+    font-size: 2.75rem !important;
+    color: #212529;
+    margin: 0.75rem 0 !important;
+    font-weight: 800;
+    line-height: 1;
+}
+
+/* Nilai akhir & waktu tampil — 2 kolom hero */
+.layar-seni-legacy .kolom-nilai-akhir > .row,
+.layar-seni-legacy .kolom-waktu > .row {
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 0;
+    min-height: 200px;
+}
+.layar-seni-legacy .kolom-nilai-akhir > .row > .col {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.layar-seni-legacy .kolom-waktu > .row > .col-12 {
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+}
+.layar-seni-legacy .nilai_akhir,
+.layar-seni-legacy .waktu_tampil {
+    font-size: clamp(4rem, 12vw, 9rem) !important;
+    font-weight: 900 !important;
+    line-height: 1 !important;
+    margin: 0 !important;
+    font-family: 'Oswald', 'Poppins', sans-serif;
+}
+.layar-seni-legacy .nilai_akhir {
+    color: #fff !important;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+}
+.layar-seni-legacy .waktu_tampil {
+    color: #212529 !important;
+}

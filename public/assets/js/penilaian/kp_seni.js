@@ -253,7 +253,10 @@
         const url = window.SOCKET_URL || 'http://localhost:3000';
         const socket = io(url);
 
-        socket.emit('JOIN_ROOM', { id_penampilan_seni: config.idPenampilan });
+        // Re-join room on initial connect AND every reconnect (parity with kp_tanding.js)
+        socket.on('connect', () => {
+            socket.emit('JOIN_ROOM', { id_penampilan_seni: config.idPenampilan });
+        });
 
         socket.on('JURI_READY_UPDATE', data => {
             if (data && String(data.id_penampilan_seni) === config.idPenampilan) {

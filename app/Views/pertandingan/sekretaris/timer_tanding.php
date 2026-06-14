@@ -154,7 +154,7 @@
 							</button>
 						</div>
 						<div class="col-3">
-							<button class="btn btn-success btn-gradient w-100 h-100 py-3 fs-5 fw-bold text-uppercase button-play-state btn-timer btn-toggle-waktu rounded-3" onclick="sekretaris_pertandingan.toggle_timer()">
+							<button class="btn btn-warning btn-gradient w-100 h-100 py-3 fs-5 fw-bold text-uppercase button-play-state btn-timer btn-toggle-waktu rounded-3" onclick="sekretaris_pertandingan.toggle_timer()">
 								<i class="fas fa-play d-none d-md-inline me-1"></i>START
 							</button>
 						</div>
