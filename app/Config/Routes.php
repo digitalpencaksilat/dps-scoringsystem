@@ -90,6 +90,7 @@ $routes->group('sekretaris-pertandingan', ['filter' => 'perangkat:sekretaris,tim
     $routes->get('jadwal-tanding/(:num)', 'Pertandingan\SekretarisPertandingan::jadwalTanding/$1');
     $routes->get('jadwal-seni/(:num)', 'Pertandingan\SekretarisPertandingan::jadwalSeni/$1');
     $routes->get('mulai-penampilan/(:num)', 'Pertandingan\SekretarisPertandingan::mulaiPenampilan/$1');
+    $routes->get('mulai-ulang-penampilan/(:num)', 'Pertandingan\SekretarisPertandingan::mulaiUlangPenampilan/$1');
     $routes->get('timer-tanding', 'Pertandingan\SekretarisPertandingan::timerTanding');
     $routes->get('timer-seni', 'Pertandingan\SekretarisPertandingan::timerSeni');
     $routes->get('mulai-pertandingan/(:num)', 'Pertandingan\SekretarisPertandingan::mulaiPertandingan/$1');

@@ -203,6 +203,7 @@ class SekretarisPertandingan extends BaseController
                 ps.id_penampilan_seni, ps.status_penampilan, ps.nilai_akhir, ps.waktu_tampil, ps.diskualifikasi, ps.babak,
                 k.nama_kontingen, ks.nomor_pool, sks.jenis_seni, sks.nama_seni, sks.sistem_penampilan,
                 ku.nama_kategori_usia, ku.jenis_kelamin,
+                pms.jenis_medali,
                 ' . $anggota('ps.id_penampilan_seni') . ' as anggota', false)
             ->join('penampilan_seni ps', 'ps.id_penampilan_seni = djs.id_penampilan_seni')
             ->join('kelompok_peserta_seni kps', 'kps.id_kelompok_peserta_seni = ps.id_kelompok_peserta_seni')
@@ -211,6 +212,7 @@ class SekretarisPertandingan extends BaseController
             ->join('sub_kategori_seni sks', 'sks.id_sub_kategori_seni = ks.id_sub_kategori_seni')
             ->join('kategori_lomba kl', 'kl.id_kategori_lomba = sks.id_kategori_lomba')
             ->join('kategori_usia ku', 'ku.id_kategori_usia = kl.id_kategori_usia')
+            ->join('perolehan_medali_seni pms', 'pms.id_kelompok_peserta_seni = kps.id_kelompok_peserta_seni', 'left')
             ->where('djs.id_jadwal_seni', $idJadwalSeni)
             ->where('djs.id_penampilan_seni IS NOT NULL')
             ->where('djs.id_battle_seni IS NULL')
@@ -225,6 +227,7 @@ class SekretarisPertandingan extends BaseController
                 psb.status_penampilan as status_biru, psm.status_penampilan as status_merah,
                 kb.nama_kontingen as nama_kontingen_biru, km.nama_kontingen as nama_kontingen_merah,
                 ks.nomor_pool, sks.jenis_seni, sks.nama_seni, ku.nama_kategori_usia, ku.jenis_kelamin,
+                pmsb.jenis_medali as medali_biru, pmsm.jenis_medali as medali_merah,
                 ' . $anggota('bs.id_penampilan_seni_biru') . ' as anggota_biru,
                 ' . $anggota('bs.id_penampilan_seni_merah') . ' as anggota_merah', false)
             ->join('battle_seni bs', 'bs.id_battle_seni = djs.id_battle_seni')
@@ -234,6 +237,8 @@ class SekretarisPertandingan extends BaseController
             ->join('kontingen kb', 'kb.id_kontingen = kpsb.id_kontingen', 'left')
             ->join('kelompok_peserta_seni kpsm', 'kpsm.id_kelompok_peserta_seni = psm.id_kelompok_peserta_seni', 'left')
             ->join('kontingen km', 'km.id_kontingen = kpsm.id_kontingen', 'left')
+            ->join('perolehan_medali_seni pmsb', 'pmsb.id_kelompok_peserta_seni = kpsb.id_kelompok_peserta_seni', 'left')
+            ->join('perolehan_medali_seni pmsm', 'pmsm.id_kelompok_peserta_seni = kpsm.id_kelompok_peserta_seni', 'left')
             ->join('kompetisi_seni ks', 'ks.id_kompetisi_seni = bs.id_kompetisi_seni')
             ->join('sub_kategori_seni sks', 'sks.id_sub_kategori_seni = ks.id_sub_kategori_seni')
             ->join('kategori_lomba kl', 'kl.id_kategori_lomba = sks.id_kategori_lomba')
@@ -339,6 +344,80 @@ class SekretarisPertandingan extends BaseController
 
         return redirect()->to($back)
             ->with('message', 'Penampilan seni dimulai (standby).');
+    }
+
+    /**
+     * Mulai ulang penampilan seni yang sudah selesai (sudah_tampil → standby).
+     * Reset nilai_akhir, waktu_tampil, diskualifikasi, hapus penilaian & medali lama.
+     * Parity: analog dengan mulai_pertandingan() untuk tanding yang bisa dimulai ulang.
+     */
+    public function mulaiUlangPenampilan(int $idPenampilanSeni)
+    {
+        $db = \Config\Database::connect();
+
+        // Ambil penampilan
+        $penampilan = $db->table('penampilan_seni')
+            ->where('id_penampilan_seni', $idPenampilanSeni)
+            ->get()->getRow();
+
+        if ($penampilan === null) {
+            return redirect()->back()->with('error', 'Penampilan tidak ditemukan.');
+        }
+
+        if ($penampilan->status_penampilan !== 'sudah_tampil') {
+            return redirect()->back()->with('error', 'Hanya penampilan yang sudah selesai yang dapat diulang.');
+        }
+
+        // Cek apakah ada penampilan lain yang sedang berlangsung di gelanggang ini
+        $aktif = $db->table('detail_jadwal_seni djs')
+            ->select('ps.id_penampilan_seni')
+            ->join('penampilan_seni ps', 'ps.id_penampilan_seni = djs.id_penampilan_seni')
+            ->join('jadwal_seni js', 'js.id_jadwal_seni = djs.id_jadwal_seni')
+            ->where('js.id_gelanggang', $this->idGelanggang())
+            ->where('djs.id_penampilan_seni IS NOT NULL')
+            ->whereNotIn('ps.status_penampilan', ['belum_tampil', 'sudah_tampil'])
+            ->get()->getRow();
+
+        // Tentukan back URL
+        $jadwalRow = $db->table('detail_jadwal_seni')
+            ->select('id_jadwal_seni')
+            ->where('id_penampilan_seni', $idPenampilanSeni)
+            ->get()->getRow();
+        $back = $jadwalRow
+            ? '/sekretaris-pertandingan/jadwal-seni/' . (int) $jadwalRow->id_jadwal_seni
+            : '/sekretaris-pertandingan';
+
+        if ($aktif !== null) {
+            return redirect()->to($back)->with('error', 'Masih ada penampilan yang berlangsung.');
+        }
+
+        // Reset penampilan: kembalikan ke kondisi awal
+        $db->table('penampilan_seni')
+            ->where('id_penampilan_seni', $idPenampilanSeni)
+            ->update([
+                'status_penampilan' => 'standby',
+                'nilai_akhir'       => '0',
+                'waktu_tampil'      => 0,
+                'diskualifikasi'    => 0,
+                'akses_penilaian'   => 'dibuka',
+            ]);
+
+        // Hapus penilaian lama
+        $db->table('penilaian_seni')
+            ->where('id_penampilan_seni', $idPenampilanSeni)
+            ->delete();
+
+        // Hapus medali lama untuk kelompok peserta ini
+        $db->table('perolehan_medali_seni')
+            ->where('id_kelompok_peserta_seni', $penampilan->id_kelompok_peserta_seni)
+            ->delete();
+
+        // Broadcast ke Layar bahwa seni berlangsung lagi
+        helper('realtime');
+        realtime_reset_room($idPenampilanSeni);
+        realtime_emit_seni_berlangsung($this->idGelanggang(), $idPenampilanSeni);
+
+        return redirect()->to($back)->with('message', 'Penampilan berhasil diulang dari awal.');
     }
 
     /**

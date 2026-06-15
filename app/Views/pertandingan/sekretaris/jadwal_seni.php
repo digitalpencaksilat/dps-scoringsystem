@@ -90,6 +90,7 @@
 											<th>Sudut Biru</th>
 											<th>Sudut Merah</th>
 											<th>Status</th>
+											<th>Medali</th>
 											<th>Aksi</th>
 										</tr>
 									</thead>
@@ -100,6 +101,24 @@
 											        || in_array($row->status_merah ?? '', ['sedang_tampil', 'standby', 'berhenti']);
 											$isAllSelesai = ($row->status_biru === 'sudah_tampil' && $row->status_merah === 'sudah_tampil');
 											$status = $isAktif ? 'sedang_berlangsung' : ($isAllSelesai ? 'selesai' : 'belum_dimulai');
+
+											// Helper render medali
+											$renderMedali = static function (?string $jenis): string {
+												if (empty($jenis)) {
+													return '<span class="text-muted">—</span>';
+												}
+												$map = [
+													'emas'    => ['bg' => 'background:#ffc107;color:#000', 'icon' => 'fa-medal', 'label' => 'Emas'],
+													'perak'   => ['bg' => 'background:#adb5bd;color:#000', 'icon' => 'fa-medal', 'label' => 'Perak'],
+													'perunggu'=> ['bg' => 'background:#cd7f32;color:#fff', 'icon' => 'fa-medal', 'label' => 'Perunggu'],
+												];
+												$m = $map[$jenis] ?? null;
+												if ($m === null) {
+													return '<span class="text-muted">—</span>';
+												}
+												return '<span class="badge" style="' . $m['bg'] . '; padding:6px 10px;">'
+													. '<i class="fas ' . $m['icon'] . ' me-1"></i>' . $m['label'] . '</span>';
+											};
 										?>
 											<tr>
 												<td><?= $i++ ?></td>
@@ -136,12 +155,39 @@
 													<span class="badge <?= $badgeClass ?>"><?= $statusLabel ?></span>
 												</td>
 												<td>
+													<div style="display:flex; flex-direction:column; gap:4px;">
+														<div style="display:flex; align-items:center; gap:6px;">
+															<small style="color:#1565c0; font-weight:600; min-width:38px;">Biru:</small>
+															<?= $renderMedali($row->medali_biru ?? null) ?>
+														</div>
+														<div style="display:flex; align-items:center; gap:6px;">
+															<small style="color:#c62828; font-weight:600; min-width:38px;">Merah:</small>
+															<?= $renderMedali($row->medali_merah ?? null) ?>
+														</div>
+													</div>
+												</td>
+												<td>
 													<?php if ($status === 'belum_dimulai' && !empty($row->penampilan_biru_id)) : ?>
 														<a href="<?= base_url('sekretaris-pertandingan/mulai-penampilan/' . $row->penampilan_biru_id) ?>"
 															class="btn btn-sm btn-primary">Mulai Biru</a>
 													<?php elseif ($status === 'sedang_berlangsung') : ?>
 														<a href="<?= base_url('sekretaris-pertandingan/timer-seni') ?>"
 															class="btn btn-sm btn-success" target="_blank">Timer</a>
+													<?php elseif ($status === 'selesai') : ?>
+														<?php if (!empty($row->penampilan_biru_id)) : ?>
+															<button type="button"
+																onclick="konfirmasiMulaiUlang('<?= base_url('sekretaris-pertandingan/mulai-ulang-penampilan/' . $row->penampilan_biru_id) ?>', 'Sudut Biru')"
+																class="btn btn-sm btn-outline-primary mb-1">
+																<i class="fas fa-redo me-1"></i>Ulang Biru
+															</button>
+														<?php endif; ?>
+														<?php if (!empty($row->penampilan_merah_id)) : ?>
+															<button type="button"
+																onclick="konfirmasiMulaiUlang('<?= base_url('sekretaris-pertandingan/mulai-ulang-penampilan/' . $row->penampilan_merah_id) ?>', 'Sudut Merah')"
+																class="btn btn-sm btn-outline-danger">
+																<i class="fas fa-redo me-1"></i>Ulang Merah
+															</button>
+														<?php endif; ?>
 													<?php endif; ?>
 												</td>
 											</tr>
@@ -163,6 +209,7 @@
 											<th>Pool</th>
 											<th>Peserta</th>
 											<th>Status</th>
+											<th>Medali</th>
 											<th>Aksi</th>
 										</tr>
 									</thead>
@@ -170,6 +217,24 @@
 										<?php $i = 1; ?>
 										<?php foreach ($pool ?? [] as $row) :
 											$sp = $row->status_penampilan ?? 'belum_tampil';
+
+											// Reuse medali helper dari tab battle (sama)
+											$renderMedaliPool = static function (?string $jenis): string {
+												if (empty($jenis)) {
+													return '<span class="text-muted">—</span>';
+												}
+												$map = [
+													'emas'    => ['bg' => 'background:#ffc107;color:#000', 'icon' => 'fa-medal', 'label' => 'Emas'],
+													'perak'   => ['bg' => 'background:#adb5bd;color:#000', 'icon' => 'fa-medal', 'label' => 'Perak'],
+													'perunggu'=> ['bg' => 'background:#cd7f32;color:#fff', 'icon' => 'fa-medal', 'label' => 'Perunggu'],
+												];
+												$m = $map[$jenis] ?? null;
+												if ($m === null) {
+													return '<span class="text-muted">—</span>';
+												}
+												return '<span class="badge" style="' . $m['bg'] . '; padding:6px 10px;">'
+													. '<i class="fas ' . $m['icon'] . ' me-1"></i>' . $m['label'] . '</span>';
+											};
 										?>
 											<tr>
 												<td><?= $i++ ?></td>
@@ -200,12 +265,21 @@
 													<span class="badge <?= $badgeClass ?>"><?= $statusLabel ?></span>
 												</td>
 												<td>
+													<?= $renderMedaliPool($row->jenis_medali ?? null) ?>
+												</td>
+												<td>
 													<?php if ($sp === 'belum_tampil') : ?>
 														<a href="<?= base_url('sekretaris-pertandingan/mulai-penampilan/' . ($row->id_penampilan_seni ?? '')) ?>"
 															class="btn btn-sm btn-primary">Mulai</a>
 													<?php elseif (in_array($sp, ['sedang_tampil', 'standby', 'berhenti'])) : ?>
 														<a href="<?= base_url('sekretaris-pertandingan/timer-seni') ?>"
 															class="btn btn-sm btn-success" target="_blank">Timer</a>
+													<?php elseif ($sp === 'sudah_tampil') : ?>
+														<button type="button"
+															onclick="konfirmasiMulaiUlang('<?= base_url('sekretaris-pertandingan/mulai-ulang-penampilan/' . ($row->id_penampilan_seni ?? '')) ?>', 'Penampilan')"
+															class="btn btn-sm btn-outline-warning">
+															<i class="fas fa-redo me-1"></i>Mulai Ulang
+														</button>
 													<?php endif; ?>
 												</td>
 											</tr>
@@ -232,5 +306,27 @@ $(document).ready(function() {
 		});
 	});
 });
+
+/**
+ * Konfirmasi sebelum mulai ulang penampilan
+ */
+function konfirmasiMulaiUlang(url, label) {
+	Swal.fire({
+		title: 'Mulai Ulang Penampilan',
+		html: `Anda yakin ingin memulai ulang penampilan <strong>${label}</strong> dari awal?<br><br>
+			   <small class="text-muted">• Data penilaian lama akan dihapus</small><br>
+			   <small class="text-muted">• Medali akan direset</small>`,
+		icon: 'warning',
+		showCancelButton: true,
+		confirmButtonText: 'Ya, Mulai Ulang',
+		cancelButtonText: 'Batal',
+		confirmButtonColor: '#0d6efd',
+		cancelButtonColor: '#6c757d',
+	}).then((result) => {
+		if (result.isConfirmed) {
+			window.location.href = url;
+		}
+	});
+}
 </script>
 <?= $this->endSection() ?>
