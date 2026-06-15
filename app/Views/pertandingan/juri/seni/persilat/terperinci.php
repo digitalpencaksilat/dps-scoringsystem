@@ -437,6 +437,8 @@ html, body { height: 100%; overflow: hidden; }
 </style>
 <?= $this->endSection() ?>
 
+<?= $this->section('navbar') ?><?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <?php
     $idPenampilan = (int) $penampilan_seni->id_penampilan_seni;

@@ -4,6 +4,8 @@
 <link rel="stylesheet" href="<?= base_url('assets/css/penilaian/kp-seni.css') ?>">
 <?= $this->endSection() ?>
 
+<?= $this->section('navbar') ?><?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <div class="container-fluid min-vh-100 bg-black" id="mainContainer">
     <!-- HEADER -->
@@ -54,7 +56,7 @@
                 <?php if (!empty($data_nilai[$penampilan_seni_berlangsung->id_penampilan_seni])): ?>
                 <?php $juriList = $data_nilai[$penampilan_seni_berlangsung->id_penampilan_seni]; ?>
                 <div class="row">
-                    <div class="col-12">
+                    <div class="col-12 table-responsive">
                         <table class="table w-100 table-sm penampilan_seni_<?= $penampilan_seni_berlangsung->id_penampilan_seni ?>">
                             <thead class="bg-dark text-white">
                                 <tr>

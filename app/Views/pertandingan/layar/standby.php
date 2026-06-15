@@ -4,6 +4,10 @@
 <link rel="stylesheet" href="<?= base_url('assets/css/penilaian/layar.css') ?>">
 <?= $this->endSection() ?>
 
+<?= $this->section('navbar') ?>
+<?= view('pertandingan/components/navbar', ['nav_role' => 'layar', 'nav_active' => 'home']) ?>
+<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <?php $mode = $mode ?? 'tanding'; ?>
 <div class="standby-wrapper" id="standby-wrapper" data-mode="<?= esc($mode) ?>">

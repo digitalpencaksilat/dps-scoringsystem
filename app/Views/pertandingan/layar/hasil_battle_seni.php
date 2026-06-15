@@ -5,6 +5,10 @@
 <link rel="stylesheet" href="<?= base_url('assets/css/penilaian/layar-seni.css') ?>">
 <?= $this->endSection() ?>
 
+<?= $this->section('navbar') ?>
+<?= view('pertandingan/components/navbar', ['nav_role' => 'layar', 'nav_active' => 'seni']) ?>
+<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <div class="layar-hasil-wrapper theme-dark layar-battle-hasil">
     <div class="layar-hasil-header">

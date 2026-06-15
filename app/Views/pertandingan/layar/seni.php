@@ -93,6 +93,8 @@
 </style>
 <?= $this->endSection() ?>
 
+<?= $this->section('navbar') ?><?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <?php
     $idPenampilan     = (int) $penampilan_seni_berlangsung->id_penampilan_seni;

@@ -87,6 +87,10 @@
 </style>
 <?= $this->endSection() ?>
 
+<?= $this->section('navbar') ?>
+<?= view('pertandingan/components/navbar', ['nav_role' => 'layar', 'nav_active' => 'tanding']) ?>
+<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <?php
     $skorMerah = (int) ($pertandingan->skor_merah ?? 0);

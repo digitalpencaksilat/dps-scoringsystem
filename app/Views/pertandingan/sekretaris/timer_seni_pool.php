@@ -268,11 +268,12 @@ body {
 <?= $this->endSection() ?>
 
 <?= $this->section('navbar') ?>
-<?= view('components/navbar_sekretaris', [
-	'active'      => 'dashboard',
-	'page_type'   => 'timer',
-	'modal_format'=> 'modal_ganti_format_penilaian',
-	'extra_items' => [
+<?= view('pertandingan/components/navbar', [
+	'nav_role'        => 'sekretaris',
+	'nav_active'      => 'dashboard',
+	'nav_page_type'   => 'timer',
+	'nav_modal_format' => 'modal_ganti_format_penilaian',
+	'nav_extra_items' => [
 		['icon' => 'fa-trophy', 'label' => 'Change Winner', 'onclick' => 'sekretaris_pertandingan.open_modal_input_juara()', 'cursor' => true],
 	],
 ]) ?>

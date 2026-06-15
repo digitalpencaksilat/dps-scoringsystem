@@ -1,5 +1,9 @@
 <?= $this->extend('layouts/penilaian') ?>
 
+<?= $this->section('navbar') ?>
+<?= view('pertandingan/components/navbar') ?>
+<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <div class="standby-wrapper">
     <!-- Icon -->

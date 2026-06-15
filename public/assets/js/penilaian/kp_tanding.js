@@ -474,10 +474,14 @@
             var jenisLabel = item.jenis_verifikasi === 'jatuhan' ? 'Dropping' : 'Violation';
             if (item.status === 'batal') jenisLabel += '<br>(canceled)';
 
-            // Waktu format: menit:detik
-            var waktuMs = parseInt(item.waktu) || 0;
-            var waktuFormatted = Math.floor(waktuMs / 1000 / 60) + ':' +
-                ((waktuMs / 1000) % 60).toString().padStart(2, '0');
+            // Waktu: ambil dari timestamp MySQL (format: "YYYY-MM-DD HH:MM:SS")
+            var waktuFormatted;
+            if (item.timestamp) {
+                var timePart = item.timestamp.split(' ')[1];
+                waktuFormatted = timePart ? timePart.substring(0, 5) : '--:--';
+            } else {
+                waktuFormatted = '--:--';
+            }
 
             html += '<tr class="text-white text-center">';
             html += '<td class="align-middle bg-white text-dark">' + (item.ronde_pertandingan || '-') + '</td>';

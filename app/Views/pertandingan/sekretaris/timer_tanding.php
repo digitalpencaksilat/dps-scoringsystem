@@ -327,12 +327,13 @@ body {
 <?= $this->endSection() ?>
 
 <?= $this->section('navbar') ?>
-<?= view('components/navbar_sekretaris', [
-	'active'      => 'dashboard',
-	'page_type'   => 'timer',
-	'modal_sound' => 'modal_pengaturan_suara',
-	'modal_format'=> 'modal_ganti_format_penilaian',
-	'modal_time'  => 'modal_ubah_waktu',
+<?= view('pertandingan/components/navbar', [
+	'nav_role'       => 'sekretaris',
+	'nav_active'     => 'dashboard',
+	'nav_page_type'  => 'timer',
+	'nav_modal_sound'  => 'modal_pengaturan_suara',
+	'nav_modal_format' => 'modal_ganti_format_penilaian',
+	'nav_modal_time'   => 'modal_ubah_waktu',
 ]) ?>
 <?= $this->endSection() ?>
 

@@ -1,8 +1,12 @@
 <?= $this->extend('layouts/penilaian') ?>
 
+<?= $this->section('navbar') ?>
+<?= view('pertandingan/components/navbar', ['nav_role' => 'broadcast_operator', 'nav_active' => 'tanding']) ?>
+<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <div class="bo-wrapper">
-    <header class="bo-topbar">
+    <header class="bo-topbar d-none">
         <span class="bo-brand penilaian-display-font">Broadcast Operator</span>
         <span class="bo-gelanggang"><?= esc($nama_gelanggang ?? 'Gelanggang') ?></span>
         <a href="<?= base_url('perangkat-pertandingan/logout') ?>" class="bo-logout"><i class="fas fa-right-from-bracket"></i></a>

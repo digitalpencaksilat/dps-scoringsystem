@@ -161,6 +161,19 @@ body {
 	background: #fff;
 	border-bottom: 1px solid #e5e7eb;
 	padding: clamp(0.4rem, 1.5vw, 0.6rem) clamp(0.5rem, 2vw, 0.75rem);
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+#scoring-table-section::-webkit-scrollbar {
+	height: 4px;
+}
+#scoring-table-section::-webkit-scrollbar-track {
+	background: #f3f4f6;
+}
+#scoring-table-section::-webkit-scrollbar-thumb {
+	background: #c4c4c4;
+	border-radius: 2px;
 }
 
 #tabel-nilai-juri {
@@ -479,6 +492,8 @@ body {
 }
 </style>
 <?= $this->endSection() ?>
+
+<?= $this->section('navbar') ?><?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
 <?php

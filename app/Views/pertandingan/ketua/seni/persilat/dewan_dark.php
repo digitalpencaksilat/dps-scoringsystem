@@ -56,6 +56,8 @@
 </style>
 <?= $this->endSection() ?>
 
+<?= $this->section('navbar') ?><?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <div class="container-fluid bg-black min-vh-100 px-4 penampilan_seni_<?= $penampilan_seni_berlangsung->id_penampilan_seni ?>">
 

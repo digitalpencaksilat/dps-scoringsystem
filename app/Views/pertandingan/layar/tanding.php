@@ -4,6 +4,8 @@
 <link rel="stylesheet" href="<?= base_url('assets/css/penilaian/layar.css') ?>">
 <?= $this->endSection() ?>
 
+<?= $this->section('navbar') ?><?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <?php
     $idP   = (int) $pertandingan->id_pertandingan;

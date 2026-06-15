@@ -29,6 +29,10 @@
 </style>
 <?= $this->endSection() ?>
 
+<?= $this->section('navbar') ?>
+<?= view('pertandingan/components/navbar', ['nav_role' => 'layar', 'nav_active' => 'tanding']) ?>
+<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <?php $mode = $mode ?? 'tanding'; ?>
 <div class="transisi-wrapper" data-mode="<?= esc($mode) ?>">

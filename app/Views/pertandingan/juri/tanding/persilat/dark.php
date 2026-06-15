@@ -22,6 +22,27 @@ body {
 	padding: 0 !important;
 }
 
+/* ─── Tabel Skor Per Ronde ─────────────────────────────────────────────── */
+#scoring-table-section {
+	flex-shrink: 0;
+	background: #0f1115;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+	padding: clamp(0.4rem, 1.5vw, 0.6rem) clamp(0.5rem, 2vw, 0.75rem);
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+#scoring-table-section::-webkit-scrollbar {
+	height: 4px;
+}
+#scoring-table-section::-webkit-scrollbar-track {
+	background: #1a1a1a;
+}
+#scoring-table-section::-webkit-scrollbar-thumb {
+	background: #444;
+	border-radius: 2px;
+}
+
 /* ─── Header: Atlet + Skor ─────────────────────────────────────────────── */
 #header-tanding {
 	flex-shrink: 0;
@@ -481,6 +502,8 @@ body {
 }
 </style>
 <?= $this->endSection() ?>
+
+<?= $this->section('navbar') ?><?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
 <?php

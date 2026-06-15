@@ -4,6 +4,8 @@
 <link rel="stylesheet" href="<?= base_url('assets/css/penilaian/kp-seni.css') ?>">
 <?= $this->endSection() ?>
 
+<?= $this->section('navbar') ?><?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <div class="container-fluid min-vh-100 bg-black pb-4" id="mainContainer">
     <!-- HEADER -->
@@ -61,7 +63,7 @@
 
                 <!-- Tabel Unsur Nilai Blue -->
                 <div class="row">
-                    <div class="col-12">
+                    <div class="col-12 table-responsive">
                         <table class="table w-100 table-sm penampilan_seni_<?= $idPs ?> blue-corner">
                             <thead class="bg-dark text-white">
                                 <tr>
@@ -187,7 +189,7 @@
 
                 <!-- Tabel Unsur Nilai Red -->
                 <div class="row">
-                    <div class="col-12">
+                    <div class="col-12 table-responsive">
                         <table class="table w-100 table-sm penampilan_seni_<?= $idPs ?> red-corner">
                             <thead class="bg-dark text-white">
                                 <tr>

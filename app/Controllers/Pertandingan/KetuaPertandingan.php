@@ -133,14 +133,31 @@ class KetuaPertandingan extends BaseController
      */
     public function index()
     {
+        $eventName = \Config\Database::connect()
+            ->table('site_builder_settings')
+            ->select('value')
+            ->where('setting', 'event_name')
+            ->get()->getRow()?->value ?? '';
+
         return view('pertandingan/ketua/home', [
-            'title' => 'Panel Ketua Pertandingan',
+            'title'           => 'Panel Ketua Pertandingan',
+            'nama_gelanggang' => session()->get('nama_gelanggang'),
+            'event_name'      => $eventName,
         ]);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
     //  TANDING
     // ═══════════════════════════════════════════════════════════════════════
+
+    /**
+     * Entry point tanding — default ke monitoringTanding.
+     * Route: /ketua-pertandingan/tanding[/:theme]
+     */
+    public function tanding(string $theme = 'dark')
+    {
+        return $this->monitoringTanding($theme);
+    }
 
     /**
      * Halaman monitoring nilai KP tanding — hanya tabel monitoring (tanpa dewan).
@@ -788,13 +805,27 @@ class KetuaPertandingan extends BaseController
         }
 
         // Create verifikasi record
+        // Store match timer value (sisa_waktu) instead of Unix timestamp
+        helper('timer');
+        $sisaWaktu = 0;
+        if (!empty($pertandingan->data_waktu)) {
+            $dataWaktu = is_string($pertandingan->data_waktu)
+                ? json_decode($pertandingan->data_waktu, true)
+                : (array) $pertandingan->data_waktu;
+            $sisaWaktu = compute_current_sisa_waktu($dataWaktu);
+        }
+        // Sanity cap: a match round is at most 10 minutes (600 seconds)
+        if ($sisaWaktu < 0 || $sisaWaktu > 600) {
+            $sisaWaktu = 0;
+        }
+        
         $db = \Config\Database::connect();
         $db->table('verifikasi_pertandingan')->insert([
             'id_pertandingan'     => $idPertandingan,
             'jenis_verifikasi'    => $jenis,
             'ronde_pertandingan'  => (string) $pertandingan->ronde_pertandingan,
             'status'              => 'berlangsung',
-            'waktu'               => (string) time(),
+            'waktu'               => (string) $sisaWaktu,
         ]);
 
         $idVerifikasi = $db->insertID();

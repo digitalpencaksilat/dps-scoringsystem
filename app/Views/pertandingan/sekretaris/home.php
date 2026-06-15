@@ -742,7 +742,7 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('navbar') ?>
-<?= view('components/navbar_sekretaris', ['active' => 'dashboard', 'page_type' => 'home']) ?>
+<?= view('pertandingan/components/navbar', ['nav_role' => 'sekretaris', 'nav_active' => 'dashboard', 'nav_page_type' => 'home']) ?>
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>

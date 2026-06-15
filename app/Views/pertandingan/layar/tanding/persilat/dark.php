@@ -73,6 +73,8 @@
 </style>
 <?= $this->endSection() ?>
 
+<?= $this->section('navbar') ?><?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <div class="container-fluid min-vh-100 bg-gradient-180-black overflow-hidden">
 
