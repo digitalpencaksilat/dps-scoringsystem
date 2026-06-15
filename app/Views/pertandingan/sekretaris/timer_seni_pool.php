@@ -56,12 +56,7 @@ body {
 }
 
 /* ─── ATHLETE CARD (single, gold accent) ───────────────────────────────── */
-.athlete-section {
-	flex-shrink: 0;
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: clamp(0.4rem, 1.2vw, 0.7rem);
-}
+.athlete-section { flex-shrink: 0; }
 
 .card-atlet-seni {
 	background: linear-gradient(135deg, #c5a017 0%, #9a7d12 100%);
@@ -72,12 +67,14 @@ body {
 	flex-direction: row;
 	align-items: center;
 	justify-content: center;
-	gap: clamp(0.5rem, 1.5vw, 1rem);
+	gap: clamp(0.6rem, 2vw, 1.5rem);
+	flex-wrap: wrap;
 	box-shadow: 0 6px 24px rgba(197, 160, 23, 0.25);
 	position: relative;
 	overflow: hidden;
 	flex-shrink: 0;
 	min-height: 0;
+	width: 100%;
 }
 
 .card-atlet-seni::before {
@@ -90,9 +87,9 @@ body {
 
 .atlet-seni-nama {
 	font-family: 'Oswald', sans-serif;
-	font-size: clamp(1.1rem, 4vw, 2.2rem);
+	font-size: clamp(1rem, 2.8vw, 1.6rem);
 	font-weight: 700; color: #fff;
-	line-height: 1.05;
+	line-height: 1.1;
 	white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 	max-width: 100%;
 	text-transform: uppercase;
@@ -101,11 +98,12 @@ body {
 }
 
 .atlet-seni-kontingen {
-	font-size: clamp(0.75rem, 2vw, 1.1rem);
-	color: rgba(255, 255, 255, 0.95);
-	margin-top: 4px;
+	font-size: clamp(0.7rem, 1.6vw, 0.95rem);
+	color: rgba(255, 255, 255, 0.9);
+	font-weight: 500;
 	white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 	max-width: 100%;
+	letter-spacing: 0.3px;
 }
 
 /* ─── TIMER SECTION ────────────────────────────────────────────────────── */
