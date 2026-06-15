@@ -572,7 +572,7 @@
     function configureButton(sudut, btnMode, opts) {
         var btn = document.querySelector('.kp-icon-btn[data-sudut="' + sudut + '"][data-mode="' + btnMode + '"]');
         if (!btn) return;
-        btn.classList.remove('kp-locked', 'kp-active', 'kp-delete-mode');
+        btn.classList.remove('kp-locked', 'kp-active', 'kp-delete-mode', 'kp-subdued');
 
         if (opts.isActive) {
             btn.classList.add('kp-active');
@@ -581,7 +581,7 @@
                 btn.dataset.actionMode = opts.deleteMode;
                 btn.dataset.actionJumlah = 'hapus';
             } else {
-                btn.classList.add('kp-locked');
+                btn.classList.add('kp-subdued');
                 btn.dataset.actionMode = '';
                 btn.dataset.actionJumlah = '';
             }
