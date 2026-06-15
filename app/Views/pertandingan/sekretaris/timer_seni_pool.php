@@ -62,7 +62,7 @@ body {
 	background: linear-gradient(135deg, #c5a017 0%, #9a7d12 100%);
 	border-radius: 0.85rem;
 	overflow: hidden;
-	padding: clamp(0.65rem, 2vh, 1.2rem) clamp(1rem, 3vw, 2rem);
+	padding: clamp(0.6rem, 1.8vh, 1.1rem) clamp(0.85rem, 2.2vw, 1.5rem);
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -128,7 +128,7 @@ body {
 	line-height: 1;
 	letter-spacing: 0.04em;
 	font-variant-numeric: tabular-nums;
-	font-size: clamp(3.5rem, 16vh, 8rem);
+	font-size: clamp(4rem, 20vh, 9rem);
 	min-height: 0;
 	text-align: center;
 }

@@ -88,7 +88,7 @@ body {
 	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 	display: flex;
 	align-items: center;
-	padding: clamp(0.5rem, 1.6vh, 1rem) clamp(0.75rem, 2vw, 1.4rem);
+	padding: clamp(0.6rem, 1.8vh, 1.1rem) clamp(0.85rem, 2.2vw, 1.5rem);
 	gap: clamp(0.5rem, 1.5vw, 1rem);
 	min-height: 0;
 	flex-shrink: 0;
@@ -157,7 +157,7 @@ body {
 	line-height: 1;
 	letter-spacing: 0.04em;
 	font-variant-numeric: tabular-nums;
-	font-size: clamp(3.5rem, 14vh, 8rem);
+	font-size: clamp(4rem, 18vh, 9rem);
 	min-height: 0;
 	text-align: center;
 }
