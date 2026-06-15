@@ -56,7 +56,12 @@ body {
 }
 
 /* ─── ATHLETE CARD (single, gold accent) ───────────────────────────────── */
-.athlete-section { flex-shrink: 0; }
+.athlete-section {
+	flex-shrink: 0;
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: clamp(0.4rem, 1.2vw, 0.7rem);
+}
 
 .card-atlet-seni {
 	background: linear-gradient(135deg, #c5a017 0%, #9a7d12 100%);
@@ -64,14 +69,15 @@ body {
 	overflow: hidden;
 	padding: clamp(0.6rem, 1.8vh, 1.1rem) clamp(0.85rem, 2.2vw, 1.5rem);
 	display: flex;
-	flex-direction: column;
+	flex-direction: row;
 	align-items: center;
 	justify-content: center;
-	text-align: center;
+	gap: clamp(0.5rem, 1.5vw, 1rem);
 	box-shadow: 0 6px 24px rgba(197, 160, 23, 0.25);
 	position: relative;
 	overflow: hidden;
 	flex-shrink: 0;
+	min-height: 0;
 }
 
 .card-atlet-seni::before {
@@ -128,7 +134,7 @@ body {
 	line-height: 1;
 	letter-spacing: 0.04em;
 	font-variant-numeric: tabular-nums;
-	font-size: clamp(4rem, 20vh, 9rem);
+	font-size: clamp(4.5rem, 24vh, 10rem);
 	min-height: 0;
 	text-align: center;
 }

@@ -157,7 +157,7 @@ body {
 	line-height: 1;
 	letter-spacing: 0.04em;
 	font-variant-numeric: tabular-nums;
-	font-size: clamp(4rem, 18vh, 9rem);
+	font-size: clamp(4.5rem, 24vh, 10rem);
 	min-height: 0;
 	text-align: center;
 }
