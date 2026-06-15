@@ -26,10 +26,10 @@ const juri = {
     if ($indicator.length > 0) {
       if (is_offline) {
         $indicator.removeClass('bg-success').addClass('bg-danger blink-indicator')
-          .html('<small><i class="fas fa-exclamation-triangle me-1"></i> Lokal</small>').show();
+          .html('<span class="dot"></span><span>Lokal</span>').show();
       } else {
         $indicator.removeClass('bg-danger').addClass('bg-success blink-indicator')
-          .html('<small><i class="fas fa-wifi me-1"></i> Online</small>').show();
+          .html('<span class="dot"></span><span>Online</span>').show();
       }
     }
   },
@@ -592,13 +592,14 @@ const juri = {
         if (data && data.csrf_hash) CSRF_HASH = data.csrf_hash;
         if (data && data.status === true) {
           $($btn).attr('data-status', newStatus);
+          // Support both legacy (btn-primary/btn-success) and new (btn-act-ready/is-ready) styles
           if (newStatus === 1) {
-            $($btn).removeClass('btn-primary').addClass('btn-success')
-              .find('.ready-icon').html('✅').end()
+            $($btn).removeClass('btn-primary').addClass('btn-success is-ready')
+              .find('.ready-icon').removeClass('fa-circle').addClass('fa-check-circle').end()
               .find('.ready-text').html('READY');
           } else {
-            $($btn).removeClass('btn-success').addClass('btn-primary')
-              .find('.ready-icon').html('🔵').end()
+            $($btn).removeClass('btn-success is-ready').addClass('btn-primary')
+              .find('.ready-icon').removeClass('fa-check-circle').addClass('fa-circle').end()
               .find('.ready-text').html('READY');
           }
         }
