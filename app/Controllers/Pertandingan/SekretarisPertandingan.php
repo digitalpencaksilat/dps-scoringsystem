@@ -348,8 +348,8 @@ class SekretarisPertandingan extends BaseController
 
     /**
      * Mulai ulang penampilan seni yang sudah selesai (sudah_tampil → standby).
-     * Reset nilai_akhir, waktu_tampil, diskualifikasi, hapus penilaian & medali lama.
-     * Parity: analog dengan mulai_pertandingan() untuk tanding yang bisa dimulai ulang.
+     * TIDAK menghapus data penilaian, waktu, maupun medali.
+     * Fungsi: buka kembali penampilan untuk review/koreksi nilai.
      */
     public function mulaiUlangPenampilan(int $idPenampilanSeni)
     {
@@ -378,46 +378,24 @@ class SekretarisPertandingan extends BaseController
             ->whereNotIn('ps.status_penampilan', ['belum_tampil', 'sudah_tampil'])
             ->get()->getRow();
 
-        // Tentukan back URL
-        $jadwalRow = $db->table('detail_jadwal_seni')
-            ->select('id_jadwal_seni')
-            ->where('id_penampilan_seni', $idPenampilanSeni)
-            ->get()->getRow();
-        $back = $jadwalRow
-            ? '/sekretaris-pertandingan/jadwal-seni/' . (int) $jadwalRow->id_jadwal_seni
-            : '/sekretaris-pertandingan';
-
         if ($aktif !== null) {
-            return redirect()->to($back)->with('error', 'Masih ada penampilan yang berlangsung.');
+            return redirect()->back()->with('error', 'Masih ada penampilan yang berlangsung.');
         }
 
-        // Reset penampilan: kembalikan ke kondisi awal
+        // Set kembali ke standby — data penilaian, waktu, medali tetap utuh
         $db->table('penampilan_seni')
             ->where('id_penampilan_seni', $idPenampilanSeni)
             ->update([
                 'status_penampilan' => 'standby',
-                'nilai_akhir'       => '0',
-                'waktu_tampil'      => 0,
-                'diskualifikasi'    => 0,
                 'akses_penilaian'   => 'dibuka',
             ]);
-
-        // Hapus penilaian lama
-        $db->table('penilaian_seni')
-            ->where('id_penampilan_seni', $idPenampilanSeni)
-            ->delete();
-
-        // Hapus medali lama untuk kelompok peserta ini
-        $db->table('perolehan_medali_seni')
-            ->where('id_kelompok_peserta_seni', $penampilan->id_kelompok_peserta_seni)
-            ->delete();
 
         // Broadcast ke Layar bahwa seni berlangsung lagi
         helper('realtime');
         realtime_reset_room($idPenampilanSeni);
         realtime_emit_seni_berlangsung($this->idGelanggang(), $idPenampilanSeni);
 
-        return redirect()->to('/sekretaris-pertandingan/timer-seni')->with('message', 'Penampilan berhasil diulang dari awal.');
+        return redirect()->to('/sekretaris-pertandingan/timer-seni')->with('message', 'Penampilan dibuka kembali untuk review/koreksi.');
     }
 
     /**

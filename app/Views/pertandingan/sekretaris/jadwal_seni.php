@@ -312,13 +312,13 @@ $(document).ready(function() {
  */
 function konfirmasiMulaiUlang(url, label) {
 	Swal.fire({
-		title: 'Mulai Ulang Penampilan',
-		html: `Anda yakin ingin memulai ulang penampilan <strong>${label}</strong> dari awal?<br><br>
-			   <small class="text-muted">• Data penilaian lama akan dihapus</small><br>
-			   <small class="text-muted">• Medali akan direset</small>`,
-		icon: 'warning',
+		title: 'Buka Kembali Penampilan',
+		html: `Buka kembali penampilan <strong>${label}</strong> untuk review atau koreksi nilai?<br><br>
+			   <small class="text-muted">• Data penilaian dan waktu tetap tersimpan</small><br>
+			   <small class="text-muted">• Status kembali ke Berlangsung</small>`,
+		icon: 'question',
 		showCancelButton: true,
-		confirmButtonText: 'Ya, Mulai Ulang',
+		confirmButtonText: 'Ya, Buka Kembali',
 		cancelButtonText: 'Batal',
 		confirmButtonColor: '#0d6efd',
 		cancelButtonColor: '#6c757d',
