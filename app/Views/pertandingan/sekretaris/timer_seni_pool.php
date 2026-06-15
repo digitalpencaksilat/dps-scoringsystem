@@ -66,7 +66,7 @@ body {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-	justify-content: flex-start;
+	justify-content: center;
 	gap: clamp(0.6rem, 2vw, 1.5rem);
 	box-shadow: 0 6px 24px rgba(197, 160, 23, 0.25);
 	position: relative;
@@ -87,13 +87,14 @@ body {
 .atlet-seni-info {
 	display: flex;
 	flex-direction: column;
-	align-items: flex-start;
+	align-items: center;
 	justify-content: center;
 	gap: clamp(0.15rem, 0.4vh, 0.3rem);
 	min-width: 0;
 	flex: 1 1 auto;
 	position: relative;
 	z-index: 1;
+	text-align: center;
 }
 
 .atlet-seni-nama {
