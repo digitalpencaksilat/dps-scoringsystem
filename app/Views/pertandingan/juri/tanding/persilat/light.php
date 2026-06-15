@@ -480,10 +480,6 @@ body {
 </style>
 <?= $this->endSection() ?>
 
-<?= $this->section('navbar') ?>
-<?= view('pertandingan/components/navbar', ['nav_role' => 'juri', 'nav_active' => 'tanding']) ?>
-<?= $this->endSection() ?>
-
 <?= $this->section('content') ?>
 <?php
     $idP   = (int) $pertandingan->id_pertandingan;
@@ -578,7 +574,7 @@ body {
     </div>
 
     <!-- ═══ Scoring Buttons (2 columns: Biru | Merah) ═══ -->
-    <div id="scoring-buttons-section">
+    <div id="scoring-buttons-section" style="margin-bottom: clamp(4px, 1vh, 12px);">
         <!-- Sudut Biru (Kiri) -->
         <div class="scoring-column biru" id="button-biru">
             <button class="btn-scoring-legacy bg-blue opacity" data-sudut="biru" data-nilai="1">
