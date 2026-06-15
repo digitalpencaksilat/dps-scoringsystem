@@ -167,16 +167,18 @@ body {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	gap: 0.5rem;
-	padding: clamp(0.6rem, 1.5vw, 0.9rem);
+	gap: 0.6rem;
+	padding: clamp(0.75rem, 2vw, 1.1rem);
 	border: none;
 	border-radius: 8px;
 	color: #fff;
-	font-size: clamp(0.8rem, 1.8vw, 0.95rem);
+	font-size: clamp(0.95rem, 2.2vw, 1.15rem);
 	font-weight: 700;
 	cursor: pointer;
 	transition: all 0.12s;
 }
+
+.dewan-btn-jatuhan i { font-size: clamp(1.05rem, 2.4vw, 1.35rem); }
 
 .dewan-btn-jatuhan:active { transform: scale(0.96); }
 
@@ -191,17 +193,19 @@ body {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	gap: 0.3rem;
-	padding: clamp(0.6rem, 1.5vw, 0.9rem);
+	gap: 0.4rem;
+	padding: clamp(0.75rem, 2vw, 1.1rem);
 	border: 1px solid #444;
 	border-radius: 8px;
 	background: transparent;
 	color: #999;
-	font-size: clamp(0.7rem, 1.5vw, 0.85rem);
+	font-size: clamp(0.8rem, 1.8vw, 0.95rem);
 	cursor: pointer;
 	transition: all 0.12s;
 	white-space: nowrap;
 }
+
+.dewan-btn-delete i { font-size: clamp(0.9rem, 2vw, 1.1rem); }
 
 .dewan-btn-delete:hover { background: rgba(255,255,255,0.05); color: #fff; border-color: #777; }
 .dewan-btn-delete:active { transform: scale(0.96); }
@@ -435,7 +439,7 @@ body {
 			<div class="dewan-jatuhan-row">
 				<button type="button" class="kp-big-btn dewan-btn-jatuhan dewan-btn-jatuhan-biru"
 					data-sudut="biru" data-mode="jatuhan" data-jumlah="3">
-					<i class="fas fa-person-falling"></i> Dropping <small style="opacity:0.75">(Jatuhan)</small>
+					<i class="fas fa-person-falling"></i> Dropping
 				</button>
 				<button type="button" class="kp-big-btn dewan-btn-delete"
 					data-sudut="biru" data-mode="jatuhan" data-jumlah="hapus">
@@ -504,7 +508,7 @@ body {
 			<div class="dewan-jatuhan-row">
 				<button type="button" class="kp-big-btn dewan-btn-jatuhan dewan-btn-jatuhan-merah"
 					data-sudut="merah" data-mode="jatuhan" data-jumlah="3">
-					<i class="fas fa-person-falling"></i> Dropping <small style="opacity:0.75">(Jatuhan)</small>
+					<i class="fas fa-person-falling"></i> Dropping
 				</button>
 				<button type="button" class="kp-big-btn dewan-btn-delete"
 					data-sudut="merah" data-mode="jatuhan" data-jumlah="hapus">
