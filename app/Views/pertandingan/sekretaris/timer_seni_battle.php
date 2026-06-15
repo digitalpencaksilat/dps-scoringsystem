@@ -33,7 +33,7 @@ body {
 	border: 1px solid rgba(255, 255, 255, 0.07);
 	border-radius: 0.65rem;
 	padding: clamp(0.4rem, 1.2vh, 0.65rem) clamp(0.7rem, 2vw, 1.1rem);
-	display: flex; align-items: center; justify-content: center;
+	display: flex; align-items: center; justify-content: flex-start;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 .info-chip.flex-fill { flex: 1 1 auto; min-width: 0; }
@@ -74,15 +74,16 @@ body {
 	white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 	margin-top: 2px;
 }
-
-/* ─── TIMER SECTION ────────────────────────────────────────────────────── */
 .timer-section {
-	flex: 1 1 0; min-height: 0;
-	display: flex; flex-direction: column;
+	flex: 1 1 auto;
+	min-height: 0;
+	max-height: 45vh;
+	display: flex;
+	flex-direction: column;
 	background: linear-gradient(180deg, #1a1d22 0%, #101317 100%);
 	border: 1px solid rgba(255, 255, 255, 0.07);
 	border-radius: 0.9rem;
-	padding: clamp(0.5rem, 1.8vh, 1rem) clamp(0.75rem, 2.5vw, 1.5rem);
+	padding: clamp(0.4rem, 1.5vh, 0.85rem) clamp(0.75rem, 2.5vw, 1.5rem);
 	box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
 	overflow: hidden;
 	gap: clamp(0.4rem, 1.4vh, 0.75rem);

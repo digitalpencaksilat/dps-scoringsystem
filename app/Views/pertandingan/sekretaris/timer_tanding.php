@@ -40,7 +40,7 @@ body {
 	padding: clamp(0.4rem, 1.2vh, 0.65rem) clamp(0.7rem, 2vw, 1.1rem);
 	display: flex;
 	align-items: center;
-	justify-content: center;
+	justify-content: flex-start;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
@@ -88,8 +88,8 @@ body {
 	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 	display: flex;
 	align-items: center;
-	padding: clamp(0.4rem, 1vh, 0.7rem) clamp(0.6rem, 1.5vw, 1rem);
-	gap: clamp(0.4rem, 1vw, 0.8rem);
+	padding: clamp(0.5rem, 1.6vh, 1rem) clamp(0.75rem, 2vw, 1.4rem);
+	gap: clamp(0.5rem, 1.5vw, 1rem);
 	min-height: 0;
 	flex-shrink: 0;
 }
@@ -123,7 +123,7 @@ body {
 
 .atlet-skor {
 	font-family: 'Oswald', sans-serif;
-	font-size: clamp(1.8rem, 6vw, 3.2rem);
+	font-size: clamp(2.2rem, 8vw, 4.5rem);
 	font-weight: 700;
 	color: #fff;
 	line-height: 0.9;
@@ -133,14 +133,15 @@ body {
 
 /* ─── TIMER SECTION (flex-grow center) ─────────────────────────────────── */
 .timer-section {
-	flex: 1 1 0;
+	flex: 1 1 auto;
 	min-height: 0;
+	max-height: 45vh;
 	display: flex;
 	flex-direction: column;
 	background: linear-gradient(180deg, #1a1d22 0%, #101317 100%);
 	border: 1px solid rgba(255, 255, 255, 0.07);
 	border-radius: 0.9rem;
-	padding: clamp(0.5rem, 1.8vh, 1rem) clamp(0.75rem, 2.5vw, 1.5rem);
+	padding: clamp(0.4rem, 1.5vh, 0.85rem) clamp(0.75rem, 2.5vw, 1.5rem);
 	box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
 	overflow: hidden;
 }
@@ -156,7 +157,7 @@ body {
 	line-height: 1;
 	letter-spacing: 0.04em;
 	font-variant-numeric: tabular-nums;
-	font-size: clamp(4rem, 20vh, 10rem);
+	font-size: clamp(3.5rem, 14vh, 8rem);
 	min-height: 0;
 	text-align: center;
 }

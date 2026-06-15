@@ -32,7 +32,7 @@ body {
 	border: 1px solid rgba(255, 255, 255, 0.07);
 	border-radius: 0.65rem;
 	padding: clamp(0.4rem, 1.2vh, 0.65rem) clamp(0.7rem, 2vw, 1.1rem);
-	display: flex; align-items: center; justify-content: center;
+	display: flex; align-items: center; justify-content: flex-start;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 .info-chip.flex-fill { flex: 1 1 auto; min-width: 0; }
@@ -62,7 +62,7 @@ body {
 	background: linear-gradient(135deg, #c5a017 0%, #9a7d12 100%);
 	border-radius: 0.85rem;
 	overflow: hidden;
-	padding: clamp(0.5rem, 1.2vh, 0.8rem) clamp(0.85rem, 2.5vw, 1.5rem);
+	padding: clamp(0.65rem, 2vh, 1.2rem) clamp(1rem, 3vw, 2rem);
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -104,14 +104,15 @@ body {
 
 /* ─── TIMER SECTION ────────────────────────────────────────────────────── */
 .timer-section {
-	flex: 1 1 0;
+	flex: 1 1 auto;
 	min-height: 0;
+	max-height: 50vh;
 	display: flex;
 	flex-direction: column;
 	background: linear-gradient(180deg, #1a1d22 0%, #101317 100%);
 	border: 1px solid rgba(255, 255, 255, 0.07);
 	border-radius: 0.9rem;
-	padding: clamp(0.5rem, 1.8vh, 1rem) clamp(0.75rem, 2.5vw, 1.5rem);
+	padding: clamp(0.4rem, 1.5vh, 0.85rem) clamp(0.75rem, 2.5vw, 1.5rem);
 	box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
 	overflow: hidden;
 	gap: clamp(0.4rem, 1.4vh, 0.75rem);
@@ -127,7 +128,7 @@ body {
 	line-height: 1;
 	letter-spacing: 0.04em;
 	font-variant-numeric: tabular-nums;
-	font-size: clamp(4rem, 22vh, 10rem);
+	font-size: clamp(3.5rem, 16vh, 8rem);
 	min-height: 0;
 	text-align: center;
 }
