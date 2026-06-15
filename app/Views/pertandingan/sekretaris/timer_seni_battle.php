@@ -38,8 +38,8 @@ body {
 }
 .info-chip.flex-fill { flex: 1 1 auto; min-width: 0; }
 .info-chip-label { font-size: clamp(0.5rem, 1.2vw, 0.62rem); text-transform: uppercase; letter-spacing: 1.5px; color: rgba(255, 255, 255, 0.4); display: block; line-height: 1; margin-bottom: 3px; }
-.info-chip-value { font-family: 'Oswald', sans-serif; font-size: clamp(0.85rem, 2.2vw, 1.25rem); font-weight: 700; color: #fff; line-height: 1.1; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.info-chip.flex-fill .info-chip-value { white-space: normal; font-size: clamp(0.75rem, 1.8vw, 1rem); }
+.info-chip-value { font-family: 'Oswald', sans-serif; font-size: clamp(0.85rem, 2.2vw, 1.25rem); font-weight: 700; color: #fff; line-height: 1.1; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.info-chip.flex-fill .info-chip-value { white-space: normal; font-size: clamp(0.75rem, 1.8vw, 1rem); text-align: left; }
 
 /* ─── ATHLETE CARDS (Battle: Blue vs Red) ──────────────────────────────── */
 .athlete-row { flex-shrink: 0; display: grid; grid-template-columns: 1fr 1fr; gap: clamp(0.4rem, 1.2vw, 0.7rem); }
@@ -47,10 +47,11 @@ body {
 .card-atlet-battle {
 	border-radius: 0.85rem;
 	overflow: hidden;
-	padding: clamp(0.5rem, 1.5vh, 0.9rem) clamp(0.75rem, 2vw, 1.2rem);
+	padding: clamp(0.4rem, 1vh, 0.7rem) clamp(0.6rem, 1.5vw, 1rem);
 	display: flex; flex-direction: column; justify-content: center;
 	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 	position: relative;
+	flex-shrink: 0;
 }
 
 .card-atlet-battle.biru { background: linear-gradient(135deg, #1d2af4 0%, #0118d8 100%); }
@@ -109,8 +110,9 @@ body {
 	font-family: 'Oswald', sans-serif;
 	font-weight: 700; color: #fff; line-height: 1;
 	letter-spacing: 0.04em; font-variant-numeric: tabular-nums;
-	font-size: clamp(3rem, 18vh, 9rem);
+	font-size: clamp(4rem, 22vh, 10rem);
 	min-height: 0;
+	text-align: center;
 }
 .timer-display.warning { color: #ffc107; animation: timerPulse 1s ease-in-out infinite; }
 .timer-display.danger { color: #ff4757; }

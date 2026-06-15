@@ -134,8 +134,8 @@ const sekretaris_pertandingan = {
 			this.ronde_aktif = ronde;
 
 			// Update UI
-			$('.btn-ronde').removeClass('btn-warning').addClass('btn-outline-light');
-			$(`.btn-ronde[data-ronde="${ronde}"]`).removeClass('btn-outline-light').addClass('btn-warning');
+			$('.btn-ronde').removeClass('active');
+			$(`.btn-ronde[data-ronde="${ronde}"]`).addClass('active');
 
 			// Reset timer for new round
 			// FIX: field is waktu_per_ronde, not durasi_ronde

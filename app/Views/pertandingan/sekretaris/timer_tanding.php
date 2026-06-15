@@ -62,7 +62,7 @@ body {
 	font-weight: 700;
 	color: #fff;
 	line-height: 1.1;
-	text-align: center;
+	text-align: left;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -71,6 +71,7 @@ body {
 .info-chip.flex-fill .info-chip-value {
 	white-space: normal;
 	font-size: clamp(0.75rem, 1.8vw, 1rem);
+	text-align: left;
 }
 
 /* ─── ATHLETE CARDS ────────────────────────────────────────────────────── */
@@ -87,9 +88,10 @@ body {
 	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 	display: flex;
 	align-items: center;
-	padding: clamp(0.5rem, 1.6vh, 1rem) clamp(0.75rem, 2vw, 1.4rem);
-	gap: clamp(0.5rem, 1.5vw, 1rem);
+	padding: clamp(0.4rem, 1vh, 0.7rem) clamp(0.6rem, 1.5vw, 1rem);
+	gap: clamp(0.4rem, 1vw, 0.8rem);
 	min-height: 0;
+	flex-shrink: 0;
 }
 
 .card-atlet.biru { background: linear-gradient(135deg, #1d2af4 0%, #0118d8 100%); }
@@ -121,7 +123,7 @@ body {
 
 .atlet-skor {
 	font-family: 'Oswald', sans-serif;
-	font-size: clamp(2.2rem, 8vw, 4.5rem);
+	font-size: clamp(1.8rem, 6vw, 3.2rem);
 	font-weight: 700;
 	color: #fff;
 	line-height: 0.9;
@@ -154,8 +156,9 @@ body {
 	line-height: 1;
 	letter-spacing: 0.04em;
 	font-variant-numeric: tabular-nums;
-	font-size: clamp(3rem, 16vh, 9rem);
+	font-size: clamp(4rem, 20vh, 10rem);
 	min-height: 0;
+	text-align: center;
 }
 
 .timer-display.warning { color: #ffc107; animation: timerPulse 1s ease-in-out infinite; }
@@ -188,7 +191,7 @@ body {
 }
 
 .btn-ronde:hover { border-color: rgba(255, 255, 255, 0.5); color: #fff; }
-.btn-ronde.btn-warning, .btn-ronde.active {
+.btn-ronde.active {
 	background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
 	border-color: #ffc107;
 	color: #000;
@@ -430,7 +433,7 @@ body {
 			$rondeAktif  = (int) ($pertandingan->ronde_pertandingan ?? 1);
 			for ($r = 1; $r <= $jumlahRonde; $r++) :
 			?>
-				<button class="btn btn-ronde <?= ($r == $rondeAktif) ? 'btn-warning active' : '' ?>" data-ronde="<?= $r ?>" onclick="sekretaris_pertandingan.pindah_ronde(<?= $r ?>)">Ronde <?= $r ?></button>
+				<button class="btn btn-ronde <?= ($r == $rondeAktif) ? 'active' : '' ?>" data-ronde="<?= $r ?>" onclick="sekretaris_pertandingan.pindah_ronde(<?= $r ?>)">Ronde <?= $r ?></button>
 			<?php endfor; ?>
 		</div>
 

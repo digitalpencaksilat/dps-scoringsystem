@@ -46,12 +46,13 @@ body {
 	font-family: 'Oswald', sans-serif;
 	font-size: clamp(0.85rem, 2.2vw, 1.25rem);
 	font-weight: 700; color: #fff; line-height: 1.1;
-	text-align: center;
+	text-align: left;
 	white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .info-chip.flex-fill .info-chip-value {
 	white-space: normal;
 	font-size: clamp(0.75rem, 1.8vw, 1rem);
+	text-align: left;
 }
 
 /* ─── ATHLETE CARD (single, gold accent) ───────────────────────────────── */
@@ -61,7 +62,7 @@ body {
 	background: linear-gradient(135deg, #c5a017 0%, #9a7d12 100%);
 	border-radius: 0.85rem;
 	overflow: hidden;
-	padding: clamp(0.65rem, 2vh, 1.2rem) clamp(1rem, 3vw, 2rem);
+	padding: clamp(0.5rem, 1.2vh, 0.8rem) clamp(0.85rem, 2.5vw, 1.5rem);
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -70,6 +71,7 @@ body {
 	box-shadow: 0 6px 24px rgba(197, 160, 23, 0.25);
 	position: relative;
 	overflow: hidden;
+	flex-shrink: 0;
 }
 
 .card-atlet-seni::before {
@@ -125,8 +127,9 @@ body {
 	line-height: 1;
 	letter-spacing: 0.04em;
 	font-variant-numeric: tabular-nums;
-	font-size: clamp(3rem, 18vh, 9rem);
+	font-size: clamp(4rem, 22vh, 10rem);
 	min-height: 0;
+	text-align: center;
 }
 
 .timer-display.warning { color: #ffc107; animation: timerPulse 1s ease-in-out infinite; }
