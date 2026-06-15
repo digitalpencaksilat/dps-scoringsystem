@@ -342,7 +342,7 @@ class SekretarisPertandingan extends BaseController
         helper('realtime');
         realtime_emit_seni_berlangsung($this->idGelanggang(), $idPenampilanSeni);
 
-        return redirect()->to($back)
+        return redirect()->to('/sekretaris-pertandingan/timer-seni')
             ->with('message', 'Penampilan seni dimulai (standby).');
     }
 
@@ -417,7 +417,7 @@ class SekretarisPertandingan extends BaseController
         realtime_reset_room($idPenampilanSeni);
         realtime_emit_seni_berlangsung($this->idGelanggang(), $idPenampilanSeni);
 
-        return redirect()->to($back)->with('message', 'Penampilan berhasil diulang dari awal.');
+        return redirect()->to('/sekretaris-pertandingan/timer-seni')->with('message', 'Penampilan berhasil diulang dari awal.');
     }
 
     /**
