@@ -66,9 +66,8 @@ body {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-	justify-content: center;
+	justify-content: flex-start;
 	gap: clamp(0.6rem, 2vw, 1.5rem);
-	flex-wrap: wrap;
 	box-shadow: 0 6px 24px rgba(197, 160, 23, 0.25);
 	position: relative;
 	overflow: hidden;
@@ -85,25 +84,44 @@ body {
 	pointer-events: none;
 }
 
+.atlet-seni-info {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	justify-content: center;
+	gap: clamp(0.15rem, 0.4vh, 0.3rem);
+	min-width: 0;
+	flex: 1 1 auto;
+	position: relative;
+	z-index: 1;
+}
+
 .atlet-seni-nama {
 	font-family: 'Oswald', sans-serif;
-	font-size: clamp(1rem, 2.8vw, 1.6rem);
-	font-weight: 700; color: #fff;
-	line-height: 1.1;
-	white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+	font-size: clamp(0.95rem, 2.5vw, 1.45rem);
+	font-weight: 700;
+	color: #fff;
+	line-height: 1.15;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 	max-width: 100%;
 	text-transform: uppercase;
 	letter-spacing: 0.5px;
 	text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+	display: block;
 }
 
 .atlet-seni-kontingen {
-	font-size: clamp(0.7rem, 1.6vw, 0.95rem);
-	color: rgba(255, 255, 255, 0.9);
+	font-size: clamp(0.7rem, 1.5vw, 0.9rem);
+	color: rgba(255, 255, 255, 0.82);
 	font-weight: 500;
-	white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 	max-width: 100%;
 	letter-spacing: 0.3px;
+	display: block;
 }
 
 /* ─── TIMER SECTION ────────────────────────────────────────────────────── */
@@ -292,14 +310,16 @@ body {
 	<!-- ATHLETE CARD -->
 	<div class="athlete-section block-atlet">
 		<div class="card-atlet-seni opacity">
-			<?php if (!empty($anggota)) : ?>
-				<?php foreach ($anggota as $peserta) : ?>
-					<span class="atlet-seni-nama"><?= esc($peserta->nama_pendaftar ?? '') ?></span>
-				<?php endforeach; ?>
-				<span class="atlet-seni-kontingen"><?= esc($anggota[0]->nama_kontingen ?? '') ?></span>
-			<?php else : ?>
-				<span class="atlet-seni-nama">-</span>
-			<?php endif; ?>
+			<div class="atlet-seni-info">
+				<?php if (!empty($anggota)) : ?>
+					<?php foreach ($anggota as $peserta) : ?>
+						<span class="atlet-seni-nama"><?= esc($peserta->nama_pendaftar ?? '') ?></span>
+					<?php endforeach; ?>
+					<span class="atlet-seni-kontingen"><?= esc($anggota[0]->nama_kontingen ?? '') ?></span>
+				<?php else : ?>
+					<span class="atlet-seni-nama">-</span>
+				<?php endif; ?>
+			</div>
 		</div>
 	</div>
 
