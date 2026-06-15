@@ -2,6 +2,482 @@
 
 <?= $this->section('styles') ?>
 <link rel="stylesheet" href="<?= base_url('assets/css/penilaian/juri-tanding.css') ?>">
+<style>
+/* ════════════════════════════════════════════════════════════════════════
+   Juri Tanding PERSILAT — Light Mode, 100dvh Compact Layout
+   ════════════════════════════════════════════════════════════════════════ */
+html, body { height: 100%; overflow: hidden; margin: 0; }
+
+body {
+	background: #f4f6f9;
+	font-family: 'Poppins', sans-serif;
+}
+
+#juri-wrapper {
+	display: flex;
+	flex-direction: column;
+	height: 100dvh;
+	background: #f4f6f9;
+	overflow: hidden;
+	padding: 0 !important;
+}
+
+/* ─── Header: Atlet + Skor ─────────────────────────────────────────────── */
+#header-tanding {
+	flex-shrink: 0;
+	display: grid;
+	grid-template-columns: 1fr auto 1fr;
+	gap: 0;
+	margin: 0 !important;
+	padding: 0 !important;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.header-atlet {
+	padding: clamp(0.5rem, 2vw, 1rem) clamp(0.75rem, 2.5vw, 1.25rem);
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	overflow: hidden;
+	min-height: clamp(60px, 10vh, 90px);
+	position: relative;
+}
+
+.header-atlet::before {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	width: 4px;
+	background: rgba(255, 255, 255, 0.3);
+}
+
+.header-atlet.biru {
+	background: linear-gradient(135deg, #1d2af4 0%, #0118d8 100%);
+}
+
+.header-atlet.merah {
+	background: linear-gradient(135deg, #dd0a35 0%, #b80c0c 100%);
+	text-align: right;
+}
+
+.header-atlet.merah::before {
+	left: auto;
+	right: 0;
+}
+
+.atlet-nama {
+	font-family: 'Oswald', sans-serif;
+	font-size: clamp(0.85rem, 2.5vw, 1.25rem);
+	font-weight: 700;
+	color: #fff;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	line-height: 1.2;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.atlet-kontingen {
+	font-size: clamp(0.65rem, 1.8vw, 0.85rem);
+	color: rgba(255, 255, 255, 0.85);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	margin-top: 2px;
+}
+
+/* ─── Skor Center ──────────────────────────────────────────────────────── */
+.header-center {
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	background: #fff;
+	border-left: 1px solid #e5e7eb;
+	border-right: 1px solid #e5e7eb;
+	min-width: clamp(180px, 35vw, 280px);
+}
+
+.score-box {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 0 clamp(0.75rem, 2vw, 1.25rem);
+	min-width: clamp(50px, 10vw, 80px);
+}
+
+.score-label {
+	font-size: clamp(0.5rem, 1.4vw, 0.65rem);
+	font-weight: 700;
+	letter-spacing: 1.5px;
+	text-transform: uppercase;
+	margin-bottom: 2px;
+}
+
+.score-label.biru { color: #1d2af4; }
+.score-label.merah { color: #dd0a35; }
+
+.score-value {
+	font-family: 'Oswald', sans-serif;
+	font-size: clamp(1.5rem, 5vw, 2.5rem);
+	font-weight: 700;
+	color: #212529;
+	line-height: 1;
+	font-variant-numeric: tabular-nums;
+}
+
+.babak-box {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 0 clamp(0.5rem, 1.5vw, 1rem);
+	border-left: 1px solid #e5e7eb;
+	border-right: 1px solid #e5e7eb;
+	background: #f9fafb;
+}
+
+.babak-label {
+	font-size: clamp(0.5rem, 1.4vw, 0.6rem);
+	color: #6b7280;
+	text-transform: uppercase;
+	letter-spacing: 1.5px;
+}
+
+.babak-value {
+	font-family: 'Oswald', sans-serif;
+	font-size: clamp(0.85rem, 2.5vw, 1.1rem);
+	font-weight: 700;
+	color: #212529;
+	white-space: nowrap;
+	margin-top: 2px;
+}
+
+/* ─── Tabel Skor Per Ronde ─────────────────────────────────────────────── */
+#scoring-table-section {
+	flex-shrink: 0;
+	background: #fff;
+	border-bottom: 1px solid #e5e7eb;
+	padding: clamp(0.4rem, 1.5vw, 0.6rem) clamp(0.5rem, 2vw, 0.75rem);
+}
+
+#tabel-nilai-juri {
+	width: 100%;
+	margin: 0;
+	background: transparent;
+	border-collapse: separate;
+	border-spacing: 0;
+}
+
+#tabel-nilai-juri thead th {
+	background: #f3f4f6;
+	color: #374151;
+	font-size: clamp(0.55rem, 1.5vw, 0.7rem);
+	font-weight: 700;
+	letter-spacing: 1.5px;
+	text-transform: uppercase;
+	padding: clamp(0.3rem, 1vw, 0.5rem);
+	border: 1px solid #e5e7eb;
+	text-align: center;
+	vertical-align: middle;
+}
+
+#tabel-nilai-juri thead th.bg-gradient-180-blue {
+	background: linear-gradient(180deg, #1d2af4 55%, #0118d8 75%) !important;
+	color: #fff;
+}
+
+#tabel-nilai-juri thead th.bg-gradient-180-red {
+	background: linear-gradient(180deg, #dd0a35 55%, #b80c0c 75%) !important;
+	color: #fff;
+}
+
+#tabel-nilai-juri tbody td {
+	background: #fff;
+	color: #374151;
+	font-size: clamp(0.7rem, 2vw, 0.95rem);
+	padding: clamp(0.25rem, 1vw, 0.4rem);
+	border: 1px solid #e5e7eb;
+	text-align: center;
+	vertical-align: middle;
+	font-family: 'Oswald', sans-serif;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+
+#tabel-nilai-juri tbody td[class*="biru-ronde"][class*="-total"] {
+	color: #1d2af4;
+	font-weight: 700;
+}
+
+#tabel-nilai-juri tbody td[class*="merah-ronde"][class*="-total"] {
+	color: #dd0a35;
+	font-weight: 700;
+}
+
+#tabel-nilai-juri tbody td[class*="ronde-"]:not([class*="-nilai"]):not([class*="-total"]) {
+	background: #f3f4f6;
+	color: #374151;
+	font-weight: 700;
+	cursor: pointer;
+	transition: background 0.15s ease;
+}
+
+#tabel-nilai-juri tbody td[class*="ronde-"]:not([class*="-nilai"]):not([class*="-total"]):hover {
+	background: #e5e7eb;
+}
+
+#tabel-nilai-juri tbody td[class*="ronde-"]:not([class*="-nilai"]):not([class*="-total"]).bg-warning {
+	background: #ffc107 !important;
+	color: #000 !important;
+}
+
+#tabel-nilai-juri td div[class*="-nilai"] {
+	gap: 3px;
+	font-size: clamp(0.65rem, 1.8vw, 0.85rem);
+	scrollbar-width: thin;
+	scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+}
+
+#tabel-nilai-juri td div[class*="-nilai"]::-webkit-scrollbar {
+	height: 3px;
+}
+
+#tabel-nilai-juri td div[class*="-nilai"]::-webkit-scrollbar-thumb {
+	background: rgba(0, 0, 0, 0.15);
+	border-radius: 2px;
+}
+
+#tabel-nilai-juri td div[class*="-nilai"] span {
+	white-space: nowrap;
+	flex-shrink: 0;
+	padding: 2px 6px;
+	background: #f3f4f6;
+	border-radius: 3px;
+	font-weight: 600;
+}
+
+/* ─── Scoring Buttons Section ──────────────────────────────────────────── */
+#scoring-buttons-section {
+	flex: 1 1 0;
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 0;
+	overflow: hidden;
+	min-height: 0;
+}
+
+.scoring-column {
+	display: flex;
+	flex-direction: column;
+	gap: clamp(4px, 0.8vw, 8px);
+	padding: clamp(4px, 0.8vw, 8px);
+	overflow: hidden;
+}
+
+.scoring-column.biru {
+	background: linear-gradient(180deg, rgba(29, 42, 244, 0.04) 0%, rgba(1, 24, 216, 0.01) 100%);
+}
+
+.scoring-column.merah {
+	background: linear-gradient(180deg, rgba(221, 10, 53, 0.04) 0%, rgba(184, 12, 12, 0.01) 100%);
+	border-left: 1px solid #e5e7eb;
+}
+
+.btn-scoring-legacy {
+	flex: 1;
+	min-height: 0 !important;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border: none;
+	border-radius: clamp(8px, 1.5vw, 14px);
+	transition: transform 0.06s ease, filter 0.15s ease, box-shadow 0.15s ease;
+	-webkit-tap-highlight-color: transparent;
+	user-select: none;
+	cursor: pointer;
+	color: #fff;
+	position: relative;
+	overflow: hidden;
+	margin: 0 !important;
+}
+
+.btn-scoring-legacy.bg-blue {
+	background: linear-gradient(135deg, #1d2af4 0%, #3b5bdb 100%) !important;
+	box-shadow: 0 4px 16px rgba(29, 42, 244, 0.25);
+}
+
+.btn-scoring-legacy.bg-red {
+	background: linear-gradient(135deg, #dd0a35 0%, #ef4444 100%) !important;
+	box-shadow: 0 4px 16px rgba(221, 10, 53, 0.25);
+}
+
+.btn-scoring-legacy:active {
+	transform: scale(0.97);
+	filter: brightness(0.9);
+}
+
+.btn-scoring-legacy:disabled {
+	opacity: 0.35;
+	pointer-events: none;
+	filter: grayscale(0.5);
+}
+
+.btn-scoring-legacy img {
+	pointer-events: none;
+	max-height: clamp(40px, 12vh, 90px) !important;
+	width: auto;
+	transition: transform 0.2s ease;
+	filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.2));
+}
+
+.btn-scoring-legacy:hover img {
+	transform: scale(1.05);
+}
+
+/* ─── Modal Verifikasi ─────────────────────────────────────────────────── */
+.modal-content {
+	background: #fff;
+	color: #212529;
+	border: 1px solid #e5e7eb;
+	border-radius: clamp(8px, 2vw, 16px);
+	overflow: hidden;
+	box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+	background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+	color: #000;
+	border-bottom: none;
+	padding: clamp(0.75rem, 2vw, 1.25rem);
+}
+
+.modal-title {
+	font-family: 'Oswald', sans-serif;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 1px;
+}
+
+.modal-body {
+	padding: clamp(1rem, 3vw, 1.5rem);
+}
+
+.modal-body p.h3, .modal-body p.h4 {
+	font-family: 'Oswald', sans-serif;
+	font-size: clamp(1rem, 3vw, 1.5rem);
+	font-weight: 600;
+	color: #374151;
+}
+
+.btn-jawaban-verifikasi {
+	font-family: 'Oswald', sans-serif;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 1.5px;
+	border: none;
+	border-radius: clamp(8px, 2vw, 12px);
+	padding: clamp(2rem, 6vw, 3.5rem) 1rem !important;
+	transition: transform 0.06s ease, filter 0.15s ease;
+	font-size: clamp(0.95rem, 3vw, 1.5rem) !important;
+}
+
+.btn-jawaban-verifikasi:active {
+	transform: scale(0.97);
+	filter: brightness(0.9);
+}
+
+.btn-jawaban-verifikasi.bg-blue {
+	background: linear-gradient(135deg, #1d2af4 0%, #3b5bdb 100%) !important;
+}
+
+.btn-jawaban-verifikasi.bg-red {
+	background: linear-gradient(135deg, #dd0a35 0%, #ef4444 100%) !important;
+}
+
+.btn-jawaban-verifikasi.bg-warning {
+	background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%) !important;
+	color: #000 !important;
+}
+
+/* ─── Animation ────────────────────────────────────────────────────────── */
+.opacity {
+	animation: fadeIn 0.4s ease-out forwards;
+	opacity: 0;
+}
+
+@keyframes fadeIn {
+	from { opacity: 0; transform: translateY(-8px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+.opacity.fast { animation-duration: 0.25s; }
+
+/* ─── Responsive: Mobile Portrait ──────────────────────────────────────── */
+@media (max-width: 575.98px) {
+	.header-atlet {
+		padding: 0.5rem 0.75rem;
+		min-height: 50px;
+	}
+	.atlet-nama { font-size: 0.8rem; }
+	.atlet-kontingen { font-size: 0.65rem; }
+
+	.score-box { padding: 0 0.5rem; min-width: 50px; }
+	.score-value { font-size: 1.5rem; }
+	.babak-value { font-size: 0.85rem; }
+
+	#tabel-nilai-juri thead th { padding: 0.25rem; font-size: 0.55rem; }
+	#tabel-nilai-juri tbody td { padding: 0.2rem; font-size: 0.7rem; }
+
+	.scoring-column { gap: 4px; padding: 4px; }
+}
+
+/* ─── Responsive: Tablet Landscape ─────────────────────────────────────── */
+@media (min-width: 768px) and (max-width: 1366px) {
+	.btn-scoring-legacy img {
+		max-height: clamp(50px, 15vh, 110px) !important;
+	}
+}
+
+/* ─── Landscape Fullscreen (low-height scoring device) ─────────────────── */
+@media (orientation: landscape) and (max-height: 600px) {
+	.header-atlet {
+		padding: 0.4rem 0.75rem;
+		min-height: 48px;
+	}
+	.atlet-nama { font-size: 0.85rem; }
+	.atlet-kontingen { font-size: 0.65rem; }
+
+	.score-value { font-size: 1.6rem; }
+	.babak-value { font-size: 0.85rem; }
+
+	#scoring-table-section { padding: 0.3rem 0.5rem; }
+	#tabel-nilai-juri thead th { padding: 0.2rem; font-size: 0.55rem; }
+	#tabel-nilai-juri tbody td { padding: 0.2rem; font-size: 0.75rem; }
+
+	.btn-scoring-legacy img {
+		max-height: clamp(40px, 22vh, 110px) !important;
+	}
+}
+
+/* ─── Accessibility ────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+	.btn-scoring-legacy,
+	.btn-jawaban-verifikasi,
+	.opacity {
+		animation: none !important;
+		transition: none !important;
+	}
+}
+
+.btn-scoring-legacy:focus-visible,
+.btn-jawaban-verifikasi:focus-visible {
+	outline: 3px solid rgba(29, 42, 244, 0.5);
+	outline-offset: 2px;
+}
+</style>
 <?= $this->endSection() ?>
 
 <?= $this->section('navbar') ?>
@@ -19,11 +495,10 @@
     $kontBiru  = $atlet_biru->nama_kontingen ?? '-';
     $skorMerah = (int) ($pertandingan->skor_merah ?? 0);
     $skorBiru  = (int) ($pertandingan->skor_biru ?? 0);
-    $isDark    = ($theme ?? 'light') === 'dark';
+    $babak     = $pertandingan->babak ?? '';
 ?>
 
-<div class="container-fluid <?= $isDark ? 'bg-black' : '' ?> min-vh-100 d-flex flex-column p-0"
-     id="juri-wrapper"
+<div id="juri-wrapper"
      data-id-pertandingan="<?= $idP ?>"
      data-ronde="<?= esc($ronde, 'attr') ?>"
      data-endpoint-edit="<?= base_url('juri/edit-penilaian-tanding/' . $idP) ?>"
@@ -33,149 +508,160 @@
      data-csrf-hash="<?= csrf_hash() ?>">
 
     <!-- ═══ Header: Atlet + Skor ═══ -->
-    <div class="card bg-dark card-container-juri border-0 rounded-0 m-0">
-        <div class="card-body p-3">
-            <div class="d-flex align-items-center justify-content-between">
-                <!-- Atlet Biru -->
-                <div class="text-center flex-grow-1" style="max-width: 30%;">
-                    <div class="fw-bolder <?= $isDark ? 'text-white' : '' ?> text-truncate" style="font-size: 0.95rem;">
-                        <?= esc($namaBiru) ?>
-                    </div>
-                    <small class="text-muted"><?= esc($kontBiru) ?></small>
-                </div>
+    <div id="header-tanding" class="opacity fast">
+        <!-- Atlet Biru (kiri) -->
+        <div class="header-atlet biru">
+            <div class="atlet-nama"><?= esc($namaBiru) ?></div>
+            <div class="atlet-kontingen"><?= esc($kontBiru) ?></div>
+        </div>
 
-                <!-- Skor Center -->
-                <div class="text-center">
-                    <div class="d-flex align-items-center gap-3">
-                        <span class="fw-bolder text-primary" style="font-size: 2.2rem;" id="skor-biru"><?= $skorBiru ?></span>
-                        <div class="text-center">
-                            <div class="badge bg-danger rounded-pill px-3 py-1 mb-1" style="font-size: 0.75rem;">
-                                Ronde <?= esc($ronde) ?>
-                            </div>
-                            <div class="<?= $isDark ? 'text-white' : '' ?>" style="font-size: 0.7rem; letter-spacing: 1px;">PERSILAT</div>
-                        </div>
-                        <span class="fw-bolder text-danger" style="font-size: 2.2rem;" id="skor-merah"><?= $skorMerah ?></span>
-                    </div>
-                </div>
-
-                <!-- Atlet Merah -->
-                <div class="text-center flex-grow-1" style="max-width: 30%;">
-                    <div class="fw-bolder <?= $isDark ? 'text-white' : '' ?> text-truncate" style="font-size: 0.95rem;">
-                        <?= esc($namaMerah) ?>
-                    </div>
-                    <small class="text-muted"><?= esc($kontMerah) ?></small>
-                </div>
+        <!-- Skor Center -->
+        <div class="header-center">
+            <div class="score-box">
+                <span class="score-label biru">Biru</span>
+                <span id="total_nilai_akhir_biru" class="score-value"><?= $skorBiru ?></span>
             </div>
+            <div class="babak-box">
+                <span class="babak-label">Babak</span>
+                <span class="babak-value"><?= esc($babak ?: '—') ?></span>
+            </div>
+            <div class="score-box">
+                <span class="score-label merah">Merah</span>
+                <span id="total_nilai_akhir_merah" class="score-value"><?= $skorMerah ?></span>
+            </div>
+        </div>
+
+        <!-- Atlet Merah (kanan) -->
+        <div class="header-atlet merah">
+            <div class="atlet-nama"><?= esc($namaMerah) ?></div>
+            <div class="atlet-kontingen"><?= esc($kontMerah) ?></div>
         </div>
     </div>
 
-    <!-- ═══ Tabel Skor Per Ronde ═══ -->
-    <div class="px-3 py-2">
-        <table class="table table-sm table-bordered text-center align-middle mb-0 <?= $isDark ? 'table-dark' : '' ?>" style="font-size: 0.8rem;">
+    <!-- ═══ Tabel Nilai Per Ronde ═══ -->
+    <div id="scoring-table-section">
+        <table class="table table-borderless mb-0" id="tabel-nilai-juri">
             <thead>
-                <tr>
-                    <th class="bg-gradient-180-blue text-white" style="width: 15%;">Biru</th>
-                    <?php for ($r = 1; $r <= $totalRonde; $r++): ?>
-                    <th class="<?= $isDark ? 'text-white' : '' ?>">R<?= $r ?></th>
-                    <?php endfor; ?>
-                    <th class="bg-gradient-180-red text-white" style="width: 15%;">Merah</th>
+                <tr class="opacity">
+                    <th colspan="5" style="font-size: clamp(0.6rem, 1.6vw, 0.75rem);">
+                        <i class="fas fa-user-shield me-1"></i>
+                        <?= esc(session()->get('nama') ?? 'Juri') ?>
+                    </th>
+                </tr>
+                <tr class="opacity">
+                    <th class="bg-gradient-180-blue" style="width:10%;">Total</th>
+                    <th class="bg-gradient-180-blue" style="width:30%;">Nilai Biru</th>
+                    <th style="width:10%;">Ronde</th>
+                    <th class="bg-gradient-180-red" style="width:30%;">Nilai Merah</th>
+                    <th class="bg-gradient-180-red" style="width:10%;">Total</th>
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td class="fw-bold text-primary" id="total-biru">0</td>
-                    <?php for ($r = 1; $r <= $totalRonde; $r++): ?>
-                    <td class="<?= $isDark ? 'text-white' : '' ?>">
-                        <span id="ronde-biru-<?= $r ?>">0</span> : <span id="ronde-merah-<?= $r ?>">0</span>
+                <?php for ($r = 1; $r <= $totalRonde; $r++):
+                    $romanNumerals = ['I', 'II', 'III', 'IV', 'V'];
+                    $romanLabel = $romanNumerals[$r - 1] ?? $r;
+                ?>
+                <tr class="opacity">
+                    <td class="biru-ronde-<?= $r ?>-total">&nbsp;</td>
+                    <td style="max-width: 0;">
+                        <div class="biru-ronde-<?= $r ?>-nilai d-flex flex-row flex-nowrap overflow-auto"></div>
                     </td>
-                    <?php endfor; ?>
-                    <td class="fw-bold text-danger" id="total-merah">0</td>
+                    <td class="ronde-<?= $r ?>" onclick="juri.warning_pindah_babak()"><?= $romanLabel ?></td>
+                    <td style="max-width: 0;">
+                        <div class="merah-ronde-<?= $r ?>-nilai d-flex flex-row flex-nowrap overflow-auto"></div>
+                    </td>
+                    <td class="merah-ronde-<?= $r ?>-total">&nbsp;</td>
                 </tr>
+                <?php endfor; ?>
             </tbody>
         </table>
     </div>
 
-    <!-- ═══ Action Buttons (2 columns: Biru | Merah) ═══ -->
-    <div class="flex-grow-1 d-flex">
-        <!-- Sudut BIRU -->
-        <div class="flex-grow-1 d-flex flex-column gap-2 p-2 bg-gradient-180-blue">
-            <button type="button" class="btn-scoring btn-pukulan flex-grow-1" data-sudut="biru" data-nilai="1">
-                <img src="<?= base_url('assets/images/icons/pukulan.png') ?>" alt="Pukulan" class="scoring-icon" onerror="this.style.display='none'">
-                <span class="scoring-label">Pukulan</span>
-                <span class="scoring-value penilaian-display-font">+1</span>
+    <!-- ═══ Scoring Buttons (2 columns: Biru | Merah) ═══ -->
+    <div id="scoring-buttons-section">
+        <!-- Sudut Biru (Kiri) -->
+        <div class="scoring-column biru" id="button-biru">
+            <button class="btn-scoring-legacy bg-blue opacity" data-sudut="biru" data-nilai="1">
+                <img src="<?= base_url('assets/images/icons/pukulan.png') ?>" alt="Pukulan +1">
             </button>
-            <button type="button" class="btn-scoring btn-tendangan flex-grow-1" data-sudut="biru" data-nilai="2">
-                <img src="<?= base_url('assets/images/icons/tendangan.png') ?>" alt="Tendangan" class="scoring-icon" onerror="this.style.display='none'">
-                <span class="scoring-label">Tendangan</span>
-                <span class="scoring-value penilaian-display-font">+2</span>
+            <button class="btn-scoring-legacy bg-blue opacity" data-sudut="biru" data-nilai="2">
+                <img src="<?= base_url('assets/images/icons/tendangan-inverted.png') ?>" alt="Tendangan +2">
             </button>
         </div>
 
-        <!-- Sudut MERAH -->
-        <div class="flex-grow-1 d-flex flex-column gap-2 p-2 bg-gradient-180-red">
-            <button type="button" class="btn-scoring btn-pukulan flex-grow-1" data-sudut="merah" data-nilai="1">
-                <img src="<?= base_url('assets/images/icons/pukulan.png') ?>" alt="Pukulan" class="scoring-icon" onerror="this.style.display='none'">
-                <span class="scoring-label">Pukulan</span>
-                <span class="scoring-value penilaian-display-font">+1</span>
+        <!-- Sudut Merah (Kanan) -->
+        <div class="scoring-column merah" id="button-merah">
+            <button class="btn-scoring-legacy bg-red opacity" data-sudut="merah" data-nilai="1">
+                <img src="<?= base_url('assets/images/icons/pukulan-inverted.png') ?>" alt="Pukulan +1">
             </button>
-            <button type="button" class="btn-scoring btn-tendangan flex-grow-1" data-sudut="merah" data-nilai="2">
-                <img src="<?= base_url('assets/images/icons/tendangan.png') ?>" alt="Tendangan" class="scoring-icon" onerror="this.style.display='none'">
-                <span class="scoring-label">Tendangan</span>
-                <span class="scoring-value penilaian-display-font">+2</span>
+            <button class="btn-scoring-legacy bg-red opacity" data-sudut="merah" data-nilai="2">
+                <img src="<?= base_url('assets/images/icons/tendangan.png') ?>" alt="Tendangan +2">
             </button>
         </div>
-    </div>
-
-    <!-- ═══ Hapus Button (bottom) ═══ -->
-    <div class="d-flex">
-        <button type="button" class="btn-hapus-scoring flex-grow-1" data-sudut="biru">
-            <i class="fas fa-rotate-left me-1"></i> Hapus Biru
-        </button>
-        <button type="button" class="btn-hapus-scoring flex-grow-1 border-start" data-sudut="merah">
-            <i class="fas fa-rotate-left me-1"></i> Hapus Merah
-        </button>
     </div>
 </div>
 
 <!-- ═══ Modal Verifikasi Jatuhan ═══ -->
-<div class="modal fade" id="modalVerifikasiJatuhan" data-bs-backdrop="static" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content bg-dark text-white border-warning">
-            <div class="modal-header border-warning">
-                <h5 class="modal-title"><i class="fas fa-gavel me-2"></i>Verifikasi Jatuhan</h5>
+<div class="modal fade" id="modalVerifikasiJatuhan" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-gavel me-2"></i>Drop Verification</h5>
             </div>
-            <div class="modal-body text-center py-4">
-                <p class="fs-5 mb-3">Apakah terjadi <strong>jatuhan</strong> pada sudut <span id="verifikasi-jatuhan-sudut" class="fw-bold text-uppercase"></span>?</p>
-            </div>
-            <div class="modal-footer border-warning justify-content-center gap-3">
-                <button type="button" class="btn btn-success btn-lg px-5" data-jawaban="ya">
-                    <i class="fas fa-check me-2"></i>Ya
-                </button>
-                <button type="button" class="btn btn-danger btn-lg px-5" data-jawaban="tidak">
-                    <i class="fas fa-xmark me-2"></i>Tidak
-                </button>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-12">
+                        <p class="h3 mb-4 text-center">Valid Drop For ?</p>
+                    </div>
+                    <div class="col">
+                        <button class="btn bg-blue text-white w-100 btn-jawaban-verifikasi" data-jawaban="biru">
+                            Blue
+                        </button>
+                    </div>
+                    <div class="col">
+                        <button class="btn bg-warning text-white w-100 btn-jawaban-verifikasi" data-jawaban="invalid">
+                            INVALID
+                        </button>
+                    </div>
+                    <div class="col">
+                        <button class="btn bg-red text-white w-100 btn-jawaban-verifikasi" data-jawaban="merah">
+                            Red
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <!-- ═══ Modal Verifikasi Pelanggaran ═══ -->
-<div class="modal fade" id="modalVerifikasiPelanggaran" data-bs-backdrop="static" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content bg-dark text-white border-warning">
-            <div class="modal-header border-warning">
-                <h5 class="modal-title"><i class="fas fa-triangle-exclamation me-2"></i>Verifikasi Pelanggaran</h5>
+<div class="modal fade" id="modalVerifikasiPelanggaran" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-triangle-exclamation me-2"></i>Penalty Verification</h5>
             </div>
-            <div class="modal-body text-center py-4">
-                <p class="fs-5 mb-3">Apakah terjadi <strong>pelanggaran</strong> pada sudut <span id="verifikasi-pelanggaran-sudut" class="fw-bold text-uppercase"></span>?</p>
-            </div>
-            <div class="modal-footer border-warning justify-content-center gap-3">
-                <button type="button" class="btn btn-success btn-lg px-5" data-jawaban="ya">
-                    <i class="fas fa-check me-2"></i>Ya
-                </button>
-                <button type="button" class="btn btn-danger btn-lg px-5" data-jawaban="tidak">
-                    <i class="fas fa-xmark me-2"></i>Tidak
-                </button>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-12">
+                        <p class="h4 mb-4 text-center">Violation For ?</p>
+                    </div>
+                    <div class="col">
+                        <button class="btn bg-blue text-white w-100 btn-jawaban-verifikasi" data-jawaban="biru">
+                            Blue
+                        </button>
+                    </div>
+                    <div class="col">
+                        <button class="btn bg-warning text-white w-100 btn-jawaban-verifikasi" data-jawaban="invalid">
+                            INVALID
+                        </button>
+                    </div>
+                    <div class="col">
+                        <button class="btn bg-red text-white w-100 btn-jawaban-verifikasi" data-jawaban="merah">
+                            Red
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -184,9 +670,14 @@
 
 <?= $this->section('scripts') ?>
 <script>
-    const JURI_TANDING_INIT = <?= json_encode($data_nilai) ?>;
-    const JURI_TANDING_RONDE = <?= json_encode($ronde) ?>;
-    const JURI_TANDING_TOTAL_RONDE = <?= $totalRonde ?>;
+    const JURI_INIT = {
+        dataNilai: <?= json_encode($data_nilai) ?>,
+        pertandingan: <?= json_encode($pertandingan) ?>,
+        pemenang: <?= json_encode($pemenang ?? null) ?>,
+        verifikasiPertandingan: <?= json_encode($verifikasi_pertandingan ?? null) ?>,
+        jawabanVerifikasi: <?= json_encode($jawaban_verifikasi ?? null) ?>,
+        totalRonde: <?= $totalRonde ?>
+    };
 </script>
 <script src="<?= base_url('assets/js/penilaian/juri_tanding_persilat.js') ?>"></script>
 <?= $this->endSection() ?>
