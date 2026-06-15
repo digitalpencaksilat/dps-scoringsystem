@@ -244,8 +244,8 @@ body {
 .dewan-btn-hukuman img {
 	width: auto;
 	height: auto;
-	max-height: clamp(4rem, 14vw, 8rem);
-	max-width: 95%;
+	max-height: clamp(3rem, 10vw, 5.5rem);
+	max-width: 92%;
 	object-fit: contain;
 }
 
