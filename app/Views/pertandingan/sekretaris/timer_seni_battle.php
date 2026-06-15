@@ -2,48 +2,231 @@
 
 <?= $this->section('styles') ?>
 <link rel="stylesheet" href="<?= base_url('assets/css/penilaian/sekretaris.css') ?>">
+<style>
+/* ════════════════════════════════════════════════════════════════════════
+   Timer Seni Battle — 100dvh Compact Blue vs Red Performance Console
+   ════════════════════════════════════════════════════════════════════════ */
+html, body { height: 100%; overflow: hidden; margin: 0; }
+
+body {
+	font-family: 'Poppins', sans-serif;
+	background:
+		radial-gradient(ellipse at top left, rgba(29, 42, 244, 0.06) 0%, transparent 45%),
+		radial-gradient(ellipse at top right, rgba(221, 10, 53, 0.06) 0%, transparent 45%),
+		linear-gradient(180deg, #0a0d11 0%, #14171c 100%);
+}
+
+#timer-app {
+	display: flex;
+	flex-direction: column;
+	height: 100dvh;
+	overflow: hidden;
+	padding: clamp(0.4rem, 1.5vh, 0.85rem);
+	gap: clamp(0.35rem, 1.2vh, 0.7rem);
+}
+
+/* ─── INFO BAR ─────────────────────────────────────────────────────────── */
+.info-bar { flex-shrink: 0; display: flex; flex-wrap: wrap; gap: clamp(0.35rem, 1vw, 0.65rem); align-items: stretch; }
+
+.info-chip {
+	background: linear-gradient(135deg, #2c2f36 0%, #1a1d22 100%);
+	border: 1px solid rgba(255, 255, 255, 0.07);
+	border-radius: 0.65rem;
+	padding: clamp(0.4rem, 1.2vh, 0.65rem) clamp(0.7rem, 2vw, 1.1rem);
+	display: flex; align-items: center; justify-content: center;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+.info-chip.flex-fill { flex: 1 1 auto; min-width: 0; }
+.info-chip-label { font-size: clamp(0.5rem, 1.2vw, 0.62rem); text-transform: uppercase; letter-spacing: 1.5px; color: rgba(255, 255, 255, 0.4); display: block; line-height: 1; margin-bottom: 3px; }
+.info-chip-value { font-family: 'Oswald', sans-serif; font-size: clamp(0.85rem, 2.2vw, 1.25rem); font-weight: 700; color: #fff; line-height: 1.1; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.info-chip.flex-fill .info-chip-value { white-space: normal; font-size: clamp(0.75rem, 1.8vw, 1rem); }
+
+/* ─── ATHLETE CARDS (Battle: Blue vs Red) ──────────────────────────────── */
+.athlete-row { flex-shrink: 0; display: grid; grid-template-columns: 1fr 1fr; gap: clamp(0.4rem, 1.2vw, 0.7rem); }
+
+.card-atlet-battle {
+	border-radius: 0.85rem;
+	overflow: hidden;
+	padding: clamp(0.5rem, 1.5vh, 0.9rem) clamp(0.75rem, 2vw, 1.2rem);
+	display: flex; flex-direction: column; justify-content: center;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+	position: relative;
+}
+
+.card-atlet-battle.biru { background: linear-gradient(135deg, #1d2af4 0%, #0118d8 100%); }
+.card-atlet-battle.merah { background: linear-gradient(135deg, #dd0a35 0%, #b80c0c 100%); text-align: right; }
+
+.card-atlet-battle.active-corner { border: 3px solid #ffc107; box-shadow: 0 4px 20px rgba(255, 193, 7, 0.3); }
+
+.atlet-battle-nama {
+	font-family: 'Oswald', sans-serif;
+	font-size: clamp(0.85rem, 2.8vw, 1.5rem);
+	font-weight: 700; color: #fff;
+	line-height: 1.1;
+	white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+	text-transform: uppercase;
+}
+
+.atlet-battle-kontingen {
+	font-size: clamp(0.6rem, 1.6vw, 0.85rem);
+	color: rgba(255, 255, 255, 0.75);
+	white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+	margin-top: 2px;
+}
+
+/* ─── TIMER SECTION ────────────────────────────────────────────────────── */
+.timer-section {
+	flex: 1 1 0; min-height: 0;
+	display: flex; flex-direction: column;
+	background: linear-gradient(180deg, #1a1d22 0%, #101317 100%);
+	border: 1px solid rgba(255, 255, 255, 0.07);
+	border-radius: 0.9rem;
+	padding: clamp(0.5rem, 1.8vh, 1rem) clamp(0.75rem, 2.5vw, 1.5rem);
+	box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+	overflow: hidden;
+	gap: clamp(0.4rem, 1.4vh, 0.75rem);
+}
+
+/* Active corner indicator */
+.active-indicator {
+	flex-shrink: 0;
+	text-align: center;
+	padding: clamp(0.35rem, 1vh, 0.55rem);
+	border-radius: 0.5rem;
+	font-family: 'Oswald', sans-serif;
+	font-size: clamp(0.75rem, 2vw, 1rem);
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 1.5px;
+	color: #fff;
+}
+.active-indicator.biru { background: linear-gradient(135deg, #1d2af4 0%, #0118d8 100%); }
+.active-indicator.merah { background: linear-gradient(135deg, #dd0a35 0%, #b80c0c 100%); }
+
+.timer-display {
+	flex: 1 1 auto;
+	display: flex; align-items: center; justify-content: center;
+	font-family: 'Oswald', sans-serif;
+	font-weight: 700; color: #fff; line-height: 1;
+	letter-spacing: 0.04em; font-variant-numeric: tabular-nums;
+	font-size: clamp(3rem, 18vh, 9rem);
+	min-height: 0;
+}
+.timer-display.warning { color: #ffc107; animation: timerPulse 1s ease-in-out infinite; }
+.timer-display.danger { color: #ff4757; }
+@keyframes timerPulse { 0%,100%{opacity:1;} 50%{opacity:0.55;} }
+
+.timer-controls {
+	flex-shrink: 0;
+	display: grid; grid-template-columns: repeat(3, 1fr);
+	gap: clamp(0.35rem, 1vw, 0.6rem);
+}
+
+.btn-timer {
+	font-family: 'Oswald', sans-serif; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+	border: none; border-radius: 0.6rem;
+	padding: clamp(0.6rem, 2vh, 1rem) 0.5rem;
+	font-size: clamp(0.75rem, 1.9vw, 1.1rem);
+	color: #fff;
+	transition: transform 0.06s ease, filter 0.15s ease;
+	display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+}
+.btn-timer:active { transform: scale(0.97); filter: brightness(0.9); }
+.btn-timer-manual { background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); color: #212529; }
+.btn-timer-start.biru { background: linear-gradient(135deg, #1d2af4 0%, #0118d8 100%); }
+.btn-timer-start.merah { background: linear-gradient(135deg, #dd0a35 0%, #b80c0c 100%); }
+.btn-timer-reset { background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%); }
+
+/* ─── END SECTION ──────────────────────────────────────────────────────── */
+.end-section {
+	flex-shrink: 0;
+	display: grid; grid-template-columns: 2fr 1fr;
+	gap: clamp(0.35rem, 1vw, 0.6rem);
+}
+
+.btn-end-turn, .btn-disqualify {
+	font-family: 'Oswald', sans-serif; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+	border: none; border-radius: 0.7rem;
+	padding: clamp(0.65rem, 2vh, 1.1rem);
+	font-size: clamp(0.9rem, 2.2vw, 1.3rem);
+	transition: transform 0.06s ease, filter 0.15s ease;
+}
+.btn-end-turn:active, .btn-disqualify:active { transform: scale(0.99); filter: brightness(0.95); }
+.btn-end-turn { background: linear-gradient(135deg, #fff 0%, #e9ecef 100%); color: #212529; box-shadow: 0 4px 16px rgba(255, 255, 255, 0.1); }
+.btn-disqualify { background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%); color: #fff; }
+.btn-disqualify.cancel { background: linear-gradient(135deg, #0dcaf0 0%, #0aa3c2 100%); }
+
+/* ─── POST-PERFORMANCE ─────────────────────────────────────────────────── */
+.block-navigasi-partai .nav-finished-title {
+	font-family: 'Oswald', sans-serif;
+	font-size: clamp(1.4rem, 5vw, 2.4rem);
+	font-weight: 700; color: #fff; text-align: center; text-transform: uppercase;
+}
+.btn-winner-decision {
+	width: 100%; background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%); color: #000;
+	font-family: 'Oswald', sans-serif; font-weight: 700; text-transform: uppercase;
+	border: none; border-radius: 0.7rem;
+	padding: clamp(0.7rem, 2vh, 1rem); font-size: clamp(1rem, 2.3vw, 1.3rem);
+	box-shadow: 0 4px 16px rgba(255, 193, 7, 0.3);
+}
+.btn-switch-turn {
+	width: 100%; font-family: 'Oswald', sans-serif; font-weight: 700; text-transform: uppercase;
+	border: none; border-radius: 0.65rem;
+	padding: clamp(0.65rem, 2vh, 1rem); font-size: clamp(0.9rem, 2.2vw, 1.2rem);
+	color: #fff;
+}
+.btn-switch-turn.to-merah { background: linear-gradient(135deg, #dd0a35 0%, #b80c0c 100%); }
+.btn-switch-turn.to-biru { background: linear-gradient(135deg, #1d2af4 0%, #0118d8 100%); }
+.btn-nav-match {
+	width: 100%; font-family: 'Oswald', sans-serif; font-weight: 700;
+	border-radius: 0.65rem; padding: clamp(0.6rem, 2vh, 0.9rem); font-size: clamp(0.85rem, 2vw, 1.1rem);
+	background: linear-gradient(135deg, #f8f9fa 0%, #dee2e6 100%); color: #212529; border: none;
+}
+
+/* ─── RESPONSIVE ───────────────────────────────────────────────────────── */
+@media (max-width: 575.98px) {
+	.end-section { grid-template-columns: 1fr; }
+	.atlet-battle-nama { font-size: clamp(0.75rem, 3.5vw, 1.1rem); }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+	#timer-app { gap: 0.3rem; padding: 0.35rem; }
+	.timer-display { font-size: clamp(2.5rem, 22vh, 7rem); }
+	.card-atlet-battle { padding: 0.4rem 0.75rem; }
+	.atlet-battle-nama { font-size: clamp(0.8rem, 4vh, 1.2rem); }
+	.btn-timer { padding: 0.4rem; font-size: 0.8rem; }
+	.btn-end-turn, .btn-disqualify { padding: 0.5rem; font-size: 0.9rem; }
+	.info-chip { padding: 0.3rem 0.7rem; }
+	.active-indicator { padding: 0.25rem; font-size: 0.7rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.btn-timer, .btn-end-turn, .btn-disqualify, .timer-display { animation: none !important; transition: none !important; }
+}
+.btn-timer:focus-visible, .btn-end-turn:focus-visible, .btn-disqualify:focus-visible {
+	outline: 3px solid rgba(255, 193, 7, 0.6); outline-offset: 2px;
+}
+.opacity { opacity: 0; }
+.bg-navbar { background: linear-gradient(180deg, #2c2c2c 0%, #1a1a1a 100%) !important; }
+</style>
 <?= $this->endSection() ?>
 
 <?= $this->section('navbar') ?>
-<nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top py-2">
-	<div class="container">
-		<a class="navbar-brand d-flex align-items-center" href="<?= base_url('sekretaris-pertandingan') ?>">
-			<img src="<?= base_url('assets/images/brand/dps/logo-match-operator.png') ?>"
-				class="navbar-brand-img" alt="Logo" width="120"
-				onerror="this.style.display='none'">
+<nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top py-1">
+	<div class="container-fluid px-3">
+		<a class="navbar-brand d-flex align-items-center py-0" href="<?= base_url('sekretaris-pertandingan') ?>">
+			<img src="<?= base_url('assets/images/brand/dps/logo-match-operator.png') ?>" class="navbar-brand-img" alt="Logo" width="100" onerror="this.style.display='none'">
 		</a>
-		<button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navigation">
-			<span class="navbar-toggler-icon"></span>
-		</button>
+		<button class="navbar-toggler border-0 py-1" type="button" data-bs-toggle="collapse" data-bs-target="#navigation"><span class="navbar-toggler-icon"></span></button>
 		<div class="collapse navbar-collapse" id="navigation">
 			<ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
-				<li class="nav-item">
-					<a class="nav-link" href="<?= base_url('sekretaris-pertandingan') ?>">
-						<i class="fas fa-home me-1"></i> Dashboard
-					</a>
-				</li>
-				<li class="nav-item">
-					<a class="nav-link cursor-pointer" data-bs-toggle="modal" data-bs-target="#modal_ganti_format_penilaian">
-						<i class="fas fa-exchange-alt me-1"></i> Change Scoring Format
-					</a>
-				</li>
-				<li class="nav-item">
-					<a class="nav-link cursor-pointer" onclick="sekretaris_pertandingan.open_modal_input_juara()">
-						<i class="fas fa-trophy me-1"></i> Change Winner
-					</a>
-				</li>
+				<li class="nav-item"><a class="nav-link" href="<?= base_url('sekretaris-pertandingan') ?>"><i class="fas fa-home me-1"></i> Dashboard</a></li>
+				<li class="nav-item"><a class="nav-link cursor-pointer" data-bs-toggle="modal" data-bs-target="#modal_ganti_format_penilaian"><i class="fas fa-exchange-alt me-1"></i> Change Scoring Format</a></li>
+				<li class="nav-item"><a class="nav-link cursor-pointer" onclick="sekretaris_pertandingan.open_modal_input_juara()"><i class="fas fa-trophy me-1"></i> Change Winner</a></li>
 			</ul>
 			<ul class="nav navbar-nav ms-auto align-items-center">
-				<li class="nav-item d-none d-lg-block">
-					<span class="badge bg-dark border border-secondary text-uppercase py-2 px-3">
-						<i class="fas fa-user-shield me-1 text-danger"></i> Secretary
-					</span>
-				</li>
-				<li class="nav-item">
-					<a class="nav-link btn-logout-brand shadow-sm" href="<?= base_url('perangkat-pertandingan/logout') ?>">
-						<i class="fas fa-power-off me-1"></i> LOGOUT
-					</a>
-				</li>
+				<li class="nav-item d-none d-lg-block"><span class="badge bg-dark border border-secondary text-uppercase py-2 px-3"><i class="fas fa-user-shield me-1 text-danger"></i> Secretary</span></li>
+				<li class="nav-item"><a class="nav-link btn-logout-brand shadow-sm" href="<?= base_url('perangkat-pertandingan/logout') ?>"><i class="fas fa-power-off me-1"></i> LOGOUT</a></li>
 			</ul>
 		</div>
 	</div>
@@ -55,253 +238,109 @@
 	$is_biru_active = (($battle->id_penampilan_seni_biru ?? '') == ($penampilan->id_penampilan_seni ?? ''));
 	$is_merah_active = !$is_biru_active;
 ?>
-<div class="container-fluid min-vh-100 pt-2 pt-lg-2 bg-super-dark bg-gradient overflow-hidden">
+<div id="timer-app">
 
-	<!-- TOP SECTION: INFO BOXES -->
-	<div class="row mb-3 g-2 g-md-3 block-informasi justify-content-center">
-		<div class="col-auto opacity">
-			<div class="px-4 py-3 bg-navbar rounded text-white text-center shadow-sm h-100 d-flex align-items-center">
-				<span class="fs-4 fs-md-3 fw-bold"><?= esc($penampilan->nama_gelanggang ?? '') ?></span>
-			</div>
+	<!-- INFO BAR -->
+	<div class="info-bar block-informasi">
+		<div class="info-chip opacity">
+			<div><span class="info-chip-label">Arena</span><span class="info-chip-value"><?= esc($penampilan->nama_gelanggang ?? '-') ?></span></div>
 		</div>
-		<div class="col-auto opacity">
-			<div class="px-4 py-3 bg-navbar rounded text-white text-center shadow-sm h-100 d-flex align-items-center">
-				<span class="fs-4 fs-md-3 fw-bold">Partai <?= esc($penampilan->nomor_partai ?? '') ?></span>
-			</div>
+		<div class="info-chip opacity">
+			<div><span class="info-chip-label">Partai</span><span class="info-chip-value"><?= esc($penampilan->nomor_partai ?? '-') ?></span></div>
 		</div>
-		<div class="col-auto opacity flex-fill">
-			<div class="px-4 py-3 bg-navbar rounded text-white text-center shadow-sm h-100 d-flex align-items-center justify-content-center">
-				<span class="fs-5 fw-bold text-wrap text-capitalize">
-					<?= esc(($penampilan->nama_kategori_usia ?? '') . ' ' . ($penampilan->jenis_kelamin ?? '') . ' ' . ucwords($penampilan->jenis_seni ?? '') . ' ' . ($penampilan->nama_seni ?? '')) ?>
-				</span>
-			</div>
+		<div class="info-chip flex-fill opacity">
+			<div><span class="info-chip-label">Kategori</span><span class="info-chip-value text-capitalize"><?= esc(($penampilan->nama_kategori_usia ?? '') . ' ' . ($penampilan->jenis_kelamin ?? '') . ' ' . ucwords($penampilan->jenis_seni ?? '') . ' ' . ($penampilan->nama_seni ?? '')) ?></span></div>
 		</div>
-		<div class="col-auto opacity">
-			<div class="px-4 py-3 bg-navbar rounded text-white text-center shadow-sm h-100 d-flex align-items-center">
-				<span class="fs-4 fs-md-3 fw-bold"><?= esc(ucwords($battle->babak ?? '')) ?></span>
-			</div>
+		<div class="info-chip opacity">
+			<div><span class="info-chip-label">Babak</span><span class="info-chip-value"><?= esc(ucwords($battle->babak ?? '-')) ?></span></div>
 		</div>
 	</div>
 
-	<!-- MIDDLE: TWO ATHLETES (BATTLE - BLUE vs RED) -->
-	<div class="row mb-3 block-atlet">
-		<div class="col-6 opacity atlet-biru">
-			<div class="d-flex bg-blue bg-gradient rounded shadow-sm text-white overflow-hidden h-100 <?= $is_biru_active ? 'border border-4 border-warning' : '' ?>">
-				<div class="flex-grow-1 p-3 d-flex flex-column justify-content-center">
-					<?php foreach ($anggota_biru ?? [] as $peserta) : ?>
-						<span class="fs-4 fw-bolder text-truncate"><?= esc($peserta->nama_pendaftar ?? '') ?></span>
-					<?php endforeach; ?>
-					<?php if (!empty($anggota_biru)) : ?>
-						<span class="fs-5 mt-1 text-truncate"><?= esc($anggota_biru[0]->nama_kontingen ?? '') ?></span>
-					<?php endif; ?>
-				</div>
-			</div>
+	<!-- ATHLETE CARDS: BLUE vs RED -->
+	<div class="athlete-row block-atlet">
+		<div class="card-atlet-battle biru opacity atlet-biru <?= $is_biru_active ? 'active-corner' : '' ?>">
+			<?php foreach ($anggota_biru ?? [] as $peserta) : ?>
+				<span class="atlet-battle-nama"><?= esc($peserta->nama_pendaftar ?? '') ?></span>
+			<?php endforeach; ?>
+			<?php if (!empty($anggota_biru)) : ?>
+				<span class="atlet-battle-kontingen"><?= esc($anggota_biru[0]->nama_kontingen ?? '') ?></span>
+			<?php endif; ?>
 		</div>
-		<div class="col-6 opacity atlet-merah">
-			<div class="d-flex bg-red bg-gradient rounded shadow-sm text-white overflow-hidden h-100 <?= $is_merah_active ? 'border border-4 border-warning' : '' ?>">
-				<div class="flex-grow-1 p-3 d-flex flex-column justify-content-center text-end">
-					<?php foreach ($anggota_merah ?? [] as $peserta) : ?>
-						<span class="fs-4 fw-bolder text-truncate"><?= esc($peserta->nama_pendaftar ?? '') ?></span>
-					<?php endforeach; ?>
-					<?php if (!empty($anggota_merah)) : ?>
-						<span class="fs-5 mt-1 text-truncate"><?= esc($anggota_merah[0]->nama_kontingen ?? '') ?></span>
-					<?php endif; ?>
-				</div>
-			</div>
+		<div class="card-atlet-battle merah opacity atlet-merah <?= $is_merah_active ? 'active-corner' : '' ?>">
+			<?php foreach ($anggota_merah ?? [] as $peserta) : ?>
+				<span class="atlet-battle-nama"><?= esc($peserta->nama_pendaftar ?? '') ?></span>
+			<?php endforeach; ?>
+			<?php if (!empty($anggota_merah)) : ?>
+				<span class="atlet-battle-kontingen"><?= esc($anggota_merah[0]->nama_kontingen ?? '') ?></span>
+			<?php endif; ?>
 		</div>
 	</div>
 
 	<!-- TIMER SECTION -->
-	<div class="col-12 mb-3 block-stopwatch">
-		<div class="row justify-content-center opacity">
-			<div class="col-12 text-center">
-				<div class="bg-navbar rounded p-3 shadow-lg w-100">
-					<!-- Active corner indicator -->
-					<?php if ($is_biru_active) : ?>
-						<div class="bg-blue rounded shadow-sm py-2 mb-2 text-white fw-bold text-uppercase fs-5">Sudut Biru</div>
-					<?php else : ?>
-						<div class="bg-red rounded shadow-sm py-2 mb-2 text-white fw-bold text-uppercase fs-5">Sudut Merah</div>
-					<?php endif; ?>
+	<div class="timer-section block-stopwatch">
+		<!-- Active corner indicator -->
+		<?php if ($is_biru_active) : ?>
+			<div class="active-indicator biru opacity"><i class="fas fa-chevron-right me-1"></i> Sudut Biru Performing</div>
+		<?php else : ?>
+			<div class="active-indicator merah opacity"><i class="fas fa-chevron-left me-1"></i> Sudut Merah Performing</div>
+		<?php endif; ?>
 
-					<div class="d-block timer-seni text-center fw-bolder text-white lh-1 mb-2" style="font-size: min(8rem, 15vw);">
-						00:00
-					</div>
-					<div class="row g-2 mt-3 block-kendali-waktu">
-						<div class="col-4">
-							<button class="btn btn-light w-100 h-100 py-2 py-lg-3 fs-5 fw-bold text-uppercase text-dark" onclick="sekretaris_pertandingan.open_modal_set_manual_waktu()">
-								<i class="fas fa-cog d-none d-md-inline"></i> Manual Set
-							</button>
-						</div>
-						<div class="col-4">
-							<?php $btn_color_class = $is_biru_active ? 'bg-blue' : 'bg-red'; ?>
-							<button class="btn <?= $btn_color_class ?> btn-gradient w-100 h-100 py-2 py-lg-3 fs-5 fw-bold text-uppercase button-play-state btn-timer btn-toggle-waktu-tampil text-white" data-status-penampilan="sedang_tampil" onclick="sekretaris_pertandingan.toggle_timer()">
-								<i class="fas fa-play d-none d-md-inline"></i> START
-							</button>
-						</div>
-						<div class="col-4">
-							<button class="btn btn-danger w-100 h-100 py-2 py-lg-3 fs-5 fw-bold text-uppercase btn-timer" onclick="sekretaris_pertandingan.reset_timer()">
-								<i class="fas fa-undo d-none d-md-inline"></i> RESET
-							</button>
-						</div>
-					</div>
-				</div>
-			</div>
+		<div class="d-block timer-seni timer-display opacity">00:00</div>
+
+		<div class="timer-controls block-kendali-waktu opacity">
+			<button class="btn btn-timer btn-timer-manual" onclick="sekretaris_pertandingan.open_modal_set_manual_waktu()"><i class="fas fa-cog d-none d-md-inline"></i>Manual</button>
+			<?php $btn_color_class = $is_biru_active ? 'biru' : 'merah'; ?>
+			<button class="btn btn-timer btn-timer-start <?= $btn_color_class ?> button-play-state btn-toggle-waktu-tampil" data-status-penampilan="sedang_tampil" onclick="sekretaris_pertandingan.toggle_timer()"><i class="fas fa-play d-none d-md-inline"></i>START</button>
+			<button class="btn btn-timer btn-timer-reset" onclick="sekretaris_pertandingan.reset_timer()"><i class="fas fa-undo d-none d-md-inline"></i>RESET</button>
 		</div>
 	</div>
 
 	<!-- END TURN & DISQUALIFY -->
-	<div class="col-12 block-end-match">
-		<div class="row opacity mt-2">
-			<div class="col-12">
-				<div class="row g-2 align-items-stretch">
-					<div class="col-8">
-						<button class="btn w-100 h-100 btn-lg bg-white text-dark btn_selesai fw-bold fs-4 py-3 shadow-sm text-uppercase" onclick="sekretaris_pertandingan.selesai_penampilan()">End Turn</button>
-					</div>
-					<div class="col-4">
-						<button <?= (($penampilan->diskualifikasi ?? 0) == 1) ? '' : 'style="display:none;"' ?> class="btn btn-info text-white w-100 h-100 btn-lg fw-bold fs-5 py-3 shadow-sm text-uppercase btn-batal-diskualifikasi" onclick="sekretaris_pertandingan.batalkan_diskualifikasi_peserta()">Cancel Disq.</button>
-						<button <?= (($penampilan->diskualifikasi ?? 0) == 0) ? '' : 'style="display:none;"' ?> class="btn btn-danger text-white w-100 h-100 btn-lg fw-bold fs-5 py-3 shadow-sm text-uppercase btn-diskualifikasi" onclick="sekretaris_pertandingan.diskualifikasi_peserta()">Disqualify</button>
-					</div>
-				</div>
-			</div>
+	<div class="end-section block-end-match">
+		<div class="opacity h-100">
+			<button class="btn btn-end-turn w-100 h-100 btn_selesai" onclick="sekretaris_pertandingan.selesai_penampilan()">End Turn</button>
+		</div>
+		<div class="opacity h-100">
+			<button <?= (($penampilan->diskualifikasi ?? 0) == 1) ? '' : 'style="display:none;"' ?> class="btn btn-disqualify cancel w-100 h-100 btn-batal-diskualifikasi" onclick="sekretaris_pertandingan.batalkan_diskualifikasi_peserta()">Cancel Disq.</button>
+			<button <?= (($penampilan->diskualifikasi ?? 0) == 0) ? '' : 'style="display:none;"' ?> class="btn btn-disqualify w-100 h-100 btn-diskualifikasi" onclick="sekretaris_pertandingan.diskualifikasi_peserta()">Disqualify</button>
 		</div>
 	</div>
 
-	<!-- POST-PERFORMANCE NAVIGATION (hidden) -->
-	<div class="row mt-3 mb-1 block-navigasi-partai d-none opacity">
-		<div class="col-12 mb-2">
-			<div class="row mb-4">
-				<div class="col-12">
-					<p class="display-3 text-center text-white fw-bold">Artistic Performance Finished!</p>
-				</div>
-			</div>
-			<div class="row mb-6">
-				<div class="col-12">
-					<button type="button" class="btn w-100 text-white h4 bg-warning bg-gradient py-4 shadow-lg" onclick="sekretaris_pertandingan.open_modal_input_juara()">Winner Decision</button>
-				</div>
-			</div>
-			<!-- Switch turn button (battle-specific) -->
-			<div class="row mb-3">
-				<div class="col-12">
-					<?php if ($is_biru_active) : ?>
-						<button type="button" class="btn w-100 text-white h4 bg-red py-4" onclick="sekretaris_pertandingan.mulai_penampilan_seni('<?= esc($battle->id_penampilan_seni_merah ?? '') ?>')">Start Red Turn</button>
-					<?php else : ?>
-						<button type="button" class="btn w-100 text-white h4 bg-blue py-4" onclick="sekretaris_pertandingan.mulai_penampilan_seni('<?= esc($battle->id_penampilan_seni_biru ?? '') ?>')">Start Blue Turn</button>
-					<?php endif; ?>
-				</div>
-			</div>
-			<div class="row">
-				<div class="col-12 col-md-6">
-					<button class="btn bg-light bg-gradient h4 w-100 py-3" onclick="sekretaris_pertandingan.pindah_partai(<?= ($penampilan->nomor_partai ?? 1) - 1 ?>)">
-						Previous Match
-					</button>
-				</div>
-				<div class="col-12 col-md-6">
-					<button class="btn bg-light bg-gradient h4 w-100 py-3" onclick="sekretaris_pertandingan.pindah_partai(<?= ($penampilan->nomor_partai ?? 1) + 1 ?>)">
-						Next Match
-					</button>
-				</div>
-			</div>
-		</div>
-		<div class="col-12 mb-4">
-			<?= $this->include('pertandingan/sekretaris/components/_offcanvas_pindah_partai_seni') ?>
+	<!-- POST-PERFORMANCE NAVIGATION -->
+	<div class="block-navigasi-partai d-none opacity">
+		<p class="nav-finished-title mb-3">Artistic Performance Finished!</p>
+		<button class="btn btn-winner-decision mb-2" onclick="sekretaris_pertandingan.open_modal_input_juara()">Winner Decision</button>
+		<!-- Switch turn -->
+		<?php if ($is_biru_active) : ?>
+			<button class="btn btn-switch-turn to-merah mb-2" onclick="sekretaris_pertandingan.mulai_penampilan_seni('<?= esc($battle->id_penampilan_seni_merah ?? '') ?>')"><i class="fas fa-exchange-alt me-2"></i>Start Red Turn</button>
+		<?php else : ?>
+			<button class="btn btn-switch-turn to-biru mb-2" onclick="sekretaris_pertandingan.mulai_penampilan_seni('<?= esc($battle->id_penampilan_seni_biru ?? '') ?>')"><i class="fas fa-exchange-alt me-2"></i>Start Blue Turn</button>
+		<?php endif; ?>
+		<div class="row g-2">
+			<div class="col-12 col-md-6"><button class="btn btn-nav-match" onclick="sekretaris_pertandingan.pindah_partai(<?= ($penampilan->nomor_partai ?? 1) - 1 ?>)">Previous Match</button></div>
+			<div class="col-12 col-md-6"><button class="btn btn-nav-match" onclick="sekretaris_pertandingan.pindah_partai(<?= ($penampilan->nomor_partai ?? 1) + 1 ?>)">Next Match</button></div>
 		</div>
 	</div>
-
-	<style>
-		.bg-navbar {
-			background: linear-gradient(180deg, #2c2c2c 0%, #1a1a1a 100%) !important;
-			border-bottom: 3px solid #d90429;
-			box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-		}
-
-		@media (orientation: landscape) and (max-width: 1280px) {
-			.block-informasi, .block-atlet, .block-stopwatch, .block-end-match {
-				margin-bottom: 0.75vh !important;
-			}
-			.block-informasi .px-4.py-3 {
-				padding-top: 0.5rem !important;
-				padding-bottom: 0.5rem !important;
-			}
-			.block-atlet .p-3 {
-				padding-top: 1vh !important;
-				padding-bottom: 1vh !important;
-			}
-			.timer-seni {
-				font-size: clamp(4rem, 25vh, 8rem) !important;
-				margin-bottom: 0 !important;
-			}
-			.btn-timer, .btn_selesai, .btn-diskualifikasi, .btn-batal-diskualifikasi {
-				padding-top: 1vh !important;
-				padding-bottom: 1vh !important;
-			}
-			.fs-4 {
-				font-size: clamp(1.1rem, 4vh, 1.5rem) !important;
-			}
-			.fs-5 {
-				font-size: clamp(0.9rem, 3vh, 1.1rem) !important;
-			}
-		}
-	</style>
 </div>
+
+<?= $this->include('pertandingan/sekretaris/components/_offcanvas_pindah_partai_seni') ?>
 
 <!-- MODAL: Manual Atur Waktu -->
 <div class="modal fade" id="modalManualAturWaktu" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
 	<div class="modal-dialog modal-dialog-centered modal-lg">
 		<div class="modal-content">
-			<div class="modal-header">
-				<h5 class="modal-title">Set Clock Manually</h5>
-				<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-			</div>
+			<div class="modal-header"><h5 class="modal-title">Set Clock Manually</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
 			<div class="modal-body">
 				<form action="#" id="formManualAturWaktu">
 					<div class="row justify-content-center my-4">
-						<div class="col-2 px-1">
-							<div class="row"><div class="col-12">
-								<button type="button" class="btn btn-default w-100 d-block bg-dark bg-gradient text-white m-0 rounded-0 h2 btn-puluh-menit" onclick="sekretaris_pertandingan.ubah_manual_digit_waktu('.puluh-menit', 1, 5, this, '.btn-puluh-menit')">+</button>
-							</div></div>
-							<div class="row"><div class="col-12">
-								<p class="text-center h1 m-0 py-2 bg-gradient-180-white puluh-menit">0</p>
-							</div></div>
-							<div class="row"><div class="col-12">
-								<button type="button" class="btn btn-default w-100 d-block bg-dark bg-gradient text-white m-0 rounded-0 h2 btn-puluh-menit" onclick="sekretaris_pertandingan.ubah_manual_digit_waktu('.puluh-menit', -1, 5, this, '.btn-puluh-menit')">-</button>
-							</div></div>
-						</div>
-						<div class="col-2 px-1">
-							<div class="row"><div class="col-12">
-								<button type="button" class="btn btn-default w-100 d-block bg-dark bg-gradient text-white m-0 rounded-0 h2 btn-satuan-menit" onclick="sekretaris_pertandingan.ubah_manual_digit_waktu('.satuan-menit', 1, 9, this, '.btn-satuan-menit')">+</button>
-							</div></div>
-							<div class="row"><div class="col-12">
-								<p class="text-center h1 m-0 py-2 bg-gradient-180-white satuan-menit">0</p>
-							</div></div>
-							<div class="row"><div class="col-12">
-								<button type="button" class="btn btn-default w-100 d-block bg-dark bg-gradient text-white m-0 rounded-0 h2 btn-satuan-menit" onclick="sekretaris_pertandingan.ubah_manual_digit_waktu('.satuan-menit', -1, 9, this, '.btn-satuan-menit')">-</button>
-							</div></div>
-						</div>
-						<div class="col-1 text-center px-1">
-							<div class="row h-100 align-items-center"><p class="h3">:</p></div>
-						</div>
-						<div class="col-2 px-1">
-							<div class="row"><div class="col-12">
-								<button type="button" class="btn btn-default w-100 d-block bg-dark bg-gradient text-white m-0 rounded-0 h2 btn-puluh-detik" onclick="sekretaris_pertandingan.ubah_manual_digit_waktu('.puluh-detik', 1, 5, this, '.btn-puluh-detik')">+</button>
-							</div></div>
-							<div class="row"><div class="col-12">
-								<p class="text-center h1 m-0 py-2 bg-gradient-180-white puluh-detik">0</p>
-							</div></div>
-							<div class="row"><div class="col-12">
-								<button type="button" class="btn btn-default w-100 d-block bg-dark bg-gradient text-white m-0 rounded-0 h2 btn-puluh-detik" onclick="sekretaris_pertandingan.ubah_manual_digit_waktu('.puluh-detik', -1, 5, this, '.btn-puluh-detik')">-</button>
-							</div></div>
-						</div>
-						<div class="col-2 px-1">
-							<div class="row"><div class="col-12">
-								<button type="button" class="btn btn-default w-100 d-block bg-dark bg-gradient text-white m-0 rounded-0 h2 btn-satuan-detik" onclick="sekretaris_pertandingan.ubah_manual_digit_waktu('.satuan-detik', 1, 9, this, '.btn-satuan-detik')">+</button>
-							</div></div>
-							<div class="row"><div class="col-12">
-								<p class="text-center h1 m-0 py-2 bg-gradient-180-white satuan-detik">0</p>
-							</div></div>
-							<div class="row"><div class="col-12">
-								<button type="button" class="btn btn-default w-100 d-block bg-dark bg-gradient text-white m-0 rounded-0 h2 btn-satuan-detik" onclick="sekretaris_pertandingan.ubah_manual_digit_waktu('.satuan-detik', -1, 9, this, '.btn-satuan-detik')">-</button>
-							</div></div>
-						</div>
+						<?php foreach (['puluh-menit', 'satuan-menit', 'puluh-detik', 'satuan-detik'] as $digIdx => $digClass) : ?>
+							<?php if ($digIdx === 2) : ?><div class="col-1 text-center px-1"><div class="row h-100 align-items-center"><p class="h3">:</p></div></div><?php endif; ?>
+							<div class="col-2 px-1">
+								<div class="row"><div class="col-12"><button type="button" class="btn btn-default w-100 d-block bg-dark bg-gradient text-white m-0 rounded-0 h2 btn-<?= $digClass ?>" onclick="sekretaris_pertandingan.ubah_manual_digit_waktu('.<?= $digClass ?>', 1, <?= $digIdx >= 2 ? '5' : '9' ?>, this, '.btn-<?= $digClass ?>')">+</button></div></div>
+								<div class="row"><div class="col-12"><p class="text-center h1 m-0 py-2 bg-gradient-180-white <?= $digClass ?>">0</p></div></div>
+								<div class="row"><div class="col-12"><button type="button" class="btn btn-default w-100 d-block bg-dark bg-gradient text-white m-0 rounded-0 h2 btn-<?= $digClass ?>" onclick="sekretaris_pertandingan.ubah_manual_digit_waktu('.<?= $digClass ?>', -1, <?= $digIdx >= 2 ? '5' : '9' ?>, this, '.btn-<?= $digClass ?>')">-</button></div></div>
+							</div>
+						<?php endforeach; ?>
 					</div>
 				</form>
 			</div>
@@ -318,10 +357,7 @@
 	<div class="modal-dialog modal-xl">
 		<div class="modal-content">
 			<form role="form" id="form_keputusan_pemenang">
-				<div class="modal-header">
-					<h4 class="modal-title">Winning Decision</h4>
-					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-				</div>
+				<div class="modal-header"><h4 class="modal-title">Winning Decision</h4><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
 				<div class="modal-body">
 					<div class="mt-2 mb-3">
 						<p class="text-center h5 mb-3">The Winner Is:</p>
@@ -339,12 +375,8 @@
 				</div>
 				<div class="modal-footer">
 					<div class="row w-100">
-						<div class="col-6">
-							<button type="button" class="btn btn-default btn-lg w-100 h5" data-bs-dismiss="modal">Cancel</button>
-						</div>
-						<div class="col-6">
-							<button type="button" class="btn btn-warning btn-lg w-100 h5" onclick="sekretaris_pertandingan.submit_input_juara_seni()">Select Winner</button>
-						</div>
+						<div class="col-6"><button type="button" class="btn btn-default btn-lg w-100 h5" data-bs-dismiss="modal">Cancel</button></div>
+						<div class="col-6"><button type="button" class="btn btn-warning btn-lg w-100 h5" onclick="sekretaris_pertandingan.submit_input_juara_seni()">Select Winner</button></div>
 					</div>
 				</div>
 			</form>
@@ -357,10 +389,7 @@
 	<div class="modal-dialog modal-lg">
 		<div class="modal-content">
 			<form id="formGantiFormatPenilaian" method="POST" action="<?= base_url('sekretaris-pertandingan/ganti-format-penilaian-seni/' . ($penampilan->id_penampilan_seni ?? '')) ?>">
-				<div class="modal-header">
-					<h4 class="modal-title">Ganti Format Penilaian</h4>
-					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-				</div>
+				<div class="modal-header"><h4 class="modal-title">Ganti Format Penilaian</h4><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
 				<div class="modal-body">
 					<div class="mb-3">
 						<label class="form-label">Scoring Format:</label>
@@ -373,29 +402,14 @@
 					<div class="mb-3">
 						<label class="form-label">Number of Jury</label>
 						<?php foreach ([3, 4, 5, 6, 8, 10] as $jml) : ?>
-							<div class="form-check">
-								<input class="form-check-input" type="radio" name="jumlah_juri" value="<?= $jml ?>" id="juriBattle<?= $jml ?>" required>
-								<label class="form-check-label" for="juriBattle<?= $jml ?>"><?= $jml ?> Jury</label>
-							</div>
+							<div class="form-check"><input class="form-check-input" type="radio" name="jumlah_juri" value="<?= $jml ?>" id="juriBattle<?= $jml ?>" required><label class="form-check-label" for="juriBattle<?= $jml ?>"><?= $jml ?> Jury</label></div>
 						<?php endforeach; ?>
 					</div>
 					<div class="mb-3">
 						<label class="form-label">Mode</label>
-						<div class="form-check">
-							<input class="form-check-input" type="radio" name="mode" value="penampilan_seni_ini" id="mode_battle_penampilan" checked>
-							<label class="form-check-label" for="mode_battle_penampilan">Change only for this performance</label>
-						</div>
-						<div class="form-check">
-							<input class="form-check-input" type="radio" name="mode" value="kompetisi_seni_ini" id="mode_battle_kompetisi">
-							<label class="form-check-label" for="mode_battle_kompetisi">Change only for this Pool</label>
-						</div>
-						<div class="form-check">
-							<input class="form-check-input" type="radio" name="mode" value="sub_kategori_seni_ini" id="mode_battle_subkategori">
-							<label class="form-check-label" for="mode_battle_subkategori">
-								Change for this whole category
-								(<?= esc(($penampilan->jenis_seni ?? '') . ' ' . ($penampilan->jenis_kelamin ?? '') . ' ' . ($penampilan->nama_seni ?? '') . ' - ' . ($penampilan->nama_kategori_usia ?? '')) ?>)
-							</label>
-						</div>
+						<div class="form-check"><input class="form-check-input" type="radio" name="mode" value="penampilan_seni_ini" id="mode_battle_penampilan" checked><label class="form-check-label" for="mode_battle_penampilan">Change only for this performance</label></div>
+						<div class="form-check"><input class="form-check-input" type="radio" name="mode" value="kompetisi_seni_ini" id="mode_battle_kompetisi"><label class="form-check-label" for="mode_battle_kompetisi">Change only for this Pool</label></div>
+						<div class="form-check"><input class="form-check-input" type="radio" name="mode" value="sub_kategori_seni_ini" id="mode_battle_subkategori"><label class="form-check-label" for="mode_battle_subkategori">Change for this whole category (<?= esc(($penampilan->jenis_seni ?? '') . ' ' . ($penampilan->jenis_kelamin ?? '') . ' ' . ($penampilan->nama_seni ?? '') . ' - ' . ($penampilan->nama_kategori_usia ?? '')) ?>)</label></div>
 					</div>
 				</div>
 				<div class="modal-footer">
@@ -416,10 +430,8 @@ $(document).ready(function() {
 	const penampilan_seni_berlangsung = <?= json_encode($penampilan ?? new stdClass()) ?>;
 	const waktu_tampil = <?= json_encode($penampilan->waktu_tampil ?? 0) ?>;
 	sekretaris_pertandingan.init(penampilan_seni_berlangsung, waktu_tampil);
-
 	ui.animateIn();
 
-	// Battle winner radio toggle styling
 	$('.radio_pemenang_atlet_biru').on('change', function(e) {
 		if (e.currentTarget.checked) {
 			$('.btn-winner-blue').addClass('bg-blue text-white').removeClass('btn-outline-info');
@@ -437,46 +449,39 @@ $(document).ready(function() {
 const ui = {
 	animateIn: function() {
 		$('.block-informasi').children('.opacity').each(function(i, v) {
-			setTimeout(() => {
-				$(v).addClass('animated slideInDown').removeClass('opacity');
-			}, i * 150);
+			setTimeout(() => { $(v).addClass('animated slideInDown').removeClass('opacity'); }, i * 120);
 		});
-		let delayAtlet = ($('.block-informasi').children('.opacity').length * 150) + 200;
+		let delayAtlet = ($('.block-informasi').children('.opacity').length * 120) + 150;
 		setTimeout(() => {
 			$('.block-atlet .atlet-biru').addClass('animated slideInLeft').removeClass('opacity');
 			$('.block-atlet .atlet-merah').addClass('animated slideInRight').removeClass('opacity');
 			setTimeout(() => {
-				$('.block-stopwatch').children('.opacity').addClass('animated slideInUp').removeClass('opacity');
+				$('.block-stopwatch').children('.opacity').addClass('animated fadeIn').removeClass('opacity');
 				setTimeout(() => {
-					$('.block-end-match').children('.row.opacity').addClass('animated slideInUp').removeClass('opacity');
-				}, 300);
-			}, 300);
+					$('.block-end-match').children('.opacity').addClass('animated slideInUp').removeClass('opacity');
+				}, 250);
+			}, 250);
 		}, delayAtlet);
 	},
 	animateOut: function() {
 		$('.block-informasi, .block-atlet, .block-stopwatch, .block-end-match').addClass('animated fadeOut');
-		setTimeout(() => {
-			$('.block-informasi, .block-atlet, .block-stopwatch, .block-end-match').addClass('d-none');
-		}, 1000);
+		setTimeout(() => { $('.block-informasi, .block-atlet, .block-stopwatch, .block-end-match').addClass('d-none'); }, 800);
 	},
 	animateInNavigasiPartai: function() {
 		const container = document.querySelector('.block-navigasi-partai');
 		if (!container) return;
 		container.classList.remove('d-none');
 		container.style.opacity = '0';
-		container.style.transform = 'translateY(50px)';
-		container.style.transition = 'all 0.6s ease';
-		setTimeout(() => {
-			container.style.opacity = '1';
-			container.style.transform = 'translateY(0)';
-		}, 50);
+		container.style.transform = 'translateY(40px)';
+		container.style.transition = 'all 0.5s ease';
+		setTimeout(() => { container.style.opacity = '1'; container.style.transform = 'translateY(0)'; }, 50);
 	},
 	animateOutNavigasiPartai: function() {
 		const container = document.querySelector('.block-navigasi-partai');
 		if (!container) return;
 		container.style.opacity = '0';
-		container.style.transform = 'translateY(50px)';
-		setTimeout(() => { container.classList.add('d-none'); }, 600);
+		container.style.transform = 'translateY(40px)';
+		setTimeout(() => { container.classList.add('d-none'); }, 500);
 	}
 };
 </script>
