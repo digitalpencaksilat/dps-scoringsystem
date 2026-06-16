@@ -16,7 +16,6 @@ body { background: #0a0e13; color: #fff; font-family: 'Poppins', sans-serif; }
 /* ─── Header ───────────────────────────────────── */
 .kps-header { flex-shrink: 0; display: grid; grid-template-columns: 1fr 1fr; gap: clamp(0.3rem, 0.8vw, 0.5rem); padding: clamp(0.35rem, 0.8vw, 0.5rem); background: #0a0a0a; border-bottom: 1px solid rgba(255,255,255,0.06); }
 .kps-header-card { background: linear-gradient(180deg, #c5a017 0%, #9a7d12 100%); border: none; border-radius: 8px; padding: clamp(0.4rem, 1vw, 0.55rem) clamp(0.5rem, 1vw, 0.75rem); display: flex; align-items: center; justify-content: center; gap: clamp(0.3rem, 0.8vw, 0.5rem); font-family: 'Oswald', sans-serif; font-size: clamp(0.75rem, 2vw, 1rem); font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.kps-header-card i { opacity: 0.7; }
 .kps-hc-sep { opacity: 0.4; font-weight: 300; }
 
 /* ─── Tabs ─────────────────────────────────────── */
@@ -100,10 +99,10 @@ body { background: #0a0e13; color: #fff; font-family: 'Poppins', sans-serif; }
 	<!-- Header -->
 	<div class="kps-header">
 		<div class="kps-header-card">
-			<i class="fas fa-map-marker-alt"></i> <?= esc($nama_gelanggang ?? '-') ?> <span class="kps-hc-sep">—</span> Partai <?= esc($nomor_partai ?? '-') ?>
+			<?= esc($nama_gelanggang ?? '-') ?> <span class="kps-hc-sep">—</span> Partai <?= esc($nomor_partai ?? '-') ?>
 		</div>
 		<div class="kps-header-card">
-			<i class="fas fa-hand-sparkles"></i> <?= esc($penampilan_seni_berlangsung->nama_seni ?? 'Seni') ?> <span class="kps-hc-sep">—</span> <?= ($penampilan_seni_berlangsung->jenis_kelamin ?? '') === 'Putra' ? 'Putra' : 'Putri' ?> <span class="kps-hc-sep">—</span> Battle · Pool <?= esc($penampilan_seni_berlangsung->nomor_pool ?? '-') ?>
+			<?= esc($penampilan_seni_berlangsung->jenis_seni ?? '') ?> <span class="kps-hc-sep">—</span> <?= esc($penampilan_seni_berlangsung->nama_seni ?? 'Seni') ?> <span class="kps-hc-sep">—</span> <?= ($penampilan_seni_berlangsung->jenis_kelamin ?? '') === 'Putra' ? 'Putra' : 'Putri' ?> <span class="kps-hc-sep">—</span> Battle · Pool <?= esc($penampilan_seni_berlangsung->nomor_pool ?? '-') ?>
 		</div>
 	</div>
 

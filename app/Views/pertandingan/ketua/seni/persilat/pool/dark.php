@@ -42,8 +42,6 @@ body { background: #0a0e13; color: #fff; font-family: 'Poppins', sans-serif; }
 	text-overflow: ellipsis;
 }
 
-.kps-header-card i { opacity: 0.7; }
-
 .kps-hc-sep {
 	opacity: 0.4;
 	font-weight: 300;
@@ -381,10 +379,10 @@ body { background: #0a0e13; color: #fff; font-family: 'Poppins', sans-serif; }
 	<!-- Header -->
 	<div class="kps-header">
 		<div class="kps-header-card">
-			<i class="fas fa-map-marker-alt"></i> <?= esc($nama_gelanggang ?? '-') ?> <span class="kps-hc-sep">—</span> Partai <?= esc($nomor_partai ?? '-') ?>
+			<?= esc($nama_gelanggang ?? '-') ?> <span class="kps-hc-sep">—</span> Partai <?= esc($nomor_partai ?? '-') ?>
 		</div>
 		<div class="kps-header-card">
-			<i class="fas fa-hand-sparkles"></i> <?= esc($penampilan_seni_berlangsung->nama_seni ?? 'Seni') ?> <span class="kps-hc-sep">—</span> <?= ($penampilan_seni_berlangsung->jenis_kelamin ?? '') === 'Putra' ? 'Putra' : 'Putri' ?> <span class="kps-hc-sep">—</span> Pool <?= esc($penampilan_seni_berlangsung->nomor_pool ?? '-') ?>
+			<?= esc($penampilan_seni_berlangsung->jenis_seni ?? '') ?> <span class="kps-hc-sep">—</span> <?= esc($penampilan_seni_berlangsung->nama_seni ?? 'Seni') ?> <span class="kps-hc-sep">—</span> <?= ($penampilan_seni_berlangsung->jenis_kelamin ?? '') === 'Putra' ? 'Putra' : 'Putri' ?> <span class="kps-hc-sep">—</span> Pool <?= esc($penampilan_seni_berlangsung->nomor_pool ?? '-') ?>
 		</div>
 	</div>
 

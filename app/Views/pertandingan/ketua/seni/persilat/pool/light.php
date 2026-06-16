@@ -10,7 +10,6 @@ body { background: #f4f6f9; color: #212529; font-family: 'Poppins', sans-serif; 
 
 .kps-header { flex-shrink: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; padding: clamp(0.35rem, 0.8vw, 0.5rem); background: #fff; border-bottom: 1px solid #dee2e6; }
 .kps-header-card { background: linear-gradient(180deg, #c5a017 0%, #9a7d12 100%); border: none; border-radius: 8px; padding: clamp(0.4rem, 1vw, 0.55rem) clamp(0.5rem, 1vw, 0.75rem); display: flex; align-items: center; justify-content: center; gap: 0.35rem; font-family: 'Oswald', sans-serif; font-size: clamp(0.75rem, 2vw, 1rem); font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.kps-header-card i { opacity: 0.7; }
 .kps-hc-sep { opacity: 0.4; font-weight: 300; }
 
 .kps-header-info { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.4rem; font-size: 0.62rem; color: #adb5bd; margin-top: 0.15rem; }
@@ -75,8 +74,8 @@ body { background: #f4f6f9; color: #212529; font-family: 'Poppins', sans-serif; 
 <?= $this->section('content') ?>
 <div id="kp-seni-app">
 	<div class="kps-header">
-		<div class="kps-header-card"><i class="fas fa-map-marker-alt"></i> <?= esc($nama_gelanggang ?? '-') ?> <span class="kps-hc-sep">—</span> Partai <?= esc($nomor_partai ?? '-') ?></div>
-		<div class="kps-header-card"><i class="fas fa-hand-sparkles"></i> <?= esc($penampilan_seni_berlangsung->nama_seni ?? 'Seni') ?> <span class="kps-hc-sep">—</span> <?= ($penampilan_seni_berlangsung->jenis_kelamin ?? '') === 'Putra' ? 'Putra' : 'Putri' ?> <span class="kps-hc-sep">—</span> Pool <?= esc($penampilan_seni_berlangsung->nomor_pool ?? '-') ?></div>
+		<div class="kps-header-card"><?= esc($nama_gelanggang ?? '-') ?> <span class="kps-hc-sep">—</span> Partai <?= esc($nomor_partai ?? '-') ?></div>
+		<div class="kps-header-card"><?= esc($penampilan_seni_berlangsung->jenis_seni ?? '') ?> <span class="kps-hc-sep">—</span> <?= esc($penampilan_seni_berlangsung->nama_seni ?? 'Seni') ?> <span class="kps-hc-sep">—</span> <?= ($penampilan_seni_berlangsung->jenis_kelamin ?? '') === 'Putra' ? 'Putra' : 'Putri' ?> <span class="kps-hc-sep">—</span> Pool <?= esc($penampilan_seni_berlangsung->nomor_pool ?? '-') ?></div>
 	</div>
 
 	<ul class="nav kps-tabs" role="tablist" id="tabNilai">
