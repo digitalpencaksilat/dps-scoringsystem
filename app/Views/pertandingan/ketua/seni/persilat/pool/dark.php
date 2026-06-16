@@ -30,74 +30,23 @@ body { background: #0a0e13; color: #fff; font-family: 'Poppins', sans-serif; }
 	border-radius: 8px;
 	padding: clamp(0.4rem, 1vw, 0.55rem) clamp(0.5rem, 1vw, 0.75rem);
 	display: flex;
-	flex-direction: row;
 	align-items: center;
-	justify-content: space-between;
+	justify-content: center;
 	gap: clamp(0.3rem, 0.8vw, 0.5rem);
-}
-
-.kps-header-card .kps-hc-label,
-.kps-header-card .kps-hc-value,
-.kps-header-card .kps-hc-sub {
-	color: #fff;
-}
-
-.kps-hc-left {
-	display: flex;
-	flex-direction: column;
-	gap: 0.1rem;
-	min-width: 0;
-}
-
-.kps-hc-label {
-	font-size: clamp(0.52rem, 1vw, 0.6rem);
-	display: flex;
-	align-items: center;
-	gap: 0.25rem;
-	opacity: 0.75;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-.kps-hc-name {
 	font-family: 'Oswald', sans-serif;
-	font-size: clamp(0.7rem, 1.5vw, 0.9rem);
-	font-weight: 700;
-	line-height: 1.15;
+	font-size: clamp(0.75rem, 2vw, 1rem);
+	font-weight: 600;
 	color: #fff;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
 
-.kps-hc-number {
-	flex-shrink: 0;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 0.05rem;
-}
+.kps-header-card i { opacity: 0.7; }
 
-.kps-hc-num-label {
-	font-size: clamp(0.5rem, 1vw, 0.58rem);
-	opacity: 0.7;
-	text-transform: uppercase;
-	letter-spacing: 0.5px;
-}
-
-.kps-hc-num-value {
-	font-family: 'Oswald', sans-serif;
-	font-size: clamp(1.3rem, 3.5vw, 2rem);
-	font-weight: 700;
-	color: #fff;
-	line-height: 1;
-}
-
-.kps-hc-sub {
-	font-size: clamp(0.52rem, 1vw, 0.6rem);
-	opacity: 0.7;
-	white-space: nowrap;
+.kps-hc-sep {
+	opacity: 0.4;
+	font-weight: 300;
 }
 
 /* ─── Tabs ───────────────────────────────────────────────────────── */
@@ -432,23 +381,10 @@ body { background: #0a0e13; color: #fff; font-family: 'Poppins', sans-serif; }
 	<!-- Header -->
 	<div class="kps-header">
 		<div class="kps-header-card">
-			<div class="kps-hc-left">
-				<div class="kps-hc-label"><i class="fas fa-map-marker-alt"></i> <?= esc($nama_gelanggang ?? '-') ?></div>
-				<div class="kps-hc-sub"><?= esc($penampilan_seni_berlangsung->nama_seni ?? 'Seni') ?></div>
-			</div>
-			<div class="kps-hc-number">
-				<span class="kps-hc-num-label">Partai</span>
-				<span class="kps-hc-num-value"><?= esc($nomor_partai ?? '-') ?></span>
-			</div>
+			<i class="fas fa-map-marker-alt"></i> <?= esc($nama_gelanggang ?? '-') ?> <span class="kps-hc-sep">—</span> Partai <?= esc($nomor_partai ?? '-') ?>
 		</div>
 		<div class="kps-header-card">
-			<div class="kps-hc-left">
-				<div class="kps-hc-label"><i class="fas fa-user"></i> <?= ($penampilan_seni_berlangsung->jenis_kelamin ?? '') === 'Putra' ? 'Putra' : 'Putri' ?> · <?= esc($penampilan_seni_berlangsung->nama_kategori_usia ?? '') ?></div>
-				<div class="kps-hc-sub">Pool</div>
-			</div>
-			<div class="kps-hc-number">
-				<span class="kps-hc-num-value"><?= esc($penampilan_seni_berlangsung->nomor_pool ?? '-') ?></span>
-			</div>
+			<i class="fas fa-hand-sparkles"></i> <?= esc($penampilan_seni_berlangsung->nama_seni ?? 'Seni') ?> <span class="kps-hc-sep">—</span> <?= ($penampilan_seni_berlangsung->jenis_kelamin ?? '') === 'Putra' ? 'Putra' : 'Putri' ?> <span class="kps-hc-sep">—</span> Pool <?= esc($penampilan_seni_berlangsung->nomor_pool ?? '-') ?>
 		</div>
 	</div>
 
