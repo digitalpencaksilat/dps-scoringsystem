@@ -28,40 +28,76 @@ body { background: #0a0e13; color: #fff; font-family: 'Poppins', sans-serif; }
 	background: linear-gradient(180deg, #c5a017 0%, #9a7d12 100%);
 	border: none;
 	border-radius: 8px;
-	padding: clamp(0.35rem, 0.8vw, 0.5rem) clamp(0.5rem, 1vw, 0.75rem);
+	padding: clamp(0.4rem, 1vw, 0.55rem) clamp(0.5rem, 1vw, 0.75rem);
 	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	gap: 0.15rem;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	gap: clamp(0.3rem, 0.8vw, 0.5rem);
 }
 
-.kps-header-card .kps-hc-label { color: rgba(255,255,255,0.7); }
-.kps-header-card .kps-hc-value { color: #fff; }
-.kps-header-card .kps-hc-sub   { color: rgba(255,255,255,0.65); }
+.kps-header-card .kps-hc-label,
+.kps-header-card .kps-hc-value,
+.kps-header-card .kps-hc-sub {
+	color: #fff;
+}
+
+.kps-hc-left {
+	display: flex;
+	flex-direction: column;
+	gap: 0.1rem;
+	min-width: 0;
+}
 
 .kps-hc-label {
-	font-size: clamp(0.55rem, 1.1vw, 0.62rem);
-	color: rgba(255,255,255,0.35);
-	text-transform: uppercase;
-	letter-spacing: 0.5px;
+	font-size: clamp(0.52rem, 1vw, 0.6rem);
 	display: flex;
 	align-items: center;
 	gap: 0.25rem;
+	opacity: 0.75;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
-.kps-hc-value {
+.kps-hc-name {
 	font-family: 'Oswald', sans-serif;
-	font-size: clamp(0.85rem, 2vw, 1.1rem);
+	font-size: clamp(0.7rem, 1.5vw, 0.9rem);
 	font-weight: 700;
-	line-height: 1.2;
+	line-height: 1.15;
+	color: #fff;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
-.kps-hc-value.arena-name { color: #64b5f6; }
-.kps-hc-value.seni-name { color: #fff; }
+.kps-hc-number {
+	flex-shrink: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.05rem;
+}
+
+.kps-hc-num-label {
+	font-size: clamp(0.5rem, 1vw, 0.58rem);
+	opacity: 0.7;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.kps-hc-num-value {
+	font-family: 'Oswald', sans-serif;
+	font-size: clamp(1.3rem, 3.5vw, 2rem);
+	font-weight: 700;
+	color: #fff;
+	line-height: 1;
+}
 
 .kps-hc-sub {
-	font-size: clamp(0.6rem, 1.2vw, 0.7rem);
-	color: rgba(255,255,255,0.55);
+	font-size: clamp(0.52rem, 1vw, 0.6rem);
+	opacity: 0.7;
+	white-space: nowrap;
 }
 
 /* ─── Tabs ───────────────────────────────────────────────────────── */
@@ -395,15 +431,24 @@ body { background: #0a0e13; color: #fff; font-family: 'Poppins', sans-serif; }
 <div id="kp-seni-app">
 	<!-- Header -->
 	<div class="kps-header">
-		<div class="kps-header-card arena">
-			<div class="kps-hc-label"><i class="fas fa-map-marker-alt"></i> Gelanggang</div>
-			<div class="kps-hc-value arena-name"><?= esc($nama_gelanggang ?? '-') ?></div>
-			<div class="kps-hc-sub">Partai <?= esc($nomor_partai ?? '-') ?></div>
+		<div class="kps-header-card">
+			<div class="kps-hc-left">
+				<div class="kps-hc-label"><i class="fas fa-map-marker-alt"></i> <?= esc($nama_gelanggang ?? '-') ?></div>
+				<div class="kps-hc-sub"><?= esc($penampilan_seni_berlangsung->nama_seni ?? 'Seni') ?></div>
+			</div>
+			<div class="kps-hc-number">
+				<span class="kps-hc-num-label">Partai</span>
+				<span class="kps-hc-num-value"><?= esc($nomor_partai ?? '-') ?></span>
+			</div>
 		</div>
-		<div class="kps-header-card seni">
-			<div class="kps-hc-label"><i class="fas fa-hand-sparkles"></i> <?= ($penampilan_seni_berlangsung->jenis_kelamin ?? '') === 'Putra' ? 'Putra' : 'Putri' ?> · <?= esc($penampilan_seni_berlangsung->nama_kategori_usia ?? '') ?></div>
-			<div class="kps-hc-value seni-name"><?= esc($penampilan_seni_berlangsung->nama_seni ?? 'Seni') ?></div>
-			<div class="kps-hc-sub">Pool <?= esc($penampilan_seni_berlangsung->nomor_pool ?? '-') ?> · Pool</div>
+		<div class="kps-header-card">
+			<div class="kps-hc-left">
+				<div class="kps-hc-label"><i class="fas fa-user"></i> <?= ($penampilan_seni_berlangsung->jenis_kelamin ?? '') === 'Putra' ? 'Putra' : 'Putri' ?> · <?= esc($penampilan_seni_berlangsung->nama_kategori_usia ?? '') ?></div>
+				<div class="kps-hc-sub">Pool</div>
+			</div>
+			<div class="kps-hc-number">
+				<span class="kps-hc-num-value"><?= esc($penampilan_seni_berlangsung->nomor_pool ?? '-') ?></span>
+			</div>
 		</div>
 	</div>
 

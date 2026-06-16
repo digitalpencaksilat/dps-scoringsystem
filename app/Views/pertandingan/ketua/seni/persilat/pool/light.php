@@ -9,12 +9,14 @@ body { background: #f4f6f9; color: #212529; font-family: 'Poppins', sans-serif; 
 #kp-seni-app { display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
 
 .kps-header { flex-shrink: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; padding: clamp(0.35rem, 0.8vw, 0.5rem); background: #fff; border-bottom: 1px solid #dee2e6; }
-.kps-header-card { background: linear-gradient(180deg, #c5a017 0%, #9a7d12 100%); border: none; border-radius: 8px; padding: 0.4rem 0.6rem; display: flex; flex-direction: column; justify-content: center; gap: 0.12rem; }
-.kps-hc-label { font-size: 0.58rem; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 0.25rem; }
-.kps-hc-value { font-family: 'Oswald', sans-serif; font-size: clamp(0.85rem, 2vw, 1.1rem); font-weight: 700; line-height: 1.2; }
-.kps-hc-value.arena-name, .kps-hc-value.seni-name { color: #fff; }
-.kps-hc-sub { font-size: clamp(0.6rem, 1.2vw, 0.7rem); color: rgba(255,255,255,0.7); }
-.kps-header-card .kps-hc-label { color: rgba(255,255,255,0.7); }
+.kps-header-card { background: linear-gradient(180deg, #c5a017 0%, #9a7d12 100%); border: none; border-radius: 8px; padding: clamp(0.4rem, 1vw, 0.55rem) clamp(0.5rem, 1vw, 0.75rem); display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 0.4rem; }
+.kps-hc-left { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.kps-hc-label { font-size: clamp(0.52rem, 1vw, 0.6rem); display: flex; align-items: center; gap: 0.25rem; color: #fff; opacity: 0.8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kps-hc-name { font-family: 'Oswald', sans-serif; font-size: clamp(0.7rem, 1.5vw, 0.9rem); font-weight: 700; line-height: 1.15; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kps-hc-number { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 0.05rem; }
+.kps-hc-num-label { font-size: clamp(0.5rem, 1vw, 0.58rem); color: #fff; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.5px; }
+.kps-hc-num-value { font-family: 'Oswald', sans-serif; font-size: clamp(1.3rem, 3.5vw, 2rem); font-weight: 700; color: #fff; line-height: 1; }
+.kps-hc-sub { font-size: clamp(0.52rem, 1vw, 0.6rem); color: #fff; opacity: 0.7; white-space: nowrap; }
 
 .kps-header-info { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.4rem; font-size: 0.62rem; color: #adb5bd; margin-top: 0.15rem; }
 .kps-header-info span { display: inline-flex; align-items: center; gap: 0.2rem; white-space: nowrap; }
@@ -78,8 +80,8 @@ body { background: #f4f6f9; color: #212529; font-family: 'Poppins', sans-serif; 
 <?= $this->section('content') ?>
 <div id="kp-seni-app">
 	<div class="kps-header">
-		<div class="kps-header-card arena"><div class="kps-hc-label"><i class="fas fa-map-marker-alt"></i> Gelanggang</div><div class="kps-hc-value arena-name"><?= esc($nama_gelanggang ?? '-') ?></div><div class="kps-hc-sub">Partai <?= esc($nomor_partai ?? '-') ?></div></div>
-		<div class="kps-header-card seni"><div class="kps-hc-label"><i class="fas fa-hand-sparkles"></i> <?= ($penampilan_seni_berlangsung->jenis_kelamin ?? '') === 'Putra' ? 'Putra' : 'Putri' ?> · <?= esc($penampilan_seni_berlangsung->nama_kategori_usia ?? '') ?></div><div class="kps-hc-value seni-name"><?= esc($penampilan_seni_berlangsung->nama_seni ?? 'Seni') ?></div><div class="kps-hc-sub">Pool <?= esc($penampilan_seni_berlangsung->nomor_pool ?? '-') ?></div></div>
+		<div class="kps-header-card"><div class="kps-hc-left"><div class="kps-hc-label"><i class="fas fa-map-marker-alt"></i> <?= esc($nama_gelanggang ?? '-') ?></div><div class="kps-hc-sub"><?= esc($penampilan_seni_berlangsung->nama_seni ?? 'Seni') ?></div></div><div class="kps-hc-number"><span class="kps-hc-num-label">Partai</span><span class="kps-hc-num-value"><?= esc($nomor_partai ?? '-') ?></span></div></div>
+		<div class="kps-header-card"><div class="kps-hc-left"><div class="kps-hc-label"><i class="fas fa-user"></i> <?= ($penampilan_seni_berlangsung->jenis_kelamin ?? '') === 'Putra' ? 'Putra' : 'Putri' ?> · <?= esc($penampilan_seni_berlangsung->nama_kategori_usia ?? '') ?></div><div class="kps-hc-sub">Pool</div></div><div class="kps-hc-number"><span class="kps-hc-num-value"><?= esc($penampilan_seni_berlangsung->nomor_pool ?? '-') ?></span></div></div>
 	</div>
 
 	<ul class="nav kps-tabs" role="tablist" id="tabNilai">
