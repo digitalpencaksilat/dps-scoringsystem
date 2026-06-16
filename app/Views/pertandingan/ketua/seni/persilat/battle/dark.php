@@ -15,9 +15,10 @@ body { background: #0a0e13; color: #fff; font-family: 'Poppins', sans-serif; }
 
 /* ─── Header ───────────────────────────────────── */
 .kps-header { flex-shrink: 0; display: grid; grid-template-columns: 1fr 1fr; gap: clamp(0.3rem, 0.8vw, 0.5rem); padding: clamp(0.35rem, 0.8vw, 0.5rem); background: #0a0a0a; border-bottom: 1px solid rgba(255,255,255,0.06); }
-.kps-header-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: clamp(0.35rem, 0.8vw, 0.5rem) clamp(0.5rem, 1vw, 0.75rem); display: flex; flex-direction: column; justify-content: center; gap: 0.15rem; }
-.kps-header-card.arena { border-left: 3px solid #1565c0; background: linear-gradient(135deg, rgba(21,101,192,0.1) 0%, rgba(255,255,255,0.05) 100%); }
-.kps-header-card.seni  { border-left: 3px solid #c5a017; background: linear-gradient(135deg, rgba(197,160,23,0.1) 0%, rgba(255,255,255,0.05) 100%); }
+.kps-header-card { background: linear-gradient(180deg, #c5a017 0%, #9a7d12 100%); border: none; border-radius: 8px; padding: clamp(0.35rem, 0.8vw, 0.5rem) clamp(0.5rem, 1vw, 0.75rem); display: flex; flex-direction: column; justify-content: center; gap: 0.15rem; }
+.kps-header-card .kps-hc-label { color: rgba(255,255,255,0.7); }
+.kps-header-card .kps-hc-value { color: #fff; }
+.kps-header-card .kps-hc-sub   { color: rgba(255,255,255,0.65); }
 .kps-hc-label { font-size: clamp(0.55rem, 1.1vw, 0.62rem); color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 0.25rem; }
 .kps-hc-value { font-family: 'Oswald', sans-serif; font-size: clamp(0.85rem, 2vw, 1.1rem); font-weight: 700; line-height: 1.2; }
 .kps-hc-value.arena-name { color: #64b5f6; }

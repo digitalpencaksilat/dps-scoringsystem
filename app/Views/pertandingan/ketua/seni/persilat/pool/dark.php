@@ -25,8 +25,8 @@ body { background: #0a0e13; color: #fff; font-family: 'Poppins', sans-serif; }
 }
 
 .kps-header-card {
-	background: rgba(255,255,255,0.05);
-	border: 1px solid rgba(255,255,255,0.1);
+	background: linear-gradient(180deg, #c5a017 0%, #9a7d12 100%);
+	border: none;
 	border-radius: 8px;
 	padding: clamp(0.35rem, 0.8vw, 0.5rem) clamp(0.5rem, 1vw, 0.75rem);
 	display: flex;
@@ -35,15 +35,9 @@ body { background: #0a0e13; color: #fff; font-family: 'Poppins', sans-serif; }
 	gap: 0.15rem;
 }
 
-.kps-header-card.arena {
-	border-left: 3px solid #1565c0;
-	background: linear-gradient(135deg, rgba(21,101,192,0.1) 0%, rgba(255,255,255,0.05) 100%);
-}
-
-.kps-header-card.seni {
-	border-left: 3px solid #c5a017;
-	background: linear-gradient(135deg, rgba(197,160,23,0.1) 0%, rgba(255,255,255,0.05) 100%);
-}
+.kps-header-card .kps-hc-label { color: rgba(255,255,255,0.7); }
+.kps-header-card .kps-hc-value { color: #fff; }
+.kps-header-card .kps-hc-sub   { color: rgba(255,255,255,0.65); }
 
 .kps-hc-label {
 	font-size: clamp(0.55rem, 1.1vw, 0.62rem);

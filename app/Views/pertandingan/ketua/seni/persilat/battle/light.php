@@ -9,14 +9,12 @@ body { background: #f4f6f9; color: #212529; font-family: 'Poppins', sans-serif; 
 #kp-seni-app { display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
 
 .kps-header { flex-shrink: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; padding: clamp(0.35rem, 0.8vw, 0.5rem); background: #fff; border-bottom: 1px solid #dee2e6; }
-.kps-header-card { background: #fff; border: 1px solid #dee2e6; border-radius: 8px; padding: 0.4rem 0.6rem; display: flex; flex-direction: column; justify-content: center; gap: 0.12rem; }
-.kps-header-card.arena { border-left: 3px solid #1565c0; background: linear-gradient(135deg, rgba(21,101,192,0.04) 0%, #fff 100%); }
-.kps-header-card.seni  { border-left: 3px solid #c5a017; background: linear-gradient(135deg, rgba(197,160,23,0.04) 0%, #fff 100%); }
+.kps-header-card { background: linear-gradient(180deg, #c5a017 0%, #9a7d12 100%); border: none; border-radius: 8px; padding: 0.4rem 0.6rem; display: flex; flex-direction: column; justify-content: center; gap: 0.12rem; }
 .kps-hc-label { font-size: 0.58rem; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 0.25rem; }
 .kps-hc-value { font-family: 'Oswald', sans-serif; font-size: clamp(0.85rem, 2vw, 1.1rem); font-weight: 700; line-height: 1.2; }
-.kps-hc-value.arena-name { color: #1565c0; }
-.kps-hc-value.seni-name { color: #212529; }
-.kps-hc-sub { font-size: clamp(0.6rem, 1.2vw, 0.7rem); color: #6c757d; }
+.kps-hc-value.arena-name, .kps-hc-value.seni-name { color: #fff; }
+.kps-hc-sub { font-size: clamp(0.6rem, 1.2vw, 0.7rem); color: rgba(255,255,255,0.7); }
+.kps-header-card .kps-hc-label { color: rgba(255,255,255,0.7); }
 
 .kps-header-info { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.4rem; font-size: 0.62rem; color: #adb5bd; margin-top: 0.15rem; }
 .kps-header-info span { display: inline-flex; align-items: center; gap: 0.2rem; white-space: nowrap; }
