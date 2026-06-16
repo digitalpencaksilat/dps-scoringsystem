@@ -8,10 +8,15 @@ body { background: #f4f6f9; color: #212529; font-family: 'Poppins', sans-serif; 
 
 #kp-seni-app { display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
 
-.kps-header { flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: clamp(0.5rem, 1vw, 0.75rem) 1rem; background: #fff; border-bottom: 1px solid #dee2e6; }
-.kps-header-icon { width: clamp(2rem, 4vw, 2.5rem); height: clamp(2rem, 4vw, 2.5rem); border-radius: 8px; background: linear-gradient(135deg, #c5a017, #9a7d12); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: #fff; flex-shrink: 0; }
-.kps-header-title { font-family: 'Oswald', sans-serif; font-size: clamp(0.85rem, 2vw, 1rem); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; text-align: center; line-height: 1.2; color: #212529; }
-.kps-header-sub { font-size: clamp(0.65rem, 1.5vw, 0.75rem); color: #6c757d; }
+.kps-header { flex-shrink: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; padding: clamp(0.35rem, 0.8vw, 0.5rem); background: #fff; border-bottom: 1px solid #dee2e6; }
+.kps-header-card { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 0.4rem 0.6rem; display: flex; flex-direction: column; justify-content: center; gap: 0.12rem; }
+.kps-header-card.arena { border-left: 2px solid #1565c0; }
+.kps-header-card.seni  { border-left: 2px solid #c5a017; }
+.kps-hc-label { font-size: 0.58rem; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 0.25rem; }
+.kps-hc-value { font-family: 'Oswald', sans-serif; font-size: clamp(0.85rem, 2vw, 1.1rem); font-weight: 700; line-height: 1.2; }
+.kps-hc-value.arena-name { color: #1565c0; }
+.kps-hc-value.seni-name { color: #212529; }
+.kps-hc-sub { font-size: clamp(0.6rem, 1.2vw, 0.7rem); color: #6c757d; }
 
 .kps-header-info { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.4rem; font-size: 0.62rem; color: #adb5bd; margin-top: 0.15rem; }
 .kps-header-info span { display: inline-flex; align-items: center; gap: 0.2rem; white-space: nowrap; }
@@ -75,8 +80,8 @@ body { background: #f4f6f9; color: #212529; font-family: 'Poppins', sans-serif; 
 <?= $this->section('content') ?>
 <div id="kp-seni-app">
 	<div class="kps-header">
-		<div class="kps-header-icon"><i class="fas fa-hand-sparkles"></i></div>
-		<div><div class="kps-header-title"><?= $penampilan_seni_berlangsung->nama_seni ?? 'Seni' ?></div><div class="kps-header-sub text-center"><?= $penampilan_seni_berlangsung->nama_kategori_usia ?? '' ?> <?= ($penampilan_seni_berlangsung->jenis_kelamin ?? '') === 'Putra' ? 'Putra' : 'Putri' ?> (Pool)</div><div class="kps-header-info"><?php if(!empty($nama_gelanggang)):?><span><i class="fas fa-map-marker-alt"></i> <?= esc($nama_gelanggang) ?></span><?php endif?><?php if(!empty($nomor_partai)):?><span><i class="fas fa-hashtag"></i> Partai <?= esc($nomor_partai) ?></span><?php endif?><?php if(!empty($penampilan_seni_berlangsung->nomor_pool)):?><span><i class="fas fa-layer-group"></i> Pool <?= esc($penampilan_seni_berlangsung->nomor_pool) ?></span><?php endif?></div></div>
+		<div class="kps-header-card arena"><div class="kps-hc-label"><i class="fas fa-map-marker-alt"></i> Gelanggang</div><div class="kps-hc-value arena-name"><?= esc($nama_gelanggang ?? '-') ?></div><div class="kps-hc-sub">Partai <?= esc($nomor_partai ?? '-') ?></div></div>
+		<div class="kps-header-card seni"><div class="kps-hc-label"><i class="fas fa-hand-sparkles"></i> <?= ($penampilan_seni_berlangsung->jenis_kelamin ?? '') === 'Putra' ? 'Putra' : 'Putri' ?> · <?= esc($penampilan_seni_berlangsung->nama_kategori_usia ?? '') ?></div><div class="kps-hc-value seni-name"><?= esc($penampilan_seni_berlangsung->nama_seni ?? 'Seni') ?></div><div class="kps-hc-sub">Pool <?= esc($penampilan_seni_berlangsung->nomor_pool ?? '-') ?></div></div>
 	</div>
 
 	<ul class="nav kps-tabs" role="tablist" id="tabNilai">
