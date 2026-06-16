@@ -9,9 +9,9 @@ body { background: #f4f6f9; color: #212529; font-family: 'Poppins', sans-serif; 
 #kp-seni-app { display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
 
 .kps-header { flex-shrink: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; padding: clamp(0.35rem, 0.8vw, 0.5rem); background: #fff; border-bottom: 1px solid #dee2e6; }
-.kps-header-card { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 0.4rem 0.6rem; display: flex; flex-direction: column; justify-content: center; gap: 0.12rem; }
-.kps-header-card.arena { border-left: 2px solid #1565c0; }
-.kps-header-card.seni  { border-left: 2px solid #c5a017; }
+.kps-header-card { background: #fff; border: 1px solid #dee2e6; border-radius: 8px; padding: 0.4rem 0.6rem; display: flex; flex-direction: column; justify-content: center; gap: 0.12rem; }
+.kps-header-card.arena { border-left: 3px solid #1565c0; background: linear-gradient(135deg, rgba(21,101,192,0.04) 0%, #fff 100%); }
+.kps-header-card.seni  { border-left: 3px solid #c5a017; background: linear-gradient(135deg, rgba(197,160,23,0.04) 0%, #fff 100%); }
 .kps-hc-label { font-size: 0.58rem; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 0.25rem; }
 .kps-hc-value { font-family: 'Oswald', sans-serif; font-size: clamp(0.85rem, 2vw, 1.1rem); font-weight: 700; line-height: 1.2; }
 .kps-hc-value.arena-name { color: #1565c0; }
@@ -32,9 +32,9 @@ body { background: #f4f6f9; color: #212529; font-family: 'Poppins', sans-serif; 
 .kps-tab-content::-webkit-scrollbar { width: 5px; }
 .kps-tab-content::-webkit-scrollbar-thumb { background: #ced4da; border-radius: 3px; }
 
-.kps-peserta-card { border-radius: 10px; padding: clamp(0.6rem, 1.5vw, 0.85rem) 1rem; margin-bottom: 0.75rem; text-align: center; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
-.kps-peserta-card.blue { border: 1px solid #90caf9; border-top: 3px solid #1565c0; }
-.kps-peserta-card.red { border: 1px solid #ef9a9a; border-top: 3px solid #c62828; }
+.kps-peserta-card { border-radius: 8px; padding: clamp(0.6rem, 1.5vw, 0.85rem) 1rem; margin-bottom: 0.75rem; text-align: center; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.kps-peserta-card.blue { border: 1px solid #90caf9; border-left: 3px solid #1565c0; }
+.kps-peserta-card.red { border: 1px solid #ef9a9a; border-left: 3px solid #c62828; }
 .kps-peserta-nama { font-family: 'Oswald', sans-serif; font-size: clamp(1rem, 2.5vw, 1.3rem); font-weight: 700; margin: 0; color: #212529; }
 .kps-peserta-kontingen { font-size: clamp(0.75rem, 1.5vw, 0.85rem); color: #6c757d; margin: 2px 0 0 0; }
 

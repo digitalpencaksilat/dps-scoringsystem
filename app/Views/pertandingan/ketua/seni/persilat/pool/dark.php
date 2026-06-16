@@ -26,7 +26,7 @@ body { background: #0a0e13; color: #fff; font-family: 'Poppins', sans-serif; }
 
 .kps-header-card {
 	background: rgba(255,255,255,0.03);
-	border: 1px solid rgba(255,255,255,0.06);
+	border: 1px solid rgba(255,255,255,0.08);
 	border-radius: 8px;
 	padding: clamp(0.35rem, 0.8vw, 0.5rem) clamp(0.5rem, 1vw, 0.75rem);
 	display: flex;
@@ -35,8 +35,15 @@ body { background: #0a0e13; color: #fff; font-family: 'Poppins', sans-serif; }
 	gap: 0.15rem;
 }
 
-.kps-header-card.arena { border-left: 2px solid var(--corner-blue, #1565c0); }
-.kps-header-card.seni  { border-left: 2px solid var(--accent-seni, #c5a017); }
+.kps-header-card.arena {
+	border-left: 3px solid #1565c0;
+	background: linear-gradient(135deg, rgba(21,101,192,0.08) 0%, rgba(255,255,255,0.03) 100%);
+}
+
+.kps-header-card.seni {
+	border-left: 3px solid #c5a017;
+	background: linear-gradient(135deg, rgba(197,160,23,0.08) 0%, rgba(255,255,255,0.03) 100%);
+}
 
 .kps-hc-label {
 	font-size: clamp(0.55rem, 1.1vw, 0.62rem);
@@ -107,9 +114,9 @@ body { background: #0a0e13; color: #fff; font-family: 'Poppins', sans-serif; }
 
 /* ─── Peserta Card ───────────────────────────────────────────────── */
 .kps-peserta-card {
-	background: linear-gradient(135deg, rgba(197,160,23,0.12) 0%, rgba(197,160,23,0.04) 100%);
-	border: 1px solid rgba(197,160,23,0.15);
-	border-radius: 10px;
+	background: rgba(255,255,255,0.03);
+	border: 1px solid rgba(255,255,255,0.08);
+	border-radius: 8px;
 	padding: clamp(0.6rem, 1.5vw, 0.85rem) clamp(0.75rem, 1.5vw, 1rem);
 	margin-bottom: clamp(0.5rem, 1vw, 0.75rem);
 	text-align: center;
