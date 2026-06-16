@@ -25,8 +25,8 @@ body { background: #0a0e13; color: #fff; font-family: 'Poppins', sans-serif; }
 }
 
 .kps-header-card {
-	background: rgba(255,255,255,0.03);
-	border: 1px solid rgba(255,255,255,0.08);
+	background: rgba(255,255,255,0.05);
+	border: 1px solid rgba(255,255,255,0.1);
 	border-radius: 8px;
 	padding: clamp(0.35rem, 0.8vw, 0.5rem) clamp(0.5rem, 1vw, 0.75rem);
 	display: flex;
@@ -37,12 +37,12 @@ body { background: #0a0e13; color: #fff; font-family: 'Poppins', sans-serif; }
 
 .kps-header-card.arena {
 	border-left: 3px solid #1565c0;
-	background: linear-gradient(135deg, rgba(21,101,192,0.08) 0%, rgba(255,255,255,0.03) 100%);
+	background: linear-gradient(135deg, rgba(21,101,192,0.1) 0%, rgba(255,255,255,0.05) 100%);
 }
 
 .kps-header-card.seni {
 	border-left: 3px solid #c5a017;
-	background: linear-gradient(135deg, rgba(197,160,23,0.08) 0%, rgba(255,255,255,0.03) 100%);
+	background: linear-gradient(135deg, rgba(197,160,23,0.1) 0%, rgba(255,255,255,0.05) 100%);
 }
 
 .kps-hc-label {
@@ -114,8 +114,8 @@ body { background: #0a0e13; color: #fff; font-family: 'Poppins', sans-serif; }
 
 /* ─── Peserta Card ───────────────────────────────────────────────── */
 .kps-peserta-card {
-	background: rgba(255,255,255,0.03);
-	border: 1px solid rgba(255,255,255,0.08);
+	background: rgba(255,255,255,0.05);
+	border: 1px solid rgba(255,255,255,0.1);
 	border-radius: 8px;
 	padding: clamp(0.6rem, 1.5vw, 0.85rem) clamp(0.75rem, 1.5vw, 1rem);
 	margin-bottom: clamp(0.5rem, 1vw, 0.75rem);
@@ -237,8 +237,8 @@ body { background: #0a0e13; color: #fff; font-family: 'Poppins', sans-serif; }
 }
 
 .kps-stat-card {
-	background: rgba(255,255,255,0.03);
-	border: 1px solid rgba(255,255,255,0.06);
+	background: rgba(255,255,255,0.05);
+	border: 1px solid rgba(255,255,255,0.1);
 	border-radius: 8px;
 	overflow: hidden;
 	text-align: center;
@@ -251,7 +251,7 @@ body { background: #0a0e13; color: #fff; font-family: 'Poppins', sans-serif; }
 	letter-spacing: 0.5px;
 	color: rgba(255,255,255,0.45);
 	padding: 0.3rem 0.25rem;
-	background: rgba(255,255,255,0.03);
+	background: rgba(255,255,255,0.04);
 }
 
 .kps-stat-value {
