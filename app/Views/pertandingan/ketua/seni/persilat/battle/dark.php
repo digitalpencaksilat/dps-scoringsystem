@@ -19,6 +19,9 @@ body { background: #0a0e13; color: #fff; font-family: 'Poppins', sans-serif; }
 .kps-header-title { font-family: 'Oswald', sans-serif; font-size: clamp(0.8rem, 2vw, 1rem); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; text-align: center; line-height: 1.2; }
 .kps-header-sub { font-size: clamp(0.65rem, 1.5vw, 0.75rem); color: rgba(255,255,255,0.5); }
 
+.kps-header-info { display: flex; flex-wrap: wrap; justify-content: center; gap: clamp(0.3rem, 0.8vw, 0.6rem); font-size: clamp(0.55rem, 1.1vw, 0.65rem); color: rgba(255,255,255,0.35); margin-top: 0.15rem; }
+.kps-header-info span { display: inline-flex; align-items: center; gap: 0.2rem; white-space: nowrap; }
+
 /* ─── Tabs ─────────────────────────────────────── */
 .kps-tabs { flex-shrink: 0; display: flex; padding: 4px clamp(0.5rem, 1vw, 0.75rem); border-bottom: 1px solid rgba(255,255,255,0.06); background: #0d0f12; }
 .kps-tabs .nav-link { background: transparent; color: rgba(255,255,255,0.5); border: none; border-radius: 6px; font-size: clamp(0.75rem, 1.5vw, 0.85rem); font-weight: 500; padding: 0.35rem 0.75rem; transition: all 0.2s ease; display: flex; align-items: center; gap: 0.35rem; white-space: nowrap; }
@@ -111,6 +114,11 @@ body { background: #0a0e13; color: #fff; font-family: 'Poppins', sans-serif; }
 				<?= ($penampilan_seni_berlangsung->jenis_kelamin ?? '') === 'Putra' ? 'Putra' : 'Putri' ?>
 				(Battle)
 			</div>
+			<div class="kps-header-info">
+				<?php if (!empty($nama_gelanggang)): ?><span><i class="fas fa-map-marker-alt"></i> <?= esc($nama_gelanggang) ?></span><?php endif ?>
+				<?php if (!empty($nomor_partai)): ?><span><i class="fas fa-hashtag"></i> Partai <?= esc($nomor_partai) ?></span><?php endif ?>
+				<?php if (!empty($penampilan_seni_berlangsung->nomor_pool)): ?><span><i class="fas fa-layer-group"></i> Pool <?= esc($penampilan_seni_berlangsung->nomor_pool) ?></span><?php endif ?>
+			</div>
 		</div>
 	</div>
 
@@ -193,10 +201,10 @@ body { background: #0a0e13; color: #fff; font-family: 'Poppins', sans-serif; }
 			<div class="kps-stats-grid penampilan_seni_<?= $idPsB ?>">
 				<div class="kps-stat-card"><div class="kps-stat-label">Median</div><div class="kps-stat-value median_<?= $idPsB ?>">0</div></div>
 				<div class="kps-stat-card"><div class="kps-stat-label">Penalty</div><div class="kps-stat-value hukuman_<?= $idPsB ?>">0</div></div>
-				<div class="kps-stat-card final-blue"><div class="kps-stat-label">Final Score</div><div class="kps-stat-value nilai_akhir_<?= $idPsB ?>">0</div></div>
-				<div class="kps-stat-card"><div class="kps-stat-label">Std Dev</div><div class="kps-stat-value standar_deviasi_<?= $idPsB ?>">0</div></div>
 				<div class="kps-stat-card"><div class="kps-stat-label">Med Kebenaran</div><div class="kps-stat-value kebenaran_median_<?= $idPsB ?>">0</div></div>
+				<div class="kps-stat-card"><div class="kps-stat-label">Std Dev</div><div class="kps-stat-value standar_deviasi_<?= $idPsB ?>">0</div></div>
 				<div class="kps-stat-card"><div class="kps-stat-label">Time</div><div class="kps-stat-value waktu_<?= $idPsB ?>">0</div></div>
+				<div class="kps-stat-card final-blue"><div class="kps-stat-label">Final Score</div><div class="kps-stat-value nilai_akhir_<?= $idPsB ?>">0</div></div>
 			</div>
 
 			<?php
@@ -278,10 +286,10 @@ body { background: #0a0e13; color: #fff; font-family: 'Poppins', sans-serif; }
 			<div class="kps-stats-grid penampilan_seni_<?= $idPsR ?>">
 				<div class="kps-stat-card"><div class="kps-stat-label">Median</div><div class="kps-stat-value median_<?= $idPsR ?>">0</div></div>
 				<div class="kps-stat-card"><div class="kps-stat-label">Penalty</div><div class="kps-stat-value hukuman_<?= $idPsR ?>">0</div></div>
-				<div class="kps-stat-card final-red"><div class="kps-stat-label">Final Score</div><div class="kps-stat-value nilai_akhir_<?= $idPsR ?>">0</div></div>
-				<div class="kps-stat-card"><div class="kps-stat-label">Std Dev</div><div class="kps-stat-value standar_deviasi_<?= $idPsR ?>">0</div></div>
 				<div class="kps-stat-card"><div class="kps-stat-label">Med Kebenaran</div><div class="kps-stat-value kebenaran_median_<?= $idPsR ?>">0</div></div>
+				<div class="kps-stat-card"><div class="kps-stat-label">Std Dev</div><div class="kps-stat-value standar_deviasi_<?= $idPsR ?>">0</div></div>
 				<div class="kps-stat-card"><div class="kps-stat-label">Time</div><div class="kps-stat-value waktu_<?= $idPsR ?>">0</div></div>
+				<div class="kps-stat-card final-red"><div class="kps-stat-label">Final Score</div><div class="kps-stat-value nilai_akhir_<?= $idPsR ?>">0</div></div>
 			</div>
 
 			<?php
@@ -318,10 +326,10 @@ body { background: #0a0e13; color: #fff; font-family: 'Poppins', sans-serif; }
 					<div class="kps-stats-grid penampilan_seni_<?= $idPsS ?> blue-corner">
 						<div class="kps-stat-card"><div class="kps-stat-label">Med</div><div class="kps-stat-value median_<?= $idPsS ?>">0</div></div>
 						<div class="kps-stat-card"><div class="kps-stat-label">Pen</div><div class="kps-stat-value hukuman_<?= $idPsS ?>">0</div></div>
-						<div class="kps-stat-card final-blue"><div class="kps-stat-label">Final</div><div class="kps-stat-value nilai_akhir_<?= $idPsS ?>">0</div></div>
-						<div class="kps-stat-card"><div class="kps-stat-label">Std</div><div class="kps-stat-value standar_deviasi_<?= $idPsS ?>">0</div></div>
 						<div class="kps-stat-card"><div class="kps-stat-label">MK</div><div class="kps-stat-value kebenaran_median_<?= $idPsS ?>">0</div></div>
+						<div class="kps-stat-card"><div class="kps-stat-label">Std</div><div class="kps-stat-value standar_deviasi_<?= $idPsS ?>">0</div></div>
 						<div class="kps-stat-card"><div class="kps-stat-label">Time</div><div class="kps-stat-value waktu_<?= $idPsS ?>">0</div></div>
+						<div class="kps-stat-card final-blue"><div class="kps-stat-label">Final</div><div class="kps-stat-value nilai_akhir_<?= $idPsS ?>">0</div></div>
 					</div>
 				</div>
 				<?php endif; ?>
@@ -338,10 +346,10 @@ body { background: #0a0e13; color: #fff; font-family: 'Poppins', sans-serif; }
 					<div class="kps-stats-grid penampilan_seni_<?= $idPsS ?> red-corner">
 						<div class="kps-stat-card"><div class="kps-stat-label">Med</div><div class="kps-stat-value median_<?= $idPsS ?>">0</div></div>
 						<div class="kps-stat-card"><div class="kps-stat-label">Pen</div><div class="kps-stat-value hukuman_<?= $idPsS ?>">0</div></div>
-						<div class="kps-stat-card final-red"><div class="kps-stat-label">Final</div><div class="kps-stat-value nilai_akhir_<?= $idPsS ?>">0</div></div>
-						<div class="kps-stat-card"><div class="kps-stat-label">Std</div><div class="kps-stat-value standar_deviasi_<?= $idPsS ?>">0</div></div>
 						<div class="kps-stat-card"><div class="kps-stat-label">MK</div><div class="kps-stat-value kebenaran_median_<?= $idPsS ?>">0</div></div>
+						<div class="kps-stat-card"><div class="kps-stat-label">Std</div><div class="kps-stat-value standar_deviasi_<?= $idPsS ?>">0</div></div>
 						<div class="kps-stat-card"><div class="kps-stat-label">Time</div><div class="kps-stat-value waktu_<?= $idPsS ?>">0</div></div>
+						<div class="kps-stat-card final-red"><div class="kps-stat-label">Final</div><div class="kps-stat-value nilai_akhir_<?= $idPsS ?>">0</div></div>
 					</div>
 				</div>
 				<?php endif; ?>

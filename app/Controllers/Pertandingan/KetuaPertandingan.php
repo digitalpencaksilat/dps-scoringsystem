@@ -384,11 +384,22 @@ class KetuaPertandingan extends BaseController
         // Retrieve full scoring data (parity legacy _retrieve_data_seni)
         $scoringData = $this->retrieveDataSeni($penampilan);
 
+        // Arena & partai info
+        $db = \Config\Database::connect();
+        $detailJadwal = $db->table('detail_jadwal_seni djs')
+            ->select('djs.nomor_partai, js.id_gelanggang, g.nama_gelanggang')
+            ->join('jadwal_seni js', 'js.id_jadwal_seni = djs.id_jadwal_seni')
+            ->join('gelanggang g', 'g.id_gelanggang = js.id_gelanggang')
+            ->where('djs.id_penampilan_seni', $idPenampilan)
+            ->get(1)->getRow();
+
         $theme = in_array($theme, ['light', 'dark'], true) ? $theme : 'dark';
 
         return view('pertandingan/ketua/seni/persilat/' . $sistemPenampilan . '/' . $theme, array_merge($scoringData, [
-            'title' => 'KP Monitoring Seni',
-            'theme' => $theme,
+            'title'           => 'KP Monitoring Seni',
+            'theme'            => $theme,
+            'nama_gelanggang'  => $detailJadwal->nama_gelanggang ?? session()->get('nama_gelanggang'),
+            'nomor_partai'     => $detailJadwal->nomor_partai ?? null,
         ]));
     }
 
@@ -405,16 +416,28 @@ class KetuaPertandingan extends BaseController
             return redirect()->to('/ketua-pertandingan')->with('info', 'Tidak ada penampilan seni berlangsung.');
         }
 
+        $idPenampilan = (int) $penampilan->id_penampilan_seni;
         $sistemPenampilan = $penampilan->sistem_penampilan ?? 'pool';
 
         // Retrieve full scoring data
         $scoringData = $this->retrieveDataSeni($penampilan);
 
+        // Arena & partai info
+        $db = \Config\Database::connect();
+        $detailJadwal = $db->table('detail_jadwal_seni djs')
+            ->select('djs.nomor_partai, js.id_gelanggang, g.nama_gelanggang')
+            ->join('jadwal_seni js', 'js.id_jadwal_seni = djs.id_jadwal_seni')
+            ->join('gelanggang g', 'g.id_gelanggang = js.id_gelanggang')
+            ->where('djs.id_penampilan_seni', $idPenampilan)
+            ->get(1)->getRow();
+
         $theme = in_array($theme, ['light', 'dark'], true) ? $theme : 'dark';
 
         return view('pertandingan/ketua/seni/persilat/dewan_' . $theme, array_merge($scoringData, [
-            'title' => 'KP Dewan Seni',
-            'theme' => $theme,
+            'title'            => 'KP Dewan Seni',
+            'theme'             => $theme,
+            'nama_gelanggang'   => $detailJadwal->nama_gelanggang ?? session()->get('nama_gelanggang'),
+            'nomor_partai'      => $detailJadwal->nomor_partai ?? null,
         ]));
     }
 

@@ -54,6 +54,23 @@ body { background: #0a0e13; color: #fff; font-family: 'Poppins', sans-serif; }
 	color: rgba(255,255,255,0.5);
 }
 
+.kps-header-info {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: clamp(0.3rem, 0.8vw, 0.6rem);
+	font-size: clamp(0.55rem, 1.1vw, 0.65rem);
+	color: rgba(255,255,255,0.35);
+	margin-top: 0.15rem;
+}
+
+.kps-header-info span {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.2rem;
+	white-space: nowrap;
+}
+
 /* ─── Tabs ───────────────────────────────────────────────────────── */
 .kps-tabs {
 	flex-shrink: 0;
@@ -398,6 +415,11 @@ body { background: #0a0e13; color: #fff; font-family: 'Poppins', sans-serif; }
 				<?= ($penampilan_seni_berlangsung->jenis_kelamin ?? '') === 'Putra' ? 'Putra' : 'Putri' ?>
 				(Pool)
 			</div>
+			<div class="kps-header-info">
+				<?php if (!empty($nama_gelanggang)): ?><span><i class="fas fa-map-marker-alt"></i> <?= esc($nama_gelanggang) ?></span><?php endif ?>
+				<?php if (!empty($nomor_partai)): ?><span><i class="fas fa-hashtag"></i> Partai <?= esc($nomor_partai) ?></span><?php endif ?>
+				<?php if (!empty($penampilan_seni_berlangsung->nomor_pool)): ?><span><i class="fas fa-layer-group"></i> Pool <?= esc($penampilan_seni_berlangsung->nomor_pool) ?></span><?php endif ?>
+			</div>
 		</div>
 	</div>
 
@@ -483,21 +505,21 @@ body { background: #0a0e13; color: #fff; font-family: 'Poppins', sans-serif; }
 					<div class="kps-stat-label">Penalty</div>
 					<div class="kps-stat-value hukuman_<?= $idNow ?>">0</div>
 				</div>
-				<div class="kps-stat-card final">
-					<div class="kps-stat-label">Final Score</div>
-					<div class="kps-stat-value nilai_akhir_<?= $idNow ?>">0</div>
+				<div class="kps-stat-card">
+					<div class="kps-stat-label">Med Kebenaran</div>
+					<div class="kps-stat-value kebenaran_median_<?= $idNow ?>">0</div>
 				</div>
 				<div class="kps-stat-card">
 					<div class="kps-stat-label">Std Dev</div>
 					<div class="kps-stat-value standar_deviasi_<?= $idNow ?>">0</div>
 				</div>
 				<div class="kps-stat-card">
-					<div class="kps-stat-label">Med Kebenaran</div>
-					<div class="kps-stat-value kebenaran_median_<?= $idNow ?>">0</div>
-				</div>
-				<div class="kps-stat-card">
 					<div class="kps-stat-label">Time</div>
 					<div class="kps-stat-value waktu_<?= $idNow ?>">0</div>
+				</div>
+				<div class="kps-stat-card final">
+					<div class="kps-stat-label">Final Score</div>
+					<div class="kps-stat-value nilai_akhir_<?= $idNow ?>">0</div>
 				</div>
 			</div>
 
@@ -531,12 +553,12 @@ body { background: #0a0e13; color: #fff; font-family: 'Poppins', sans-serif; }
 						<tr>
 							<th>#</th>
 							<th style="text-align:left;">Nama</th>
-							<th>Med Keb</th>
 							<th>Med</th>
 							<th>Pen</th>
-							<th>Final</th>
-							<th>Time</th>
+							<th>Med Keb</th>
 							<th>Std D</th>
+							<th>Time</th>
+							<th>Final</th>
 							<th>Disq</th>
 						</tr>
 					</thead>
@@ -548,12 +570,12 @@ body { background: #0a0e13; color: #fff; font-family: 'Poppins', sans-serif; }
 								<?= str_replace('<br>', ' ', $pnSeni->anggota_kelompok_peserta_seni ?? '-') ?>
 								<span class="kontingen-cell"><?= $pnSeni->nama_kontingen ?? '' ?></span>
 							</td>
-							<td class="kebenaran_median_<?= $pnSeni->id_penampilan_seni ?>"></td>
 							<td class="median_<?= $pnSeni->id_penampilan_seni ?>"></td>
 							<td class="hukuman_<?= $pnSeni->id_penampilan_seni ?>"></td>
-							<td class="nilai_akhir_<?= $pnSeni->id_penampilan_seni ?>"><?= number_format($pnSeni->nilai_akhir ?? 0, 3) ?></td>
-							<td class="waktu_<?= $pnSeni->id_penampilan_seni ?>"><?= date("i:s", $pnSeni->waktu_tampil ?? 0) ?></td>
+							<td class="kebenaran_median_<?= $pnSeni->id_penampilan_seni ?>"></td>
 							<td class="standar_deviasi_<?= $pnSeni->id_penampilan_seni ?>"></td>
+							<td class="waktu_<?= $pnSeni->id_penampilan_seni ?>"><?= date("i:s", $pnSeni->waktu_tampil ?? 0) ?></td>
+							<td class="nilai_akhir_<?= $pnSeni->id_penampilan_seni ?>"><?= number_format($pnSeni->nilai_akhir ?? 0, 3) ?></td>
 							<td class="keterangan_<?= $pnSeni->id_penampilan_seni ?>">
 								<?= ($pnSeni->diskualifikasi ?? 0) == 1 ? '<span class="kps-disq">Disq</span>' : '' ?>
 							</td>
