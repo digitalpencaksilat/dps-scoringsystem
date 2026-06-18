@@ -151,5 +151,9 @@ $routes->group('broadcast-operator', ['filter' => 'perangkat:broadcast_operator'
 
 // Overlay OBS + state grafis: PUBLIK (tanpa auth perangkat) agar bisa dipakai
 // sebagai Browser Source. Berbasis id_gelanggang pada URL.
-$routes->get('broadcast-operator/overlay/(:num)', 'Pertandingan\BroadcastOperator::overlay/$1');
-$routes->get('broadcast-operator/refresh-graphic/(:num)', 'Pertandingan\BroadcastOperator::refreshBroadcastGraphic/$1');
+$routes->get('broadcast-operator/overlay/(:num)', 'Pertandingan\\BroadcastOperator::overlay/$1');
+$routes->get('broadcast-operator/refresh-graphic/(:num)', 'Pertandingan\\BroadcastOperator::refreshBroadcastGraphic/$1');
+
+// --- Monitoring Partai (parity users/Monitoring) — public, no auth ---
+$routes->get('monitoring', 'Pertandingan\\Monitoring::index');
+$routes->get('monitoring/live-jadwal', 'Pertandingan\\Monitoring::liveJadwal');
