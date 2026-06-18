@@ -16,9 +16,6 @@
     display: flex; flex-direction: column;
 }
 
-/* Override competition_title default opacity:0 */
-.statistik-page #competition-title { opacity: 1 !important; }
-
 /* Competition title takes natural height */
 .statistik-page > .row:first-child { flex-shrink: 0; }
 
@@ -132,29 +129,10 @@ $labelMap = [
 
 $hasStats = !empty($ringkasan_nilai) && isset($ringkasan_nilai->semua_ronde);
 
-$info_left   = [];
-$info_center = [];
-$info_right  = [];
-if (!empty($pertandingan->nama_gelanggang)) $info_left[]  = $pertandingan->nama_gelanggang;
-if (!empty($pertandingan->nomor_partai))     $info_left[]  = 'Partai ' . esc($pertandingan->nomor_partai);
-if (!empty($pertandingan->label))              $info_center[] = esc($pertandingan->label);
-if (!empty($pertandingan->nama_kategori_lomba)) $info_center[] = esc($pertandingan->nama_kategori_lomba);
-if (!empty($pertandingan->nama_kategori_usia))  $info_center[] = esc($pertandingan->nama_kategori_usia);
-if (!empty($pertandingan->jenis_kelamin))    $info_right[] = esc($pertandingan->jenis_kelamin);
-if (!empty($pertandingan->format_penilaian)) $info_right[] = esc($pertandingan->format_penilaian);
-if (!empty($pertandingan->babak))            $info_right[] = esc(ucwords($pertandingan->babak));
-
 $namaBiru  = $atlet_biru->nama_pendaftar ?? 'Atlet Biru';
 $namaMerah = $atlet_merah->nama_pendaftar ?? 'Atlet Merah';
 ?>
 <div class="statistik-page">
-    <?= view('pertandingan/layar/components/competition_title', [
-        'event_name'  => $event_name ?? 'Pencak Silat Championship',
-        'info_left'   => $info_left,
-        'info_center' => $info_center,
-        'info_right'  => $info_right,
-    ]) ?>
-
     <?php if ($hasStats):
         $statsBiru  = (array) $ringkasan_nilai->semua_ronde->biru;
         $statsMerah = (array) $ringkasan_nilai->semua_ronde->merah;
