@@ -153,8 +153,8 @@ $namaMerah = $atlet_merah->nama_pendaftar ?? 'Atlet Merah';
     ]) ?>
 
     <?php if ($hasStats):
-        $statsBiru  = $ringkasan_nilai->semua_ronde->biru;
-        $statsMerah = $ringkasan_nilai->semua_ronde->merah;
+        $statsBiru  = (array) $ringkasan_nilai->semua_ronde->biru;
+        $statsMerah = (array) $ringkasan_nilai->semua_ronde->merah;
     ?>
     <div class="statistik-body animated slideInUp">
         <!-- Header -->
@@ -185,7 +185,7 @@ $namaMerah = $atlet_merah->nama_pendaftar ?? 'Atlet Merah';
                 $last = end($keys);
             ?>
             <?php foreach ($statsBiru as $jenis => $nilaiBiru): ?>
-                <?php $nilaiMerah = $statsMerah->$jenis ?? 0; ?>
+                <?php $nilaiMerah = $statsMerah[$jenis] ?? 0; ?>
                 <div class="statistik-row <?= $jenis === $last ? 'final-row' : '' ?>">
                     <div class="statistik-col bg-gradient-180-white text-dark penilaian-display-font">
                         <?= is_numeric($nilaiBiru) ? number_format((float)$nilaiBiru, 1) : esc($nilaiBiru) ?>
