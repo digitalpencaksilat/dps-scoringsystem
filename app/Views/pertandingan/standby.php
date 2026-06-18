@@ -1,63 +1,39 @@
 <?= $this->extend('layouts/penilaian') ?>
 
-<?= $this->section('navbar') ?>
-<?= view('pertandingan/components/navbar') ?>
-<?= $this->endSection() ?>
-
 <?= $this->section('content') ?>
 <div class="standby-wrapper">
-    <!-- Icon -->
-    <div class="standby-icon">
-        <?php
-            $icon = 'fa-solid fa-gavel';
-            if (($posisi ?? '') === 'juri') $icon = 'fa-solid fa-scale-balanced';
-            elseif (($posisi ?? '') === 'ketua_pertandingan') $icon = 'fa-solid fa-shield-halved';
-            elseif (($posisi ?? '') === 'layar') $icon = 'fa-solid fa-tv';
-        ?>
-        <i class="<?= $icon ?>"></i>
+    <div class="standby-grid"></div>
+    <div class="standby-glow"></div>
+    <div class="standby-ring ring-1"></div>
+    <div class="standby-ring ring-2"></div>
+    <div class="standby-ring ring-3"></div>
+
+    <div class="standby-logo-wrap">
+        <img src="<?= base_url('assets/images/brand/dps/logo-digital-scoring.png') ?>"
+             alt="Digital Pencak Silat"
+             class="standby-logo">
     </div>
 
-    <!-- Badge posisi -->
-    <span class="standby-badge">
-        <i class="fas fa-circle-dot fa-xs" style="color: var(--brand-primary);"></i>
-        <?= esc(ucwords(str_replace('_', ' ', (string) ($posisi ?? 'Perangkat')))) ?>
-    </span>
+    <div class="standby-divider"></div>
 
-    <!-- Title -->
-    <div class="standby-title">Menunggu Pertandingan</div>
+    <div class="standby-status-text">
+        <span class="standby-pulse"></span>
+        Menunggu Pertandingan
+    </div>
 
-    <!-- Subtitle: nama perangkat -->
-    <?php if (!empty($nama)) : ?>
-        <p class="standby-subtitle"><?= esc($nama) ?></p>
-    <?php endif; ?>
-
-    <!-- Gelanggang info -->
-    <?php if (!empty($nama_gelanggang)) : ?>
-        <div class="standby-gelanggang">
-            <div class="standby-gelanggang-label">Gelanggang</div>
-            <div class="standby-gelanggang-name"><?= esc($nama_gelanggang) ?></div>
-        </div>
-    <?php endif; ?>
-
-    <!-- Status -->
     <?php if (!empty($pertandingan)) : ?>
-        <div class="standby-status standby-status-active">
-            <i class="fas fa-circle-play"></i>
-            Ada pertandingan berlangsung (No. <?= esc($pertandingan->nomor_pertandingan ?? '-') ?>)
-        </div>
-    <?php else : ?>
-        <div class="standby-status standby-status-waiting">
-            <i class="fas fa-clock"></i>
-            Belum ada partai aktif di gelanggang ini
+        <div class="standby-match-alert">
+            <i class="fas fa-circle-play fa-xs"></i>
+            Pertandingan No. <?= esc($pertandingan->nomor_pertandingan ?? '-') ?> sedang berlangsung
         </div>
     <?php endif; ?>
 
-    <!-- Spinner -->
     <div class="standby-spinner">
-        <div class="spinner-border" role="status" aria-hidden="true"></div>
+        <svg class="standby-loader-ring" viewBox="25 25 50 50">
+            <circle cx="50" cy="50" r="20"></circle>
+        </svg>
     </div>
 
-    <!-- Logout -->
     <div class="standby-logout">
         <a href="<?= base_url('perangkat-pertandingan/logout') ?>" class="btn btn-outline-secondary rounded-pill">
             <i class="fas fa-right-from-bracket me-1"></i>Keluar

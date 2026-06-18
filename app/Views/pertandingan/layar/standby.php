@@ -4,45 +4,39 @@
 <link rel="stylesheet" href="<?= base_url('assets/css/penilaian/layar.css') ?>">
 <?= $this->endSection() ?>
 
-<?= $this->section('navbar') ?>
-<?= view('pertandingan/components/navbar', ['nav_role' => 'layar', 'nav_active' => 'home']) ?>
-<?= $this->endSection() ?>
-
 <?= $this->section('content') ?>
 <?php $mode = $mode ?? 'tanding'; ?>
 <div class="standby-wrapper" id="standby-wrapper" data-mode="<?= esc($mode) ?>">
-    <!-- Icon -->
-    <div class="standby-icon">
-        <?php if ($mode === 'seni'): ?>
-            <i class="fa-solid fa-masks-theater"></i>
-        <?php else: ?>
-            <i class="fa-solid fa-hand-fist"></i>
-        <?php endif; ?>
+    <div class="standby-grid"></div>
+    <div class="standby-glow"></div>
+    <div class="standby-ring ring-1"></div>
+    <div class="standby-ring ring-2"></div>
+    <div class="standby-ring ring-3"></div>
+
+    <div class="standby-logo-wrap">
+        <img src="<?= base_url('assets/images/brand/dps/logo-digital-scoring.png') ?>"
+             alt="Digital Pencak Silat"
+             class="standby-logo">
     </div>
 
-    <!-- Badge -->
-    <span class="standby-badge">
-        <i class="fas fa-tv fa-xs" style="color: var(--brand-primary);"></i>
-        Scoreboard
-    </span>
+    <div class="standby-divider"></div>
 
-    <!-- Title -->
-    <div class="standby-title"><?= esc($nama_gelanggang ?? 'Gelanggang') ?></div>
-
-    <!-- Subtitle -->
-    <p class="standby-subtitle">
-        <?= $mode === 'seni' ? 'Menunggu penampilan seni berikutnya...' : 'Menunggu pertandingan berikutnya...' ?>
-    </p>
-
-    <!-- Status -->
-    <div class="standby-status standby-status-waiting">
-        <i class="fas fa-clock"></i>
-        Standby
+    <div class="standby-status-text">
+        <span class="standby-pulse"></span>
+        <?= $mode === 'seni' ? 'Menunggu Penampilan Seni' : 'Menunggu Pertandingan' ?>
     </div>
 
-    <!-- Spinner -->
+    <?php if (!empty($nama_gelanggang)): ?>
+        <div class="standby-gelanggang">
+            <div class="standby-gelanggang-label">Gelanggang</div>
+            <div class="standby-gelanggang-name"><?= esc($nama_gelanggang) ?></div>
+        </div>
+    <?php endif; ?>
+
     <div class="standby-spinner">
-        <div class="spinner-border" role="status" aria-hidden="true"></div>
+        <svg class="standby-loader-ring" viewBox="25 25 50 50">
+            <circle cx="50" cy="50" r="20"></circle>
+        </svg>
     </div>
 </div>
 <?= $this->endSection() ?>
