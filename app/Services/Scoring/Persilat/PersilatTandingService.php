@@ -59,6 +59,26 @@ class PersilatTandingService
      */
     public function hitungSkorAtlet(array $penilaianSemuaJuri): array
     {
+        // Filter baris yang JSON-nya valid (jika rusak, skip agar tidak crash)
+        $penilaianSemuaJuri = array_values(array_filter($penilaianSemuaJuri, function ($row) {
+            foreach (['penilaian_merah', 'penilaian_biru'] as $kolom) {
+                $decoded = json_decode($row->$kolom);
+                if ($decoded === null || ! isset($decoded->ronde_pertandingan)) {
+                    return false;
+                }
+            }
+            return true;
+        }));
+
+        if (empty($penilaianSemuaJuri)) {
+            return [
+                'rows'       => [],
+                'ringkasan'  => [],
+                'skor_merah' => 0,
+                'skor_biru'  => 0,
+            ];
+        }
+
         $penilaianSemuaJuri = $this->resetMetadataPenilaian($penilaianSemuaJuri);
         $penilaianSemuaJuri = $this->verifikasiPenilaian($penilaianSemuaJuri);
 
@@ -86,6 +106,9 @@ class PersilatTandingService
         foreach ($penilaianSemuaJuri as $indexJuri => $penilaianJuri) {
             foreach (['penilaian_merah', 'penilaian_biru'] as $kolom) {
                 $decoded = json_decode($penilaianJuri->$kolom);
+                if (! $decoded || ! isset($decoded->ronde_pertandingan)) {
+                    continue;
+                }
                 $semuaRonde = $decoded->ronde_pertandingan;
 
                 foreach ($semuaRonde as $ronde => $perRonde) {
@@ -423,8 +446,16 @@ class PersilatTandingService
      */
     private function akumulasiBinaan(array &$ringkasan, array $penilaianSemuaJuri, string $sudut): void
     {
+        if (empty($penilaianSemuaJuri)) {
+            return;
+        }
+
         $kolom  = $sudut === 'merah' ? 'penilaian_merah' : 'penilaian_biru';
-        $sampel = json_decode($penilaianSemuaJuri[0]->$kolom)->ronde_pertandingan;
+        $decoded = json_decode($penilaianSemuaJuri[0]->$kolom);
+        if (! $decoded || ! isset($decoded->ronde_pertandingan)) {
+            return;
+        }
+        $sampel = $decoded->ronde_pertandingan;
 
         foreach ($sampel as $ronde => $nilaiRonde) {
             if (! isset($nilaiRonde->catatan->binaan)) {
