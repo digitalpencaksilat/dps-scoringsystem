@@ -638,6 +638,36 @@ class Layar extends BaseController
         ]);
     }
 
+    /**
+     * Halaman statistik ringkasan_nilai tanding — dedicated fullscreen stats table.
+     * Dipanggil setelah hasil_tanding menampilkan pemenang (5s).
+     * After 5s → redirect ke standby.
+     * Parity legacy: container-statistik section di transisi.php
+     */
+    public function statistikTanding(int $idPertandingan)
+    {
+        $pertandingan = $this->pertandinganModel->getPertandinganLengkap($idPertandingan);
+
+        if ($pertandingan === null) {
+            return redirect()->to(base_url('layar/home'));
+        }
+
+        $pertandingan->ringkasan_nilai = !empty($pertandingan->ringkasan_nilai)
+            ? json_decode($pertandingan->ringkasan_nilai)
+            : null;
+
+        $eventName = env('app.eventName', 'Pencak Silat Championship');
+
+        return view('pertandingan/layar/statistik_tanding', [
+            'title'           => 'Statistik Pertandingan',
+            'pertandingan'    => $pertandingan,
+            'ringkasan_nilai' => $pertandingan->ringkasan_nilai,
+            'atlet_merah'     => $this->pertandinganModel->getAtletPertandingan($idPertandingan, 'merah'),
+            'atlet_biru'      => $this->pertandinganModel->getAtletPertandingan($idPertandingan, 'biru'),
+            'event_name'      => $eventName,
+        ]);
+    }
+
     // ═══════════════════════════════════════════════════════════════════════
     //  PRIVATE HELPERS
     // ═══════════════════════════════════════════════════════════════════════

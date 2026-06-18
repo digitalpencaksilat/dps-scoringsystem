@@ -133,6 +133,7 @@ $routes->group('layar', ['filter' => 'perangkat:layar'], static function ($route
     $routes->get('transisi', 'Pertandingan\Layar::transisi');
     $routes->get('transisi/(:segment)', 'Pertandingan\Layar::transisi/$1');
     $routes->get('hasil-tanding/(:num)', 'Pertandingan\Layar::hasilTanding/$1');
+    $routes->get('statistik-tanding/(:num)', 'Pertandingan\Layar::statistikTanding/$1');
 
     // Seni
     $routes->get('seni', 'Pertandingan\Layar::seni');
