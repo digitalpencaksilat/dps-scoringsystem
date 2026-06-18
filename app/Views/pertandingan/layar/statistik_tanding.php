@@ -16,6 +16,9 @@
     display: flex; flex-direction: column;
 }
 
+/* Override competition_title default opacity:0 */
+.statistik-page #competition-title { opacity: 1 !important; }
+
 /* Competition title takes natural height */
 .statistik-page > .row:first-child { flex-shrink: 0; }
 
@@ -188,13 +191,13 @@ $namaMerah = $atlet_merah->nama_pendaftar ?? 'Atlet Merah';
                 <?php $nilaiMerah = $statsMerah[$jenis] ?? 0; ?>
                 <div class="statistik-row <?= $jenis === $last ? 'final-row' : '' ?>">
                     <div class="statistik-col bg-gradient-180-white text-dark penilaian-display-font">
-                        <?= is_numeric($nilaiBiru) ? number_format((float)$nilaiBiru, 1) : esc($nilaiBiru) ?>
+                        <?= is_numeric($nilaiBiru) ? ((int)$nilaiBiru == $nilaiBiru ? (int)$nilaiBiru : number_format((float)$nilaiBiru, 1)) : esc($nilaiBiru) ?>
                     </div>
                     <div class="statistik-col-label bg-gradient-180-gray-dark text-white">
                         <?= esc($labelMap[$jenis] ?? ucwords(str_replace('_', ' ', $jenis))) ?>
                     </div>
                     <div class="statistik-col bg-gradient-180-white text-dark penilaian-display-font">
-                        <?= is_numeric($nilaiMerah) ? number_format((float)$nilaiMerah, 1) : esc($nilaiMerah) ?>
+                        <?= is_numeric($nilaiMerah) ? ((int)$nilaiMerah == $nilaiMerah ? (int)$nilaiMerah : number_format((float)$nilaiMerah, 1)) : esc($nilaiMerah) ?>
                     </div>
                 </div>
             <?php endforeach; ?>
