@@ -9,23 +9,103 @@
 .bg-gradient-180-white { background: linear-gradient(180deg, #f8f9fa, #e9ecef) !important; }
 .bg-gradient-180-gray-dark { background: linear-gradient(180deg, #343a40, #212529) !important; }
 
-.statistik-page { background: radial-gradient(ellipse at 50% 30%, #1a2332 0%, #0b0d12 70%); min-height: 100vh; color: #fff; }
+.statistik-page {
+    background: radial-gradient(ellipse at 50% 30%, #1a2332 0%, #0b0d12 70%);
+    height: 100vh; overflow: hidden;
+    color: #fff;
+    display: flex; flex-direction: column;
+}
 
-.statistik-biru-header { font-size: clamp(1.5rem, 3vw, 2.5rem); font-weight: 700; letter-spacing: 2px; }
-.statistik-merah-header { font-size: clamp(1.5rem, 3vw, 2.5rem); font-weight: 700; letter-spacing: 2px; }
-.statistik-nilai { font-size: clamp(1.2rem, 2vw, 1.8rem); font-weight: 600; }
-.statistik-label { font-size: clamp(0.8rem, 1.2vw, 1rem); font-weight: 500; opacity: 0.85; }
+/* Competition title takes natural height */
+.statistik-page > .row:first-child { flex-shrink: 0; }
 
-/* Slide-in anim */
+/* Stats container fills remaining vh */
+.statistik-body {
+    flex: 1;
+    display: flex; flex-direction: column;
+    padding: 0 3vw;
+    overflow: hidden;
+}
+
+.statistik-header-row {
+    flex-shrink: 0;
+    padding: 1vh 0;
+    display: flex; align-items: center; justify-content: center;
+}
+.statistik-header-row .bg-gradient-180-dark {
+    width: 100%; text-align: center;
+    padding: 1.2vh 0;
+}
+.statistik-header-title {
+    font-size: clamp(1.2rem, 2.5vw, 2rem);
+    font-weight: 700; letter-spacing: 3px;
+}
+.statistik-header-sub {
+    font-size: clamp(0.7rem, 1vw, 0.9rem);
+    opacity: 0.7; margin-top: 0.25vh;
+}
+
+/* Athlete name row */
+.statistik-names-row {
+    flex-shrink: 0;
+    display: flex; gap: 0.5vw;
+    margin-bottom: 0.5vh;
+}
+.statistik-name-col {
+    flex: 5;
+    text-align: center;
+    padding: 1vh 0;
+    font-size: clamp(1rem, 1.8vw, 1.6rem);
+    font-weight: 700;
+}
+.statistik-name-gap { flex: 2; }
+
+/* Stats list: fills remaining vh with equal rows */
+.statistik-list {
+    flex: 1;
+    display: flex; flex-direction: column;
+    gap: 1px;
+    overflow: hidden;
+}
+.statistik-row {
+    flex: 1;
+    display: flex; gap: 0.5vw;
+    min-height: 0;
+}
+.statistik-row.final-row { flex: 1.3; }
+
+.statistik-col {
+    flex: 5;
+    display: flex; align-items: center; justify-content: center;
+    font-size: clamp(1.2rem, 2.2vw, 2rem);
+    font-weight: 600;
+}
+.statistik-col-label {
+    flex: 2;
+    display: flex; align-items: center; justify-content: center;
+    font-size: clamp(0.7rem, 1vw, 0.9rem);
+    font-weight: 500; opacity: 0.85;
+    text-align: center; line-height: 1.2;
+}
+
+/* Fallback */
+.statistik-fallback {
+    flex: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    opacity: 0.5;
+}
+
+/* Slide anim */
 @keyframes slideInDown {
-    from { opacity: 0; transform: translateY(-40px); }
+    from { opacity: 0; transform: translateY(-30px); }
     to   { opacity: 1; transform: translateY(0); }
 }
 @keyframes slideInUp {
-    from { opacity: 0; transform: translateY(40px); }
+    from { opacity: 0; transform: translateY(30px); }
     to   { opacity: 1; transform: translateY(0); }
 }
-.animated { animation-duration: 0.6s; animation-fill-mode: both; }
+.animated { animation-duration: 0.5s; animation-fill-mode: both; }
 .slideInDown { animation-name: slideInDown; }
 .slideInUp { animation-name: slideInUp; }
 .delay-1s { animation-delay: 1s; }
@@ -49,18 +129,14 @@ $labelMap = [
 
 $hasStats = !empty($ringkasan_nilai) && isset($ringkasan_nilai->semua_ronde);
 
-// Build competition title info
 $info_left   = [];
 $info_center = [];
 $info_right  = [];
-
 if (!empty($pertandingan->nama_gelanggang)) $info_left[]  = $pertandingan->nama_gelanggang;
 if (!empty($pertandingan->nomor_partai))     $info_left[]  = 'Partai ' . esc($pertandingan->nomor_partai);
-
 if (!empty($pertandingan->label))              $info_center[] = esc($pertandingan->label);
 if (!empty($pertandingan->nama_kategori_lomba)) $info_center[] = esc($pertandingan->nama_kategori_lomba);
 if (!empty($pertandingan->nama_kategori_usia))  $info_center[] = esc($pertandingan->nama_kategori_usia);
-
 if (!empty($pertandingan->jenis_kelamin))    $info_right[] = esc($pertandingan->jenis_kelamin);
 if (!empty($pertandingan->format_penilaian)) $info_right[] = esc($pertandingan->format_penilaian);
 if (!empty($pertandingan->babak))            $info_right[] = esc(ucwords($pertandingan->babak));
@@ -76,78 +152,66 @@ $namaMerah = $atlet_merah->nama_pendaftar ?? 'Atlet Merah';
         'info_right'  => $info_right,
     ]) ?>
 
-    <div class="container-fluid px-3 mt-3">
-        <!-- Statistik header -->
-        <div class="row mb-3 animated slideInDown">
-            <div class="col-12 text-center bg-gradient-180-dark py-3">
-                <span class="penilaian-display-font" style="font-size: clamp(1.5rem, 3.5vw, 2.5rem); font-weight: 700; letter-spacing: 3px;">
-                    RINGKASAN NILAI
-                </span>
-                <div style="font-size: clamp(0.8rem, 1.2vw, 1rem); opacity: 0.7; margin-top: 0.25rem;">
-                    Partai <?= esc($pertandingan->nomor_partai ?? '-') ?> — Final Score: <?= (int) ($pertandingan->skor_biru ?? 0) ?> - <?= (int) ($pertandingan->skor_merah ?? 0) ?>
+    <?php if ($hasStats):
+        $statsBiru  = $ringkasan_nilai->semua_ronde->biru;
+        $statsMerah = $ringkasan_nilai->semua_ronde->merah;
+    ?>
+    <div class="statistik-body animated slideInUp">
+        <!-- Header -->
+        <div class="statistik-header-row animated slideInDown">
+            <div class="bg-gradient-180-dark">
+                <div class="statistik-header-title penilaian-display-font">RINGKASAN NILAI</div>
+                <div class="statistik-header-sub">
+                    Partai <?= esc($pertandingan->nomor_partai ?? '-') ?>
+                    &nbsp;—&nbsp;
+                    Final Score: <strong><?= (int) ($pertandingan->skor_biru ?? 0) ?></strong>
+                    &nbsp;-&nbsp;
+                    <strong><?= (int) ($pertandingan->skor_merah ?? 0) ?></strong>
                 </div>
             </div>
         </div>
 
-        <?php if ($hasStats): ?>
-            <!-- Sudut headers -->
-            <div class="row mb-2 animated slideInDown delay-1s">
-                <div class="col-5 text-center py-2 bg-gradient-180-blue statistik-biru-header penilaian-display-font">
-                    <?= esc($namaBiru) ?>
-                </div>
-                <div class="col-2"></div>
-                <div class="col-5 text-center py-2 bg-gradient-180-red statistik-merah-header penilaian-display-font">
-                    <?= esc($namaMerah) ?>
-                </div>
-            </div>
+        <!-- Athlete names -->
+        <div class="statistik-names-row animated slideInDown delay-1s">
+            <div class="statistik-name-col bg-gradient-180-blue penilaian-display-font"><?= esc($namaBiru) ?></div>
+            <div class="statistik-name-gap"></div>
+            <div class="statistik-name-col bg-gradient-180-red penilaian-display-font"><?= esc($namaMerah) ?></div>
+        </div>
 
-            <!-- Stats table -->
-            <div class="row animated slideInUp delay-1s">
-                <div class="col-12 px-4">
-                    <div class="row justify-content-center">
-                        <div class="col">
-                            <?php foreach ($ringkasan_nilai->semua_ronde->biru as $jenis => $nilai): ?>
-                                <div class="row mb-1">
-                                    <div class="col-12 py-2 text-center statistik-nilai bg-gradient-180-white text-dark">
-                                        <?= is_numeric($nilai) ? number_format((float)$nilai, 1) : esc($nilai) ?>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                        <div class="col-3">
-                            <?php foreach ($ringkasan_nilai->semua_ronde->biru as $jenis => $nilai): ?>
-                                <div class="row mb-1">
-                                    <div class="col-12 py-2 text-center text-truncate statistik-label bg-gradient-180-gray-dark text-white">
-                                        <?= esc($labelMap[$jenis] ?? ucwords(str_replace('_', ' ', $jenis))) ?>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                        <div class="col">
-                            <?php foreach ($ringkasan_nilai->semua_ronde->merah as $jenis => $nilai): ?>
-                                <div class="row mb-1">
-                                    <div class="col-12 py-2 text-center statistik-nilai bg-gradient-180-white text-dark">
-                                        <?= is_numeric($nilai) ? number_format((float)$nilai, 1) : esc($nilai) ?>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
+        <!-- Stats rows -->
+        <div class="statistik-list animated slideInUp delay-1s">
+            <?php
+                $keys = array_keys($statsBiru);
+                $last = end($keys);
+            ?>
+            <?php foreach ($statsBiru as $jenis => $nilaiBiru): ?>
+                <?php $nilaiMerah = $statsMerah->$jenis ?? 0; ?>
+                <div class="statistik-row <?= $jenis === $last ? 'final-row' : '' ?>">
+                    <div class="statistik-col bg-gradient-180-white text-dark penilaian-display-font">
+                        <?= is_numeric($nilaiBiru) ? number_format((float)$nilaiBiru, 1) : esc($nilaiBiru) ?>
+                    </div>
+                    <div class="statistik-col-label bg-gradient-180-gray-dark text-white">
+                        <?= esc($labelMap[$jenis] ?? ucwords(str_replace('_', ' ', $jenis))) ?>
+                    </div>
+                    <div class="statistik-col bg-gradient-180-white text-dark penilaian-display-font">
+                        <?= is_numeric($nilaiMerah) ? number_format((float)$nilaiMerah, 1) : esc($nilaiMerah) ?>
                     </div>
                 </div>
-            </div>
-        <?php else: ?>
-            <!-- fallback: no ringkasan_nilai -->
-            <div class="row animated slideInUp delay-1s">
-                <div class="col-12 text-center py-5">
-                    <i class="fas fa-chart-bar mb-3" style="font-size: 4rem; opacity: 0.3;"></i>
-                    <p style="font-size: clamp(1rem, 2vw, 1.5rem); opacity: 0.5;">
-                        Data ringkasan nilai belum tersedia.<br>
-                        <small>Skor Akhir: Biru <?= (int) ($pertandingan->skor_biru ?? 0) ?> — <?= (int) ($pertandingan->skor_merah ?? 0) ?> Merah</small>
-                    </p>
-                </div>
-            </div>
-        <?php endif; ?>
+            <?php endforeach; ?>
+        </div>
     </div>
+
+    <?php else: ?>
+    <div class="statistik-fallback animated slideInUp delay-1s">
+        <i class="fas fa-chart-bar mb-3" style="font-size: 4rem;"></i>
+        <p style="font-size: clamp(1rem, 2vw, 1.5rem);">
+            Data ringkasan nilai belum tersedia.
+        </p>
+        <p style="font-size: clamp(0.8rem, 1.2vw, 1rem);">
+            Skor Akhir: Biru <?= (int) ($pertandingan->skor_biru ?? 0) ?> — <?= (int) ($pertandingan->skor_merah ?? 0) ?> Merah
+        </p>
+    </div>
+    <?php endif; ?>
 </div>
 <?= $this->endSection() ?>
 
@@ -160,23 +224,17 @@ $namaMerah = $atlet_merah->nama_pendaftar ?? 'Atlet Merah';
     var pollCount = 0;
     var maxPoll = 90;
 
-    // Redirect ke standby setelah 5 detik
     setTimeout(function () {
         window.location.href = '<?= base_url('layar/standby?mode=tanding') ?>';
     }, 5000);
 
-    // Polling for new match (runs in background)
     function pollNextMatch() {
         if (pollCount >= maxPoll) return;
         pollCount++;
-
         var body = new URLSearchParams();
         body.append(csrfName, csrfHash);
-
         fetch('<?= base_url('layar/refresh-status-pertandingan') ?>', {
-            method: 'POST',
-            headers: { 'X-Requested-With': 'XMLHttpRequest' },
-            body: body
+            method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: body
         })
         .then(function(r) { return r.json(); })
         .then(function(d) {
@@ -190,7 +248,6 @@ $namaMerah = $atlet_merah->nama_pendaftar ?? 'Atlet Merah';
             if (pollCount < maxPoll) setTimeout(pollNextMatch, 2000);
         });
     }
-
     setTimeout(pollNextMatch, 2000);
 })();
 </script>
