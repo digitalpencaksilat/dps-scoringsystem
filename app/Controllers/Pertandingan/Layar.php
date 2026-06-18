@@ -163,8 +163,11 @@ class Layar extends BaseController
             if ($idPertandingan === null || $idPertandingan === 0) {
                 return $this->jsonResponse(['status' => true, 'reload' => false]);
             }
-            // Had match but now gone → reload to standby
-            return $this->jsonResponse(['status' => true, 'reload' => true]);
+            // Had match but now gone → redirect to hasil page (parity legacy standby_tanding shows winner)
+            return $this->jsonResponse([
+                'status'   => true,
+                'redirect' => base_url('layar/hasil-tanding/' . $idPertandingan),
+            ]);
         }
 
         // Case 1: Dipanggil dari home/standby (null id) → ada pertandingan aktif
@@ -343,11 +346,11 @@ class Layar extends BaseController
                         $sistemPenampilan = $kompetisi->sistem_penampilan ?? 'pool';
 
                         if ($sistemPenampilan === 'battle') {
-                            // Check for completed battle
+                            // Check for completed battle WITH winner decided (parity legacy line 379)
                             $battle = $db->table('detail_jadwal_seni')
                                 ->where('id_penampilan_seni', $idPenampilanSeni)
                                 ->get()->getRow();
-                            if ($battle && !empty($battle->id_battle_seni)) {
+                            if ($battle && !empty($battle->id_battle_seni) && !empty($battle->id_penampilan_seni_pemenang)) {
                                 return $this->jsonResponse([
                                     'status'            => true,
                                     'reload'            => false,
@@ -364,12 +367,37 @@ class Layar extends BaseController
                                 ->countAllResults();
 
                             if ($belumTampil === 0) {
-                                return $this->jsonResponse([
-                                    'status'           => true,
-                                    'reload'           => false,
-                                    'hasil_pool_seni'  => true,
-                                    'id_kompetisi_seni' => (int) $kompetisiId,
-                                ]);
+                                // All done — check babak_pool (parity legacy line 392-410)
+                                $lastPenampilanRow = $db->table('penampilan_seni')
+                                    ->where('id_penampilan_seni', $idPenampilanSeni)
+                                    ->get()->getRow();
+                                $babakPool = $lastPenampilanRow->babak ?? 'penyisihan';
+
+                                if ($babakPool === 'penyisihan') {
+                                    return $this->jsonResponse([
+                                        'status'            => true,
+                                        'reload'            => false,
+                                        'hasil_pool_seni'   => true,
+                                        'id_kompetisi_seni' => (int) $kompetisiId,
+                                    ]);
+                                } else {
+                                    // Final: tunggu input medali dulu (parity legacy line 397-409)
+                                    $jumlahMedali = $db->table('penampilan_seni ps')
+                                        ->join('kelompok_peserta_seni kps', 'kps.id_kelompok_peserta_seni = ps.id_kelompok_peserta_seni')
+                                        ->join('perolehan_medali_seni pms', 'pms.id_kelompok_peserta_seni = kps.id_kelompok_peserta_seni', 'left')
+                                        ->where('kps.id_kompetisi_seni', $kompetisiId)
+                                        ->where('pms.jenis_medali IS NOT NULL')
+                                        ->countAllResults();
+
+                                    if ($jumlahMedali > 0) {
+                                        return $this->jsonResponse([
+                                            'status'            => true,
+                                            'reload'            => false,
+                                            'hasil_pool_seni'   => true,
+                                            'id_kompetisi_seni' => (int) $kompetisiId,
+                                        ]);
+                                    }
+                                }
                             }
                         }
                     }
@@ -436,7 +464,8 @@ class Layar extends BaseController
                    (SELECT GROUP_CONCAT(CONCAT_WS(' ', p.nama_pendaftar) SEPARATOR ' ,<br>')
                     FROM pendaftar p
                     JOIN peserta_seni pse ON pse.id_pendaftar = p.id_pendaftar
-                    WHERE pse.id_kelompok_peserta_seni = kps.id_kelompok_peserta_seni) AS anggota_kelompok_peserta_seni
+                    WHERE pse.id_kelompok_peserta_seni = kps.id_kelompok_peserta_seni) AS anggota_kelompok_peserta_seni,
+                   (SELECT jenis_medali FROM perolehan_medali_seni WHERE id_kelompok_peserta_seni = kps.id_kelompok_peserta_seni) AS jenis_medali
             FROM penampilan_seni ps
             JOIN kelompok_peserta_seni kps ON kps.id_kelompok_peserta_seni = ps.id_kelompok_peserta_seni
             LEFT JOIN kontingen k ON k.id_kontingen = kps.id_kontingen
@@ -454,7 +483,7 @@ class Layar extends BaseController
             $penampilan->peserta = $peserta;
         }
 
-        return view('pertandingan/layar/seni/persilat/hasil_pool_seni', [
+        return view('pertandingan/layar/hasil_pool_seni', [
             'title'           => 'Hasil Pool Seni',
             'kompetisi_seni'  => $kompetisiSeni,
             'daftar'          => $daftarPenampilan,
@@ -526,7 +555,7 @@ class Layar extends BaseController
                 ->get()->getResult();
         }
 
-        return view('pertandingan/layar/seni/persilat/hasil_battle_seni', [
+        return view('pertandingan/layar/hasil_battle_seni', [
             'title'                => 'Hasil Battle Seni',
             'battle_seni'          => $battle,
             'penampilan_seni_biru' => $penampilanBiru,
@@ -562,17 +591,50 @@ class Layar extends BaseController
      */
     public function hasilTanding(int $idPertandingan)
     {
-        $pertandingan = $this->pertandinganModel->find($idPertandingan);
+        $pertandingan = $this->pertandinganModel->getPertandinganLengkap($idPertandingan);
 
         if ($pertandingan === null) {
             return redirect()->to(base_url('layar/home'));
         }
 
+        // Decode ringkasan_nilai (parity legacy)
+        $pertandingan->ringkasan_nilai = !empty($pertandingan->ringkasan_nilai)
+            ? json_decode($pertandingan->ringkasan_nilai)
+            : null;
+
+        // Determine winner via id_pemenang (parity legacy)
+        $pemenang = $this->pertandinganModel->getPemenangPertandingan($idPertandingan);
+        $winnerSide = '';
+        if ($pemenang) {
+            if ((int) $pertandingan->id_pemenang === (int) $pertandingan->id_atlet_biru) {
+                $winnerSide = 'biru';
+            } elseif ((int) $pertandingan->id_pemenang === (int) $pertandingan->id_atlet_merah) {
+                $winnerSide = 'merah';
+            }
+        }
+
+        // Next match in same gelanggang (parity legacy pertandingan_selanjutnya)
+        $nextMatch = null;
+        if (!empty($pertandingan->id_jadwal_tanding) && !empty($pertandingan->nomor_partai)) {
+            $nextMatch = $this->pertandinganModel->getPartaiTetangga(
+                (int) $pertandingan->id_jadwal_tanding,
+                (int) $pertandingan->nomor_partai,
+                'next'
+            );
+        }
+
+        $eventName = env('app.eventName', 'Pencak Silat Championship');
+
         return view('pertandingan/layar/hasil_tanding', [
-            'title'        => 'Hasil Pertandingan',
-            'pertandingan' => $pertandingan,
-            'atlet_merah'  => $this->pertandinganModel->getAtletPertandingan($idPertandingan, 'merah'),
-            'atlet_biru'   => $this->pertandinganModel->getAtletPertandingan($idPertandingan, 'biru'),
+            'title'           => 'Hasil Pertandingan',
+            'pertandingan'    => $pertandingan,
+            'pemenang'        => $pemenang,
+            'winner_side'     => $winnerSide,
+            'atlet_merah'     => $this->pertandinganModel->getAtletPertandingan($idPertandingan, 'merah'),
+            'atlet_biru'      => $this->pertandinganModel->getAtletPertandingan($idPertandingan, 'biru'),
+            'next_match'      => $nextMatch,
+            'ringkasan_nilai' => $pertandingan->ringkasan_nilai,
+            'event_name'      => $eventName,
         ]);
     }
 

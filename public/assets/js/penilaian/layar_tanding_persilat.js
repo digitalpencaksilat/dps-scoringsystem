@@ -307,7 +307,9 @@ const layar = {
             function (data) {
                 if (data.csrf_hash) { CSRF_HASH = data.csrf_hash; }
 
-                if (data.status === true && data.reload === true) {
+                if (data.redirect) {
+                    window.location = data.redirect;
+                } else if (data.status === true && data.reload === true) {
                     window.location.reload();
                 } else if (data.status === false) {
                     // Stinger on round change

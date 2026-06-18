@@ -79,6 +79,51 @@ class PertandinganModel extends Model
     }
 
     /**
+     * Ambil satu pertandingan by-id dengan full join (kelas, kategori, gelanggang, nomor_partai).
+     * Untuk halaman hasil pertandingan — parity legacy Detail_jadwal_tanding_model->find().
+     */
+    public function getPertandinganLengkap(int $idPertandingan): ?object
+    {
+        return $this->db->table('detail_jadwal_tanding')
+            ->select('pertandingan.*, detail_jadwal_tanding.nomor_partai, detail_jadwal_tanding.id_jadwal_tanding,
+                jadwal_tanding.id_gelanggang, gelanggang.nama_gelanggang,
+                kelas_tanding.id_kelas_tanding, kelas_tanding.label, kelas_tanding.format_penilaian,
+                kelas_tanding.jumlah_ronde, kelas_tanding.waktu_per_ronde, kelas_tanding.waktu_istirahat,
+                kategori_lomba.id_kategori_lomba, kategori_lomba.nama_kategori_lomba,
+                kategori_usia.nama_kategori_usia, kategori_usia.jenis_kelamin')
+            ->join('pertandingan', 'pertandingan.id_pertandingan = detail_jadwal_tanding.id_pertandingan')
+            ->join('kompetisi_tanding', 'kompetisi_tanding.id_kompetisi_tanding = pertandingan.id_kompetisi_tanding')
+            ->join('kelas_tanding', 'kelas_tanding.id_kelas_tanding = kompetisi_tanding.id_kelas_tanding')
+            ->join('kategori_lomba', 'kategori_lomba.id_kategori_lomba = kelas_tanding.id_kategori_lomba')
+            ->join('kategori_usia', 'kategori_usia.id_kategori_usia = kategori_lomba.id_kategori_usia')
+            ->join('jadwal_tanding', 'jadwal_tanding.id_jadwal_tanding = detail_jadwal_tanding.id_jadwal_tanding')
+            ->join('gelanggang', 'gelanggang.id_gelanggang = jadwal_tanding.id_gelanggang')
+            ->where('pertandingan.id_pertandingan', $idPertandingan)
+            ->get()
+            ->getRow();
+    }
+
+    /**
+     * Ambil data pemenang (peserta_tanding + pendaftar + kontingen) dari pertandingan.
+     * Parity legacy: Peserta_tanding_model->find($pertandingan->id_pemenang).
+     */
+    public function getPemenangPertandingan(int $idPertandingan): ?object
+    {
+        $pertandingan = $this->find($idPertandingan);
+        if (!$pertandingan || empty($pertandingan->id_pemenang)) {
+            return null;
+        }
+
+        return $this->db->table('peserta_tanding')
+            ->select('peserta_tanding.*, pendaftar.nama_pendaftar, pendaftar.foto, kontingen.nama_kontingen')
+            ->join('pendaftar', 'pendaftar.id_pendaftar = peserta_tanding.id_pendaftar')
+            ->join('kontingen', 'kontingen.id_kontingen = pendaftar.id_kontingen')
+            ->where('peserta_tanding.id_peserta_tanding', $pertandingan->id_pemenang)
+            ->get()
+            ->getRow();
+    }
+
+    /**
      * Ambil data atlet (pendaftar + kontingen) pada satu sudut pertandingan.
      * Parity legacy Pertandingan_model::get_atlet_pertandingan().
      *
