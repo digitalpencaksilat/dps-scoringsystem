@@ -82,10 +82,6 @@
 </style>
 <?= $this->endSection() ?>
 
-<?= $this->section('navbar') ?>
-<?= view('pertandingan/components/navbar', ['nav_role' => 'layar', 'nav_active' => 'home']) ?>
-<?= $this->endSection() ?>
-
 <?= $this->section('content') ?>
 <div class="layar-dashboard bg-black text-white" id="layar-dashboard"
      data-endpoint-tanding="<?= base_url('layar/refresh-status-pertandingan') ?>"

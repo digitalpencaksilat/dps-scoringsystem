@@ -4,12 +4,8 @@
 <link rel="stylesheet" href="<?= base_url('assets/css/penilaian/sekretaris.css') ?>">
 <?= $this->endSection() ?>
 
-<?= $this->section('navbar') ?>
-<?= view('pertandingan/components/navbar', ['nav_role' => 'sekretaris', 'nav_active' => 'dashboard', 'nav_page_type' => 'home']) ?>
-<?= $this->endSection() ?>
-
 <?= $this->section('content') ?>
-<div class="standby-wrapper" style="min-height: calc(100vh - 70px);">
+<div class="standby-wrapper" style="min-height: 100vh;">
     <!-- Icon -->
     <div class="standby-icon">
         <?php if (($mode_standby ?? 'tanding') === 'tanding'): ?>
