@@ -986,10 +986,11 @@ class KetuaPertandingan extends BaseController
 
         // Join pertandingan → detail_jadwal_tanding → jadwal_tanding → pendaftar → kontingen
         $pertandinganList = $db->table('detail_jadwal_tanding djt')
-            ->select('p.id_pertandingan, djt.nomor_partai, p.skor_merah, p.skor_biru, p.pemenang, p.status_pertandingan, p.jenis_kemenangan,
+            ->select('p.id_pertandingan, djt.nomor_partai, p.skor_merah, p.skor_biru,
+                      CASE WHEN p.id_pemenang = p.id_atlet_biru THEN \'biru\' WHEN p.id_pemenang = p.id_atlet_merah THEN \'merah\' ELSE NULL END as pemenang,
+                      p.status_pertandingan, p.jenis_kemenangan, p.babak,
                       pd_merah.nama_pendaftar as nama_merah, pd_biru.nama_pendaftar as nama_biru,
-                      k_merah.nama_kontingen as kontingen_merah, k_biru.nama_kontingen as kontingen_biru,
-                      jt.babak')
+                      k_merah.nama_kontingen as kontingen_merah, k_biru.nama_kontingen as kontingen_biru')
             ->join('pertandingan p', 'p.id_pertandingan = djt.id_pertandingan', 'inner')
             ->join('jadwal_tanding jt', 'jt.id_jadwal_tanding = djt.id_jadwal_tanding', 'left')
             ->join('peserta_tanding pt_merah', 'pt_merah.id_peserta_tanding = p.id_atlet_merah', 'left')
@@ -1020,8 +1021,8 @@ class KetuaPertandingan extends BaseController
 
         // Pool: penampilan_seni → kelompok_peserta_seni → pendaftar → kontingen + jadwal_seni
         $poolList = $db->table('penampilan_seni ps')
-            ->select('ps.id_penampilan_seni, ps.nilai_akhir, ps.diskualifikasi, ps.alasan_diskualifikasi,
-                      djs.nomor_urut, pd.nama_pendaftar, k.nama_kontingen,
+            ->select('ps.id_penampilan_seni, ps.nilai_akhir, ps.diskualifikasi,
+                      djs.nomor_urut, djs.nomor_partai, pd.nama_pendaftar, k.nama_kontingen,
                       js.id_gelanggang, "pool" as sistem')
             ->join('detail_jadwal_seni djs', 'djs.id_penampilan_seni = ps.id_penampilan_seni', 'inner')
             ->join('jadwal_seni js', 'js.id_jadwal_seni = djs.id_jadwal_seni', 'inner')
@@ -1043,7 +1044,7 @@ class KetuaPertandingan extends BaseController
                       pd_biru.nama_pendaftar as nama_biru, k_biru.nama_kontingen as kontingen_biru,
                       pd_merah.nama_pendaftar as nama_merah, k_merah.nama_kontingen as kontingen_merah,
                       bs.babak, bs.jenis_kemenangan, js.id_gelanggang, "battle" as sistem')
-            ->join('detail_jadwal_seni djs', 'djs.id_detail_jadwal_seni = bs.id_detail_jadwal_seni', 'inner')
+            ->join('detail_jadwal_seni djs', 'djs.id_battle_seni = bs.id_battle_seni', 'inner')
             ->join('jadwal_seni js', 'js.id_jadwal_seni = djs.id_jadwal_seni', 'inner')
             ->join('penampilan_seni ps_biru', 'ps_biru.id_penampilan_seni = bs.id_penampilan_seni_biru', 'left')
             ->join('penampilan_seni ps_merah', 'ps_merah.id_penampilan_seni = bs.id_penampilan_seni_merah', 'left')
@@ -1075,18 +1076,22 @@ class KetuaPertandingan extends BaseController
     {
         $db = \Config\Database::connect();
         
-        $builder = $db->table('pertandingan p')
-            ->select('p.id_pertandingan, p.no_partai, p.skor_merah, p.skor_biru, p.pemenang, p.status_pertandingan,
-                      atlet_merah.nama_lengkap as nama_merah, atlet_biru.nama_lengkap as nama_biru,
-                      kontingen_merah.nama_kontingen as kontingen_merah, kontingen_biru.nama_kontingen as kontingen_biru,
-                      jt.babak')
-            ->join('jadwal_tanding jt', 'jt.id_jadwal_tanding = p.id_jadwal_tanding', 'left')
-            ->join('peserta atlet_merah', 'atlet_merah.id_peserta = p.id_peserta_merah', 'left')
-            ->join('peserta atlet_biru', 'atlet_biru.id_peserta = p.id_peserta_biru', 'left')
-            ->join('kontingen kontingen_merah', 'kontingen_merah.id_kontingen = atlet_merah.id_kontingen', 'left')
-            ->join('kontingen kontingen_biru', 'kontingen_biru.id_kontingen = atlet_biru.id_kontingen', 'left')
+        $builder = $db->table('detail_jadwal_tanding djt')
+            ->select('p.id_pertandingan, djt.nomor_partai, p.skor_merah, p.skor_biru,
+                      CASE WHEN p.id_pemenang = p.id_atlet_biru THEN \'biru\' WHEN p.id_pemenang = p.id_atlet_merah THEN \'merah\' ELSE NULL END as pemenang,
+                      p.status_pertandingan, p.jenis_kemenangan, p.babak,
+                      pd_merah.nama_pendaftar as nama_merah, pd_biru.nama_pendaftar as nama_biru,
+                      k_merah.nama_kontingen as kontingen_merah, k_biru.nama_kontingen as kontingen_biru')
+            ->join('pertandingan p', 'p.id_pertandingan = djt.id_pertandingan', 'inner')
+            ->join('jadwal_tanding jt', 'jt.id_jadwal_tanding = djt.id_jadwal_tanding', 'left')
+            ->join('peserta_tanding pt_merah', 'pt_merah.id_peserta_tanding = p.id_atlet_merah', 'left')
+            ->join('peserta_tanding pt_biru', 'pt_biru.id_peserta_tanding = p.id_atlet_biru', 'left')
+            ->join('pendaftar pd_merah', 'pd_merah.id_pendaftar = pt_merah.id_pendaftar', 'left')
+            ->join('pendaftar pd_biru', 'pd_biru.id_pendaftar = pt_biru.id_pendaftar', 'left')
+            ->join('kontingen k_merah', 'k_merah.id_kontingen = pd_merah.id_kontingen', 'left')
+            ->join('kontingen k_biru', 'k_biru.id_kontingen = pd_biru.id_kontingen', 'left')
             ->where('jt.id_gelanggang', $this->idGelanggang())
-            ->orderBy('p.no_partai', 'ASC');
+            ->orderBy('djt.nomor_partai', 'ASC');
 
         $result = $builder->get()->getResult();
 
@@ -1098,7 +1103,7 @@ class KetuaPertandingan extends BaseController
 
             $data[] = [
                 'no' => $idx + 1,
-                'partai' => "Partai {$row->no_partai} ({$row->babak})",
+                'partai' => "Partai {$row->nomor_partai} ({$row->babak})",
                 'atlet_biru' => ($row->nama_biru ?? '-') . '<br><small class="text-muted">' . ($row->kontingen_biru ?? '') . '</small>',
                 'atlet_merah' => ($row->nama_merah ?? '-') . '<br><small class="text-muted">' . ($row->kontingen_merah ?? '') . '</small>',
                 'skor' => $skor,
@@ -1117,41 +1122,45 @@ class KetuaPertandingan extends BaseController
     public function apiDaftarNilaiSeni()
     {
         $db = \Config\Database::connect();
-        
-        // Pool seni
+
+        // Pool seni — same schema as daftarNilaiSeni server render
         $builderPool = $db->table('penampilan_seni ps')
-            ->select('ps.id_penampilan_seni, ps.nilai_akhir, ps.diskualifikasi, ps.alasan_diskualifikasi,
-                      djs.nama_partai, peserta.nama_lengkap as nama_peserta, kontingen.nama_kontingen,
-                      js.nomor_pertandingan, js.jenis_kelamin, ku.nama_kategori_usia, "pool" as sistem')
-            ->join('detail_jadwal_seni djs', 'djs.id_detail_jadwal_seni = ps.id_detail_jadwal_seni', 'left')
-            ->join('jadwal_seni js', 'js.id_jadwal_seni = djs.id_jadwal_seni', 'left')
-            ->join('peserta', 'peserta.id_peserta = ps.id_peserta', 'left')
-            ->join('kontingen', 'kontingen.id_kontingen = peserta.id_kontingen', 'left')
-            ->join('kategori_usia ku', 'ku.id_kategori_usia = js.id_kategori_usia', 'left')
+            ->select('ps.id_penampilan_seni, ps.nilai_akhir, ps.diskualifikasi,
+                      djs.nomor_urut, djs.nomor_partai, pd.nama_pendaftar, k.nama_kontingen,
+                      js.id_gelanggang, "pool" as sistem')
+            ->join('detail_jadwal_seni djs', 'djs.id_penampilan_seni = ps.id_penampilan_seni', 'inner')
+            ->join('jadwal_seni js', 'js.id_jadwal_seni = djs.id_jadwal_seni', 'inner')
+            ->join('kelompok_peserta_seni kps', 'kps.id_kelompok_peserta_seni = ps.id_kelompok_peserta_seni', 'left')
+            ->join('peserta_seni pst', 'pst.id_kelompok_peserta_seni = kps.id_kelompok_peserta_seni', 'left')
+            ->join('pendaftar pd', 'pd.id_pendaftar = pst.id_pendaftar', 'left')
+            ->join('kontingen k', 'k.id_kontingen = pd.id_kontingen', 'left')
             ->where('js.id_gelanggang', $this->idGelanggang())
-            ->where('js.sistem_perlombaan', 'pool');
+            ->where('djs.id_battle_seni IS NULL');
 
         $poolData = $builderPool->get()->getResult();
 
-        // Battle seni (biru dan merah)
+        // Battle seni — same schema as daftarNilaiSeni server render
         $builderBattle = $db->table('battle_seni bs')
             ->select('ps_biru.id_penampilan_seni as id_biru, ps_biru.nilai_akhir as nilai_biru, ps_biru.diskualifikasi as dq_biru,
                       ps_merah.id_penampilan_seni as id_merah, ps_merah.nilai_akhir as nilai_merah, ps_merah.diskualifikasi as dq_merah,
-                      djs.nama_partai, 
-                      peserta_biru.nama_lengkap as nama_biru, kontingen_biru.nama_kontingen as kontingen_biru,
-                      peserta_merah.nama_lengkap as nama_merah, kontingen_merah.nama_kontingen as kontingen_merah,
-                      js.nomor_pertandingan, js.jenis_kelamin, ku.nama_kategori_usia, bs.babak, "battle" as sistem')
+                      djs.nomor_urut, djs.nomor_partai,
+                      pd_biru.nama_pendaftar as nama_biru, k_biru.nama_kontingen as kontingen_biru,
+                      pd_merah.nama_pendaftar as nama_merah, k_merah.nama_kontingen as kontingen_merah,
+                      bs.babak, bs.jenis_kemenangan, js.id_gelanggang, "battle" as sistem')
+            ->join('detail_jadwal_seni djs', 'djs.id_battle_seni = bs.id_battle_seni', 'inner')
+            ->join('jadwal_seni js', 'js.id_jadwal_seni = djs.id_jadwal_seni', 'inner')
             ->join('penampilan_seni ps_biru', 'ps_biru.id_penampilan_seni = bs.id_penampilan_seni_biru', 'left')
             ->join('penampilan_seni ps_merah', 'ps_merah.id_penampilan_seni = bs.id_penampilan_seni_merah', 'left')
-            ->join('detail_jadwal_seni djs', 'djs.id_detail_jadwal_seni = bs.id_detail_jadwal_seni', 'left')
-            ->join('jadwal_seni js', 'js.id_jadwal_seni = djs.id_jadwal_seni', 'left')
-            ->join('peserta peserta_biru', 'peserta_biru.id_peserta = ps_biru.id_peserta', 'left')
-            ->join('peserta peserta_merah', 'peserta_merah.id_peserta = ps_merah.id_peserta', 'left')
-            ->join('kontingen kontingen_biru', 'kontingen_biru.id_kontingen = peserta_biru.id_kontingen', 'left')
-            ->join('kontingen kontingen_merah', 'kontingen_merah.id_kontingen = peserta_merah.id_kontingen', 'left')
-            ->join('kategori_usia ku', 'ku.id_kategori_usia = js.id_kategori_usia', 'left')
+            ->join('kelompok_peserta_seni kps_biru', 'kps_biru.id_kelompok_peserta_seni = ps_biru.id_kelompok_peserta_seni', 'left')
+            ->join('kelompok_peserta_seni kps_merah', 'kps_merah.id_kelompok_peserta_seni = ps_merah.id_kelompok_peserta_seni', 'left')
+            ->join('peserta_seni pst_biru', 'pst_biru.id_kelompok_peserta_seni = kps_biru.id_kelompok_peserta_seni', 'left')
+            ->join('peserta_seni pst_merah', 'pst_merah.id_kelompok_peserta_seni = kps_merah.id_kelompok_peserta_seni', 'left')
+            ->join('pendaftar pd_biru', 'pd_biru.id_pendaftar = pst_biru.id_pendaftar', 'left')
+            ->join('pendaftar pd_merah', 'pd_merah.id_pendaftar = pst_merah.id_pendaftar', 'left')
+            ->join('kontingen k_biru', 'k_biru.id_kontingen = pd_biru.id_kontingen', 'left')
+            ->join('kontingen k_merah', 'k_merah.id_kontingen = pd_merah.id_kontingen', 'left')
             ->where('js.id_gelanggang', $this->idGelanggang())
-            ->where('js.sistem_perlombaan', 'battle');
+            ->orderBy('djs.nomor_urut', 'ASC');
 
         $battleData = $builderBattle->get()->getResult();
 
@@ -1160,15 +1169,13 @@ class KetuaPertandingan extends BaseController
 
         // Pool
         foreach ($poolData as $row) {
-            $kategori = "{$row->nomor_pertandingan} - {$row->nama_kategori_usia} - " . ($row->jenis_kelamin === 'L' ? 'Putra' : 'Putri');
             $dq = $row->diskualifikasi ? 'DQ' : '-';
             $nilai = $row->diskualifikasi ? '-' : number_format($row->nilai_akhir ?? 0, 2);
 
             $data[] = [
                 'no' => $no++,
-                'partai' => "{$row->nama_partai} (Pool)",
-                'peserta' => ($row->nama_peserta ?? '-') . '<br><small class="text-muted">' . ($row->nama_kontingen ?? '') . '</small>',
-                'kategori' => $kategori,
+                'partai' => "Partai {$row->nomor_partai} - Urut {$row->nomor_urut} (Pool)",
+                'peserta' => ($row->nama_pendaftar ?? '-') . '<br><small class="text-muted">' . ($row->nama_kontingen ?? '') . '</small>',
                 'nilai_akhir' => $nilai,
                 'status' => 'Selesai',
                 'dq' => $dq,
@@ -1177,16 +1184,13 @@ class KetuaPertandingan extends BaseController
 
         // Battle
         foreach ($battleData as $row) {
-            $kategori = "{$row->nomor_pertandingan} - {$row->nama_kategori_usia} - " . ($row->jenis_kelamin === 'L' ? 'Putra' : 'Putri');
-            
             // Biru
             $dqBiru = $row->dq_biru ? 'DQ' : '-';
             $nilaiBiru = $row->dq_biru ? '-' : number_format($row->nilai_biru ?? 0, 2);
             $data[] = [
                 'no' => $no++,
-                'partai' => "{$row->nama_partai} ({$row->babak}) - Biru",
+                'partai' => "Partai {$row->nomor_partai} - Urut {$row->nomor_urut} ({$row->babak}) - Biru",
                 'peserta' => ($row->nama_biru ?? '-') . '<br><small class="text-muted">' . ($row->kontingen_biru ?? '') . '</small>',
-                'kategori' => $kategori,
                 'nilai_akhir' => $nilaiBiru,
                 'status' => 'Selesai',
                 'dq' => $dqBiru,
@@ -1197,9 +1201,8 @@ class KetuaPertandingan extends BaseController
             $nilaiMerah = $row->dq_merah ? '-' : number_format($row->nilai_merah ?? 0, 2);
             $data[] = [
                 'no' => $no++,
-                'partai' => "{$row->nama_partai} ({$row->babak}) - Merah",
+                'partai' => "Partai {$row->nomor_partai} - Urut {$row->nomor_urut} ({$row->babak}) - Merah",
                 'peserta' => ($row->nama_merah ?? '-') . '<br><small class="text-muted">' . ($row->kontingen_merah ?? '') . '</small>',
-                'kategori' => $kategori,
                 'nilai_akhir' => $nilaiMerah,
                 'status' => 'Selesai',
                 'dq' => $dqMerah,

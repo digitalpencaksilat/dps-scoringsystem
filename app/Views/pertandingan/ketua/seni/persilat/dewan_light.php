@@ -6,7 +6,7 @@
 <style>
 html, body { height: 100%; overflow: hidden; margin: 0; }
 
-body { background: #000; font-family: 'Poppins', sans-serif; color: #fff; }
+body { background: #f4f6f9; font-family: 'Poppins', sans-serif; color: #212529; }
 
 #ds-wrapper {
 	display: flex;
@@ -23,8 +23,9 @@ body { background: #000; font-family: 'Poppins', sans-serif; color: #fff; }
 	gap: clamp(0.3rem, 0.8vw, 0.6rem);
 	align-items: stretch;
 	padding: clamp(0.3rem, 1.2vw, 0.65rem);
-	background: #0a0a0a;
+	background: #fff;
 	border-bottom: 2px solid #c60000;
+	box-shadow: 0 2px 12px rgba(0,0,0,0.06);
 }
 
 .ds-hdr-card {
@@ -37,21 +38,21 @@ body { background: #000; font-family: 'Poppins', sans-serif; color: #fff; }
 }
 
 .ds-hdr-left {
-	background: linear-gradient(135deg, #1a1a1a 0%, #111 100%);
-	border: 1px solid rgba(255,255,255,0.08);
+	background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+	border: 1px solid #dee2e6;
 	text-align: left;
 }
 
 .ds-hdr-center {
-	background: linear-gradient(135deg, rgba(198,0,0,0.15) 0%, rgba(198,0,0,0.05) 100%);
-	border: 1px solid rgba(198,0,0,0.2);
+	background: linear-gradient(135deg, rgba(198,0,0,0.06) 0%, rgba(198,0,0,0.02) 100%);
+	border: 1px solid rgba(198,0,0,0.15);
 	align-items: center;
 	justify-content: center;
 }
 
 .ds-hdr-right {
-	background: linear-gradient(135deg, #1a1a1a 0%, #111 100%);
-	border: 1px solid rgba(255,255,255,0.08);
+	background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+	border: 1px solid #dee2e6;
 	text-align: right;
 	align-items: flex-end;
 }
@@ -60,7 +61,7 @@ body { background: #000; font-family: 'Poppins', sans-serif; color: #fff; }
 	font-size: clamp(0.8rem, 2vw, 1.05rem);
 	font-weight: 700;
 	line-height: 1.25;
-	color: #fff;
+	color: #212529;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -68,7 +69,7 @@ body { background: #000; font-family: 'Poppins', sans-serif; color: #fff; }
 
 .ds-hdr-sub {
 	font-size: clamp(0.65rem, 1.3vw, 0.78rem);
-	color: rgba(255,255,255,0.55);
+	color: #6c757d;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -82,9 +83,7 @@ body { background: #000; font-family: 'Poppins', sans-serif; color: #fff; }
 	text-align: center;
 }
 
-.ds-hdr-center .ds-hdr-sub {
-	text-align: center;
-}
+.ds-hdr-center .ds-hdr-sub { text-align: center; }
 
 /* ─── Body ─────────────────────────────────────────────────────────── */
 #ds-body {
@@ -95,7 +94,6 @@ body { background: #000; font-family: 'Poppins', sans-serif; color: #fff; }
 	padding: clamp(0.3rem, 0.8vw, 0.6rem);
 }
 
-/* Left panel */
 #ds-left {
 	flex: 0 0 clamp(240px, 24vw, 320px);
 	display: flex;
@@ -105,22 +103,20 @@ body { background: #000; font-family: 'Poppins', sans-serif; color: #fff; }
 	min-width: 0;
 }
 
-/* Right panel */
 #ds-right {
 	flex: 1;
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
 	min-width: 0;
-	background: #0e0e0e;
-	border: 1px solid rgba(255,255,255,0.06);
+	background: #fff;
+	border: 1px solid #dee2e6;
 	border-radius: 10px;
+	box-shadow: 0 2px 12px rgba(0,0,0,0.05);
 }
 
 /* ─── Lock Button ──────────────────────────────────────────────────── */
-.ds-lock-wrap {
-	flex-shrink: 0;
-}
+.ds-lock-wrap { flex-shrink: 0; }
 
 .ds-btn-lock {
 	display: flex;
@@ -138,41 +134,39 @@ body { background: #000; font-family: 'Poppins', sans-serif; color: #fff; }
 	cursor: pointer;
 	transition: all 0.15s;
 	color: #fff;
+	box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
 .ds-btn-lock:active { transform: scale(0.97); }
 
 .ds-btn-lock-unlock {
 	background: linear-gradient(135deg, #1565c0, #0d47a1);
-	box-shadow: 0 4px 12px rgba(21,101,192,0.35);
 }
 
 .ds-btn-lock-unlock:hover { background: linear-gradient(135deg, #1976d2, #1155a8); }
 
 .ds-btn-lock-lock {
 	background: linear-gradient(135deg, #c62828, #b71c1c);
-	box-shadow: 0 4px 12px rgba(198,40,40,0.35);
 }
 
 .ds-btn-lock-lock:hover { background: linear-gradient(135deg, #d32f2f, #c62828); }
 
-.ds-btn-lock i {
-	font-size: clamp(1rem, 2.2vw, 1.3rem);
-}
+.ds-btn-lock i { font-size: clamp(1rem, 2.2vw, 1.3rem); }
 
 /* ─── Total Penalties Card ─────────────────────────────────────────── */
 .ds-card-total {
 	flex-shrink: 0;
-	background: #111;
-	border: 1px solid rgba(255,255,255,0.08);
+	background: #fff;
+	border: 1px solid #dee2e6;
 	border-radius: 10px;
 	padding: clamp(0.5rem, 1.5vw, 0.75rem);
 	text-align: center;
+	box-shadow: 0 1px 8px rgba(0,0,0,0.04);
 }
 
 .ds-card-total-label {
 	font-size: clamp(0.65rem, 1.2vw, 0.75rem);
-	color: rgba(255,255,255,0.45);
+	color: #6c757d;
 	text-transform: uppercase;
 	letter-spacing: 1px;
 	margin-bottom: clamp(0.3rem, 0.8vw, 0.5rem);
@@ -183,8 +177,9 @@ body { background: #000; font-family: 'Poppins', sans-serif; color: #fff; }
 	font-size: clamp(2.5rem, 7vw, 4.5rem);
 	font-weight: 700;
 	line-height: 1;
-	color: #ef5350;
-	background: #1a1a1a;
+	color: #c62828;
+	background: #f8f9fa;
+	border: 1px solid #e9ecef;
 	border-radius: 8px;
 	padding: clamp(0.3rem, 1vw, 0.5rem);
 }
@@ -192,18 +187,19 @@ body { background: #000; font-family: 'Poppins', sans-serif; color: #fff; }
 /* ─── Jury Readiness Card ──────────────────────────────────────────── */
 .ds-card-jury {
 	flex: 1;
-	background: #111;
-	border: 1px solid rgba(255,255,255,0.08);
+	background: #fff;
+	border: 1px solid #dee2e6;
 	border-radius: 10px;
 	padding: clamp(0.5rem, 1.2vw, 0.7rem);
 	display: flex;
 	flex-direction: column;
 	min-height: 0;
+	box-shadow: 0 1px 8px rgba(0,0,0,0.04);
 }
 
 .ds-card-jury-label {
 	font-size: clamp(0.6rem, 1.1vw, 0.72rem);
-	color: rgba(255,255,255,0.45);
+	color: #6c757d;
 	text-transform: uppercase;
 	letter-spacing: 1px;
 	margin-bottom: clamp(0.3rem, 0.8vw, 0.5rem);
@@ -223,14 +219,15 @@ body { background: #000; font-family: 'Poppins', sans-serif; color: #fff; }
 	align-items: center;
 	justify-content: space-between;
 	padding: clamp(0.3rem, 0.8vw, 0.45rem) clamp(0.4rem, 1vw, 0.6rem);
-	background: rgba(255,255,255,0.03);
+	background: #f8f9fa;
 	border-radius: 6px;
 	font-size: clamp(0.65rem, 1.2vw, 0.78rem);
+	border: 1px solid #e9ecef;
 }
 
 .ds-jury-item .ds-jury-nama {
 	font-weight: 500;
-	color: #ccc;
+	color: #495057;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -248,15 +245,15 @@ body { background: #000; font-family: 'Poppins', sans-serif; color: #fff; }
 }
 
 .ds-jury-ready {
-	background: rgba(40,167,69,0.2);
-	color: #28a745;
-	border: 1px solid rgba(40,167,69,0.3);
+	background: #d4edda;
+	color: #155724;
+	border: 1px solid #c3e6cb;
 }
 
 .ds-jury-waiting {
-	background: rgba(255,193,7,0.15);
-	color: #ffc107;
-	border: 1px solid rgba(255,193,7,0.25);
+	background: #fff3cd;
+	color: #856404;
+	border: 1px solid #ffeeba;
 }
 
 /* ─── Right Panel Header ───────────────────────────────────────────── */
@@ -266,8 +263,8 @@ body { background: #000; font-family: 'Poppins', sans-serif; color: #fff; }
 	align-items: center;
 	justify-content: space-between;
 	padding: clamp(0.5rem, 1.2vw, 0.7rem) clamp(0.6rem, 1.5vw, 1rem);
-	border-bottom: 1px solid rgba(255,255,255,0.05);
-	background: rgba(255,255,255,0.02);
+	border-bottom: 1px solid #e9ecef;
+	background: #fafafa;
 }
 
 .ds-right-title {
@@ -276,7 +273,7 @@ body { background: #000; font-family: 'Poppins', sans-serif; color: #fff; }
 	font-weight: 700;
 	text-transform: uppercase;
 	letter-spacing: 1px;
-	color: #fff;
+	color: #212529;
 }
 
 .ds-right-title i {
@@ -299,26 +296,26 @@ body { background: #000; font-family: 'Poppins', sans-serif; color: #fff; }
 	gap: clamp(0.3rem, 0.8vw, 0.55rem);
 	padding: clamp(0.55rem, 1.5vw, 0.85rem) clamp(0.5rem, 1.2vw, 0.75rem);
 	margin-bottom: clamp(0.25rem, 0.6vw, 0.4rem);
-	background: rgba(255,255,255,0.03);
-	border: 1px solid rgba(255,255,255,0.06);
+	background: #f8f9fa;
+	border: 1px solid #e9ecef;
 	border-radius: 8px;
-	transition: border-color 0.15s;
+	transition: border-color 0.15s, box-shadow 0.15s;
 }
 
-.ds-penalty-row:hover { border-color: rgba(255,255,255,0.12); }
+.ds-penalty-row:hover { border-color: #c5a017; box-shadow: 0 1px 6px rgba(197,160,23,0.08); }
 
 .ds-penalty-label {
 	flex: 1 1 auto;
 	min-width: 140px;
 	font-weight: 600;
 	font-size: clamp(0.75rem, 1.5vw, 0.88rem);
-	color: #ddd;
+	color: #343a40;
 	line-height: 1.3;
 }
 
 .ds-penalty-label small {
 	display: block;
-	color: rgba(255,255,255,0.4);
+	color: #6c757d;
 	font-weight: 400;
 	font-size: clamp(0.6rem, 1.1vw, 0.68rem);
 	margin-top: 1px;
@@ -334,17 +331,17 @@ body { background: #000; font-family: 'Poppins', sans-serif; color: #fff; }
 
 .ds-btn-reset {
 	padding: clamp(0.35rem, 0.8vw, 0.45rem) clamp(0.55rem, 1.2vw, 0.75rem);
-	background: rgba(255,255,255,0.06);
-	border: 1px solid rgba(255,255,255,0.12);
+	background: #fff;
+	border: 1px solid #dee2e6;
 	border-radius: 6px;
-	color: rgba(255,255,255,0.6);
+	color: #6c757d;
 	font-size: clamp(0.65rem, 1.2vw, 0.75rem);
 	cursor: pointer;
 	transition: all 0.15s;
 	white-space: nowrap;
 }
 
-.ds-btn-reset:hover { background: rgba(255,255,255,0.12); color: #fff; border-color: rgba(255,255,255,0.25); }
+.ds-btn-reset:hover { background: #e9ecef; color: #212529; border-color: #adb5bd; }
 .ds-btn-reset:active { transform: scale(0.96); }
 
 .ds-btn-penalty-group {
@@ -364,34 +361,32 @@ body { background: #000; font-family: 'Poppins', sans-serif; color: #fff; }
 	cursor: pointer;
 	transition: all 0.12s;
 	text-align: center;
+	box-shadow: 0 1px 6px rgba(0,0,0,0.1);
 }
 
 .ds-btn-penalty:active { transform: scale(0.94); }
 
 .ds-btn-penalty-danger {
 	background: linear-gradient(135deg, #c62828, #9a1b1b);
-	box-shadow: 0 2px 8px rgba(198,40,40,0.25);
 }
 .ds-btn-penalty-danger:hover { background: linear-gradient(135deg, #d32f2f, #b71c1c); }
 
 .ds-btn-penalty-warning {
 	background: linear-gradient(135deg, #e65100, #bf360c);
-	box-shadow: 0 2px 8px rgba(230,81,0,0.25);
 }
 .ds-btn-penalty-warning:hover { background: linear-gradient(135deg, #f57c00, #d84315); }
 
 .ds-btn-penalty-dq {
-	background: linear-gradient(135deg, #212121, #000);
+	background: #fff;
 	border: 2px solid #c62828;
-	box-shadow: 0 0 8px rgba(198,40,40,0.3);
+	color: #c62828;
 }
-.ds-btn-penalty-dq:hover { background: #c62828; }
+.ds-btn-penalty-dq:hover { background: #c62828; color: #fff; }
 
-/* Current value display */
 .ds-current-value {
-	background: #212529;
-	border: 1px solid rgba(255,255,255,0.12);
-	color: #fff;
+	background: #fff;
+	border: 1px solid #dee2e6;
+	color: #212529;
 	font-family: 'Oswald', sans-serif;
 	font-weight: 700;
 	font-size: clamp(0.85rem, 1.8vw, 1.05rem);
@@ -408,8 +403,8 @@ body { background: #000; font-family: 'Poppins', sans-serif; color: #fff; }
 	display: flex;
 	gap: clamp(0.3rem, 0.8vw, 0.55rem);
 	padding: clamp(0.5rem, 1.2vw, 0.7rem);
-	border-top: 1px solid rgba(255,255,255,0.05);
-	background: rgba(255,255,255,0.02);
+	border-top: 1px solid #e9ecef;
+	background: #fafafa;
 }
 
 .ds-btn-footer {
@@ -426,16 +421,17 @@ body { background: #000; font-family: 'Poppins', sans-serif; color: #fff; }
 	text-align: center;
 	white-space: nowrap;
 	color: #fff;
+	box-shadow: 0 1px 6px rgba(0,0,0,0.1);
 }
 
 .ds-btn-footer:active { transform: scale(0.97); }
 
 .ds-btn-discard-dq {
-	background: linear-gradient(135deg, rgba(0,188,212,0.2), rgba(0,188,212,0.1));
-	border: 1px solid rgba(0,188,212,0.3);
-	color: #00bcd4;
+	background: #e0f7fa;
+	border: 1px solid #00bcd4;
+	color: #00838f;
 }
-.ds-btn-discard-dq:hover { background: rgba(0,188,212,0.25); }
+.ds-btn-discard-dq:hover { background: #b2ebf2; }
 
 .ds-btn-disqualify {
 	background: linear-gradient(135deg, #e65100, #bf360c);
@@ -454,7 +450,7 @@ body { background: #000; font-family: 'Poppins', sans-serif; color: #fff; }
 	align-items: center;
 	justify-content: center;
 	height: 100%;
-	color: rgba(255,255,255,0.3);
+	color: #adb5bd;
 	text-align: center;
 	padding: 2rem;
 }
@@ -462,7 +458,7 @@ body { background: #000; font-family: 'Poppins', sans-serif; color: #fff; }
 .ds-empty-state i {
 	font-size: clamp(2rem, 5vw, 3rem);
 	margin-bottom: 1rem;
-	opacity: 0.3;
+	opacity: 0.4;
 }
 
 .ds-empty-state p {
@@ -477,38 +473,34 @@ body { background: #000; font-family: 'Poppins', sans-serif; color: #fff; }
 	align-items: center;
 	justify-content: center;
 	padding: 1rem;
-	color: rgba(255,255,255,0.35);
+	color: #adb5bd;
 	font-size: 0.78rem;
 	gap: 0.5rem;
 }
 
-.ds-loading .spinner-border {
-	width: 1rem;
-	height: 1rem;
-	border-width: 2px;
-}
+.ds-loading .spinner-border { width: 1rem; height: 1rem; border-width: 2px; }
 
 /* ─── Button States ────────────────────────────────────────────────── */
 .ds-locked { opacity: 0.45; pointer-events: none; filter: grayscale(0.5); }
 .ds-loading-btn { opacity: 0.55; pointer-events: none; }
 
-.ds-pulse-ok { animation: dsPulseOk 0.45s ease; }
-.ds-pulse-fail { animation: dsPulseFail 0.45s ease; }
+.ds-pulse-ok { animation: dsPulseOkLight 0.45s ease; }
+.ds-pulse-fail { animation: dsPulseFailLight 0.45s ease; }
 
-@keyframes dsPulseOk {
-	0% { box-shadow: 0 0 0 0 rgba(40,167,69,0.55); }
-	100% { box-shadow: 0 0 0 14px rgba(40,167,69,0); }
+@keyframes dsPulseOkLight {
+	0% { box-shadow: 0 0 0 0 rgba(40,167,69,0.4); }
+	100% { box-shadow: 0 0 0 12px rgba(40,167,69,0); }
 }
 
-@keyframes dsPulseFail {
-	0% { box-shadow: 0 0 0 0 rgba(220,53,69,0.55); }
-	100% { box-shadow: 0 0 0 14px rgba(220,53,69,0); }
+@keyframes dsPulseFailLight {
+	0% { box-shadow: 0 0 0 0 rgba(220,53,69,0.4); }
+	100% { box-shadow: 0 0 0 12px rgba(220,53,69,0); }
 }
 
 /* ─── Scrollbar ────────────────────────────────────────────────────── */
 #ds-left::-webkit-scrollbar,
 #ds-penalty-rows::-webkit-scrollbar,
-.ds-jury-ready-list::-webkit-scrollbar { width: 4px; }
+.ds-jury-ready-list::-webkit-scrollbar { width: 5px; }
 
 #ds-left::-webkit-scrollbar-track,
 #ds-penalty-rows::-webkit-scrollbar-track,
@@ -516,11 +508,11 @@ body { background: #000; font-family: 'Poppins', sans-serif; color: #fff; }
 
 #ds-left::-webkit-scrollbar-thumb,
 #ds-penalty-rows::-webkit-scrollbar-thumb,
-.ds-jury-ready-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+.ds-jury-ready-list::-webkit-scrollbar-thumb { background: #dee2e6; border-radius: 3px; }
 
 #ds-left::-webkit-scrollbar-thumb:hover,
 #ds-penalty-rows::-webkit-scrollbar-thumb:hover,
-.ds-jury-ready-list::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
+.ds-jury-ready-list::-webkit-scrollbar-thumb:hover { background: #adb5bd; }
 
 /* ─── Responsive ───────────────────────────────────────────────────── */
 @media (max-width: 768px) {

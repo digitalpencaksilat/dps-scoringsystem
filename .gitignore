@@ -128,3 +128,4 @@ _modules/*
 realtime-server/node_modules/
 Screenshot*
 *.bak
+.hermes/
